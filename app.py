@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify, abort, redirect  # 添加 redirect
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -136,6 +136,23 @@ def after_request(response):
     logger.info(f"{request.remote_addr} - {request.method} {request.path} - {response.status_code}")
     
     return response
+
+# 添加根路徑路由
+@app.route('/', methods=['GET'])
+def index():
+    """根路徑 - 服務信息"""
+    return jsonify({
+        'service': 'Artale Auth Service',
+        'version': '1.0.0',
+        'status': 'running',
+        'endpoints': {
+            'health': '/health',
+            'login': '/auth/login',
+            'logout': '/auth/logout',
+            'validate': '/auth/validate'
+        },
+        'firebase_connected': db is not None
+    })
 
 @app.route('/health', methods=['GET'])
 def health_check():
