@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, abort, redirect  # 添加 redirect
+from flask import Flask, request, jsonify, abort
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -27,21 +27,46 @@ CORS(app, origins=allowed_origins, supports_credentials=True)
 
 # 全局變數
 db = None
+firebase_initialized = False
 session_store = {}  # 在生產環境中應使用 Redis
 
 def init_firebase():
-    """初始化 Firebase"""
-    global db
+    """初始化 Firebase - 改進版本"""
+    global db, firebase_initialized
     
     try:
+        logger.info("開始初始化 Firebase...")
+        
+        # 檢查是否已經初始化
+        if firebase_admin._apps:
+            logger.info("Firebase 應用已存在，刪除後重新初始化")
+            firebase_admin.delete_app(firebase_admin.get_app())
+        
         # 方法1：使用 Base64 編碼的完整憑證
         if 'FIREBASE_CREDENTIALS_BASE64' in os.environ:
-            credentials_json = base64.b64decode(os.environ['FIREBASE_CREDENTIALS_BASE64']).decode('utf-8')
-            credentials_dict = json.loads(credentials_json)
-            logger.info("使用 Base64 憑證初始化 Firebase")
+            logger.info("使用 Base64 編碼憑證")
+            try:
+                credentials_base64 = os.environ['FIREBASE_CREDENTIALS_BASE64'].strip()
+                logger.info(f"Base64 憑證長度: {len(credentials_base64)} 字符")
+                
+                # 解碼 Base64
+                credentials_json = base64.b64decode(credentials_base64).decode('utf-8')
+                logger.info(f"解碼後 JSON 長度: {len(credentials_json)} 字符")
+                
+                # 解析 JSON
+                credentials_dict = json.loads(credentials_json)
+                logger.info(f"解析 JSON 成功，項目ID: {credentials_dict.get('project_id', 'Unknown')}")
+                
+            except base64.binascii.Error as e:
+                logger.error(f"Base64 解碼失敗: {str(e)}")
+                raise ValueError(f"Base64 憑證格式錯誤: {str(e)}")
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON 解析失敗: {str(e)}")
+                raise ValueError(f"憑證 JSON 格式錯誤: {str(e)}")
         
         # 方法2：使用分別的環境變數（備用方案）
         else:
+            logger.info("使用分離式環境變數")
             credentials_dict = {
                 "type": "service_account",
                 "project_id": os.environ.get('FIREBASE_PROJECT_ID'),
@@ -55,30 +80,79 @@ def init_firebase():
                 "client_x509_cert_url": os.environ.get('FIREBASE_CLIENT_X509_CERT_URL'),
                 "universe_domain": "googleapis.com"
             }
-            logger.info("使用分離式環境變數初始化 Firebase")
         
         # 檢查必需字段
         required_fields = ['type', 'project_id', 'private_key', 'client_email']
+        missing_fields = []
         for field in required_fields:
             if not credentials_dict.get(field):
-                raise ValueError(f"缺少必需的憑證字段: {field}")
+                missing_fields.append(field)
+        
+        if missing_fields:
+            raise ValueError(f"缺少必需的憑證字段: {', '.join(missing_fields)}")
+        
+        # 驗證私鑰格式
+        private_key = credentials_dict.get('private_key', '')
+        if not private_key.startswith('-----BEGIN PRIVATE KEY-----'):
+            logger.error("私鑰格式錯誤")
+            raise ValueError("私鑰格式錯誤，必須以 -----BEGIN PRIVATE KEY----- 開始")
+        
+        logger.info("憑證驗證通過，開始初始化 Firebase...")
         
         # 初始化 Firebase
         cred = credentials.Certificate(credentials_dict)
         firebase_admin.initialize_app(cred)
+        logger.info("Firebase 應用初始化成功")
         
         # 初始化 Firestore
         db = firestore.client()
+        logger.info("Firestore 客戶端創建成功")
         
-        # 測試連接
+        # 測試 Firestore 連接
+        logger.info("測試 Firestore 連接...")
         test_collection = db.collection('connection_test')
-        test_doc = test_collection.document('test').get()
+        test_doc_ref = test_collection.document('test_connection')
         
-        logger.info("✅ Firebase 初始化成功")
-        return True
+        # 嘗試寫入測試數據
+        test_doc_ref.set({
+            'timestamp': datetime.now(),
+            'test': True,
+            'message': 'Connection test from Render server'
+        })
+        logger.info("Firestore 寫入測試成功")
         
+        # 嘗試讀取測試數據
+        test_doc = test_doc_ref.get()
+        if test_doc.exists:
+            logger.info("Firestore 讀取測試成功")
+            firebase_initialized = True
+            logger.info("✅ Firebase 完全初始化成功")
+            return True
+        else:
+            raise Exception("無法讀取測試文檔")
+            
     except Exception as e:
         logger.error(f"❌ Firebase 初始化失敗: {str(e)}")
+        logger.error(f"❌ 錯誤類型: {type(e).__name__}")
+        
+        # 提供具體的故障排除建議
+        if "credentials" in str(e).lower():
+            logger.error("🔧 憑證相關錯誤建議:")
+            logger.error("   1. 檢查 FIREBASE_CREDENTIALS_BASE64 環境變數")
+            logger.error("   2. 確保 Base64 字串完整且無換行符")
+            logger.error("   3. 驗證原始 JSON 憑證文件格式")
+        elif "permission" in str(e).lower():
+            logger.error("🔧 權限相關錯誤建議:")
+            logger.error("   1. 檢查服務帳戶權限")
+            logger.error("   2. 確保已啟用 Firestore API")
+            logger.error("   3. 檢查 Firebase 專案設定")
+        elif "network" in str(e).lower() or "timeout" in str(e).lower():
+            logger.error("🔧 網路相關錯誤建議:")
+            logger.error("   1. 檢查 Render 服務器網路連接")
+            logger.error("   2. 檢查 Firebase 服務狀態")
+        
+        firebase_initialized = False
+        db = None
         return False
 
 def rate_limit(max_requests=10, time_window=60):
@@ -137,39 +211,42 @@ def after_request(response):
     
     return response
 
-# 添加根路徑路由
-@app.route('/', methods=['GET'])
-def index():
-    """根路徑 - 服務信息"""
-    return jsonify({
-        'service': 'Artale Auth Service',
-        'version': '1.0.0',
-        'status': 'running',
-        'endpoints': {
-            'health': '/health',
-            'login': '/auth/login',
-            'logout': '/auth/logout',
-            'validate': '/auth/validate'
-        },
-        'firebase_connected': db is not None
-    })
-
 @app.route('/health', methods=['GET'])
 def health_check():
-    """健康檢查端點"""
+    """健康檢查端點 - 改進版本"""
+    
+    # 檢查 Firebase 狀態
+    firebase_status = firebase_initialized and db is not None
+    
+    # 如果 Firebase 未初始化，嘗試重新初始化
+    if not firebase_status:
+        logger.warning("健康檢查發現 Firebase 未初始化，嘗試重新初始化...")
+        firebase_status = init_firebase()
+    
     return jsonify({
-        'status': 'healthy',
+        'status': 'healthy' if firebase_status else 'degraded',
         'timestamp': datetime.now().isoformat(),
-        'firebase_connected': db is not None,
+        'firebase_connected': firebase_status,
+        'firebase_initialized': firebase_initialized,
+        'db_object_exists': db is not None,
         'service': 'artale-auth-service',
-        'version': '1.0.0'
+        'version': '1.0.1',
+        'environment': os.environ.get('FLASK_ENV', 'unknown')
     })
 
 @app.route('/auth/login', methods=['POST'])
 @rate_limit(max_requests=5, time_window=300)  # 每5分鐘最多5次登入嘗試
 def login():
-    """用戶登入端點"""
+    """用戶登入端點 - 改進版本"""
     try:
+        # 檢查 Firebase 狀態
+        if not firebase_initialized or db is None:
+            logger.error("Firebase 未初始化或數據庫對象為 None")
+            return jsonify({
+                'success': False,
+                'error': 'Authentication service unavailable. Please try again later.'
+            }), 503
+        
         data = request.get_json()
         
         if not data or 'uuid' not in data:
@@ -250,6 +327,13 @@ def logout():
 def validate_session():
     """驗證會話令牌"""
     try:
+        # 檢查 Firebase 狀態
+        if not firebase_initialized or db is None:
+            return jsonify({
+                'success': False,
+                'error': 'Authentication service unavailable'
+            }), 503
+            
         data = request.get_json()
         session_token = data.get('session_token') if data else None
         
@@ -281,46 +365,31 @@ def validate_session():
             'error': 'Validation failed'
         }), 500
 
-@app.route('/auth/sessions', methods=['GET'])
-@rate_limit(max_requests=10, time_window=60)
-def get_active_sessions():
-    """獲取活躍會話（管理用途）"""
-    try:
-        # 這裡可以添加管理員權限檢查
-        admin_key = request.headers.get('X-Admin-Key')
-        if admin_key != os.environ.get('ADMIN_API_KEY'):
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-        
-        active_sessions = []
-        now = time.time()
-        
-        for token, session_data in session_store.items():
-            if isinstance(session_data, dict) and 'uuid' in session_data:
-                if now < session_data.get('expires_at', 0):
-                    active_sessions.append({
-                        'session_id': token[:16] + '...',
-                        'uuid': session_data['uuid'][:8] + '...',
-                        'created_at': session_data.get('created_at'),
-                        'last_activity': session_data.get('last_activity'),
-                        'client_ip': session_data.get('client_ip', 'unknown')
-                    })
-        
-        return jsonify({
-            'success': True,
-            'active_sessions': active_sessions,
-            'total_count': len(active_sessions)
-        })
-        
-    except Exception as e:
-        logger.error(f"Get sessions error: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to get sessions'
-        }), 500
+@app.route('/admin/reinit-firebase', methods=['POST'])
+def reinit_firebase():
+    """重新初始化 Firebase（管理員端點）"""
+    admin_key = request.headers.get('X-Admin-Key')
+    if admin_key != os.environ.get('ADMIN_API_KEY'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    logger.info("管理員請求重新初始化 Firebase...")
+    success = init_firebase()
+    
+    return jsonify({
+        'success': success,
+        'message': 'Firebase reinitialized' if success else 'Firebase initialization failed',
+        'firebase_connected': firebase_initialized,
+        'db_exists': db is not None
+    })
 
 def authenticate_user(uuid, force_login=True, client_ip='unknown'):
-    """認證用戶"""
+    """認證用戶 - 改進版本"""
     try:
+        # 再次檢查 db 對象
+        if db is None:
+            logger.error("authenticate_user: db 對象為 None")
+            return False, "認證服務不可用", None
+        
         uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
         
         # 從 Firestore 查詢用戶
@@ -410,6 +479,10 @@ def verify_session_token(token):
     
     # 獲取用戶數據
     try:
+        if db is None:
+            logger.error("verify_session_token: db 對象為 None")
+            return False, None
+            
         uuid_hash = hashlib.sha256(session['uuid'].encode()).hexdigest()
         user_ref = db.collection('authorized_users').document(uuid_hash)
         user_doc = user_ref.get()
@@ -463,6 +536,10 @@ def check_existing_session(uuid_hash):
 def log_unauthorized_attempt(uuid_hash, client_ip):
     """記錄未授權登入嘗試"""
     try:
+        if db is None:
+            logger.error("log_unauthorized_attempt: db 對象為 None")
+            return
+            
         attempts_ref = db.collection('unauthorized_attempts')
         attempts_ref.add({
             'uuid_hash': uuid_hash,
@@ -473,51 +550,19 @@ def log_unauthorized_attempt(uuid_hash, client_ip):
     except Exception as e:
         logger.error(f"Failed to log unauthorized attempt: {str(e)}")
 
-# 清理過期會話的定期任務
-def cleanup_expired_sessions():
-    """清理過期會話"""
-    now = time.time()
-    expired_tokens = []
-    
-    for token, session_data in session_store.items():
-        if isinstance(session_data, dict):
-            if now > session_data.get('expires_at', 0):
-                expired_tokens.append(token)
-    
-    for token in expired_tokens:
-        del session_store[token]
-    
-    if expired_tokens:
-        logger.info(f"Cleaned up {len(expired_tokens)} expired sessions")
-
-@app.route('/admin/cleanup', methods=['POST'])
-def manual_cleanup():
-    """手動清理會話"""
-    admin_key = request.headers.get('X-Admin-Key')
-    if admin_key != os.environ.get('ADMIN_API_KEY'):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    cleanup_expired_sessions()
-    return jsonify({'success': True, 'message': 'Cleanup completed'})
-
 if __name__ == '__main__':
+    logger.info("啟動 Artale Auth Service...")
+    
     if init_firebase():
-        # 啟動定期清理
-        import threading
-        import atexit
-        
-        def periodic_cleanup():
-            while True:
-                time.sleep(300)  # 每5分鐘清理一次
-                cleanup_expired_sessions()
-        
-        cleanup_thread = threading.Thread(target=periodic_cleanup, daemon=True)
-        cleanup_thread.start()
-        
         port = int(os.environ.get('PORT', 5000))
         debug = os.environ.get('FLASK_ENV') == 'development'
         
         logger.info(f"Starting server on port {port}")
+        logger.info(f"Debug mode: {debug}")
+        logger.info(f"Firebase initialized: {firebase_initialized}")
+        logger.info(f"Database object exists: {db is not None}")
+        
         app.run(host='0.0.0.0', port=port, debug=debug)
     else:
         logger.error("❌ 無法啟動服務：Firebase 初始化失敗")
+        logger.error("請檢查環境變數設置和憑證配置")
