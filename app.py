@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify, abort, redirect  # 添加 redirect 導入
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -135,22 +135,6 @@ def init_firebase():
         logger.error(f"❌ Firebase 初始化失敗: {str(e)}")
         logger.error(f"❌ 錯誤類型: {type(e).__name__}")
         
-        # 提供具體的故障排除建議
-        if "credentials" in str(e).lower():
-            logger.error("🔧 憑證相關錯誤建議:")
-            logger.error("   1. 檢查 FIREBASE_CREDENTIALS_BASE64 環境變數")
-            logger.error("   2. 確保 Base64 字串完整且無換行符")
-            logger.error("   3. 驗證原始 JSON 憑證文件格式")
-        elif "permission" in str(e).lower():
-            logger.error("🔧 權限相關錯誤建議:")
-            logger.error("   1. 檢查服務帳戶權限")
-            logger.error("   2. 確保已啟用 Firestore API")
-            logger.error("   3. 檢查 Firebase 專案設定")
-        elif "network" in str(e).lower() or "timeout" in str(e).lower():
-            logger.error("🔧 網路相關錯誤建議:")
-            logger.error("   1. 檢查 Render 服務器網路連接")
-            logger.error("   2. 檢查 Firebase 服務狀態")
-        
         firebase_initialized = False
         db = None
         return False
@@ -210,6 +194,22 @@ def after_request(response):
     logger.info(f"{request.remote_addr} - {request.method} {request.path} - {response.status_code}")
     
     return response
+
+@app.route('/', methods=['GET'])
+def root():
+    """根路徑端點"""
+    return jsonify({
+        'service': 'Artale Authentication Service',
+        'version': '1.0.1',
+        'status': 'running',
+        'endpoints': {
+            'health': '/health',
+            'login': '/auth/login',
+            'logout': '/auth/logout',
+            'validate': '/auth/validate'
+        },
+        'firebase_connected': firebase_initialized
+    })
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -364,23 +364,6 @@ def validate_session():
             'success': False,
             'error': 'Validation failed'
         }), 500
-
-@app.route('/admin/reinit-firebase', methods=['POST'])
-def reinit_firebase():
-    """重新初始化 Firebase（管理員端點）"""
-    admin_key = request.headers.get('X-Admin-Key')
-    if admin_key != os.environ.get('ADMIN_API_KEY'):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    logger.info("管理員請求重新初始化 Firebase...")
-    success = init_firebase()
-    
-    return jsonify({
-        'success': success,
-        'message': 'Firebase reinitialized' if success else 'Firebase initialization failed',
-        'firebase_connected': firebase_initialized,
-        'db_exists': db is not None
-    })
 
 def authenticate_user(uuid, force_login=True, client_ip='unknown'):
     """認證用戶 - 改進版本"""
