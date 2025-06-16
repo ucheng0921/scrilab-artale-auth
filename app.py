@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, abort, redirect  # 添加 redirect 導入
+from flask import Flask, request, jsonify, abort, redirect
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -533,19 +533,25 @@ def log_unauthorized_attempt(uuid_hash, client_ip):
     except Exception as e:
         logger.error(f"Failed to log unauthorized attempt: {str(e)}")
 
+# ================================
+# 🔥 關鍵修復：將 Firebase 初始化移到模塊級別
+# ================================
+logger.info("🚀 模塊載入時初始化 Firebase...")
+try:
+    init_firebase()
+    logger.info(f"✅ 模塊級別 Firebase 初始化完成: {firebase_initialized}")
+except Exception as e:
+    logger.error(f"❌ 模塊級別 Firebase 初始化失敗: {str(e)}")
+
 if __name__ == '__main__':
-    logger.info("啟動 Artale Auth Service...")
+    # 這裡只處理開發環境的直接運行
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') == 'development'
     
-    if init_firebase():
-        port = int(os.environ.get('PORT', 5000))
-        debug = os.environ.get('FLASK_ENV') == 'development'
-        
-        logger.info(f"Starting server on port {port}")
-        logger.info(f"Debug mode: {debug}")
-        logger.info(f"Firebase initialized: {firebase_initialized}")
-        logger.info(f"Database object exists: {db is not None}")
-        
-        app.run(host='0.0.0.0', port=port, debug=debug)
-    else:
-        logger.error("❌ 無法啟動服務：Firebase 初始化失敗")
-        logger.error("請檢查環境變數設置和憑證配置")
+    logger.info(f"🔧 開發模式啟動:")
+    logger.info(f"   Port: {port}")
+    logger.info(f"   Debug: {debug}")
+    logger.info(f"   Firebase initialized: {firebase_initialized}")
+    logger.info(f"   Database object exists: {db is not None}")
+    
+    app.run(host='0.0.0.0', port=port, debug=debug)
