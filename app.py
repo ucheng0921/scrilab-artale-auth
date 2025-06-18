@@ -907,7 +907,8 @@ def get_all_users():
             
             user_list.append({
                 'document_id': user.id,
-                'uuid_preview': user.id[:16] + '...',
+                'uuid_preview': user_data.get('original_uuid', user.id[:16] + '...'),
+                'original_uuid': user_data.get('original_uuid', 'Unknown'),
                 'display_name': user_data.get('display_name', 'Unknown'),
                 'active': user_data.get('active', False),
                 'expires_at': expires_at_str,
@@ -959,6 +960,7 @@ def create_user_admin():
             expires_at = (datetime.now() + timedelta(days=days_valid)).isoformat()
         
         user_data = {
+            "original_uuid": uuid_string,  # 🔥 新增：存儲原始 UUID
             "display_name": display_name,
             "permissions": {
                 "script_access": True,
