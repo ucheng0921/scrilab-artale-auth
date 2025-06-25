@@ -15,6 +15,8 @@ import uuid as uuid_lib
 from flask import render_template_string
 import csv
 from io import StringIO
+from collections import defaultdict
+import threading
 
 # 設置日誌
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +35,35 @@ CORS(app, origins=allowed_origins, supports_credentials=True)
 db = None
 firebase_initialized = False
 session_store = {}  # 在生產環境中應使用 Redis
+
+# ===== 新增：IP 封鎖機制 =====
+blocked_ips = {}  # {ip: block_until_timestamp}
+rate_limit_store = defaultdict(list)  # {ip: [timestamp1, timestamp2, ...]}
+cleanup_lock = threading.Lock()
+
+def cleanup_expired_blocks():
+    """清理過期的封鎖記錄"""
+    with cleanup_lock:
+        now = time.time()
+        expired_ips = [ip for ip, block_until in blocked_ips.items() if block_until < now]
+        for ip in expired_ips:
+            del blocked_ips[ip]
+            logger.info(f"IP {ip} 解除封鎖")
+
+def is_ip_blocked(ip):
+    """檢查 IP 是否被封鎖"""
+    cleanup_expired_blocks()
+    return ip in blocked_ips and blocked_ips[ip] > time.time()
+
+def block_ip(ip, duration_minutes=30):
+    """封鎖 IP"""
+    block_until = time.time() + (duration_minutes * 60)
+    blocked_ips[ip] = block_until
+    logger.warning(f"IP {ip} 已被封鎖至 {datetime.fromtimestamp(block_until)}")
+
+def get_client_ip():
+    """獲取客戶端真實 IP"""
+    return request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr).split(',')[0].strip()
 
 def init_firebase():
     """初始化 Firebase - 改進版本"""
@@ -143,37 +174,50 @@ def init_firebase():
         db = None
         return False
 
-def rate_limit(max_requests=10, time_window=60):
-    """速率限制裝飾器"""
+# ===== 修改：更嚴格的速率限制 =====
+def rate_limit(max_requests=3, time_window=300, block_on_exceed=True):
+    """速率限制裝飾器 - 更嚴格版本"""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not os.environ.get('RATE_LIMIT_ENABLED', 'true').lower() == 'true':
                 return f(*args, **kwargs)
             
-            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+            client_ip = get_client_ip()
             
-            # 簡單的記憶體速率限制
-            now = time.time()
-            if client_ip not in session_store:
-                session_store[client_ip] = {'requests': []}
-            
-            # 清理過期記錄
-            session_store[client_ip]['requests'] = [
-                req_time for req_time in session_store[client_ip]['requests'] 
-                if now - req_time < time_window
-            ]
-            
-            # 檢查是否超過限制
-            if len(session_store[client_ip]['requests']) >= max_requests:
-                logger.warning(f"Rate limit exceeded for IP: {client_ip}")
+            # 檢查 IP 是否被封鎖
+            if is_ip_blocked(client_ip):
+                remaining_time = int((blocked_ips[client_ip] - time.time()) / 60)
+                logger.warning(f"被封鎖的 IP {client_ip} 嘗試訪問")
                 return jsonify({
                     'success': False,
-                    'error': 'Rate limit exceeded. Please try again later.'
+                    'error': f'您的 IP 已被暫時封鎖。請在 {remaining_time} 分鐘後再試。'
                 }), 429
             
-            # 記錄此次請求
-            session_store[client_ip]['requests'].append(now)
+            now = time.time()
+            
+            # 清理過期記錄
+            with cleanup_lock:
+                rate_limit_store[client_ip] = [
+                    req_time for req_time in rate_limit_store[client_ip]
+                    if now - req_time < time_window
+                ]
+                
+                # 檢查是否超過限制
+                if len(rate_limit_store[client_ip]) >= max_requests:
+                    logger.warning(f"IP {client_ip} 超過速率限制")
+                    
+                    # 自動封鎖違規 IP
+                    if block_on_exceed:
+                        block_ip(client_ip, 30)
+                    
+                    return jsonify({
+                        'success': False,
+                        'error': '請求過於頻繁。您的 IP 已被暫時封鎖 30 分鐘。'
+                    }), 429
+                
+                # 記錄此次請求
+                rate_limit_store[client_ip].append(now)
             
             return f(*args, **kwargs)
         return decorated_function
@@ -239,7 +283,7 @@ def health_check():
     })
 
 @app.route('/auth/login', methods=['POST'])
-@rate_limit(max_requests=5, time_window=300)  # 每5分鐘最多5次登入嘗試
+@rate_limit(max_requests=3, time_window=300, block_on_exceed=True)  # 每5分鐘最多3次，超過自動封鎖30分鐘
 def login():
     """用戶登入端點 - 改進版本"""
     try:
@@ -269,7 +313,7 @@ def login():
             }), 400
         
         # 記錄登入嘗試
-        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+        client_ip = get_client_ip()
         logger.info(f"Login attempt from {client_ip} for UUID: {uuid[:8]}...")
         
         # 呼叫認證邏輯
@@ -370,7 +414,7 @@ def validate_session():
         }), 500
 
 def authenticate_user(uuid, force_login=True, client_ip='unknown'):
-    """認證用戶 - 改進版本"""
+    """認證用戶 - 優化 Firebase 讀取版本"""
     try:
         # 再次檢查 db 對象
         if db is None:
@@ -379,7 +423,8 @@ def authenticate_user(uuid, force_login=True, client_ip='unknown'):
         
         uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
         
-        # 從 Firestore 查詢用戶
+        # ===== 關鍵優化：直接使用 document().get() 而非 where() 查詢 =====
+        # 這樣每次認證只消耗 1 次讀取，而非掃描整個集合
         user_ref = db.collection('authorized_users').document(uuid_hash)
         user_doc = user_ref.get()
         
@@ -413,12 +458,21 @@ def authenticate_user(uuid, force_login=True, client_ip='unknown'):
             if has_active:
                 return False, "該帳號已在其他地方登入", None
         
-        # 更新登入記錄
-        user_ref.update({
+        # 更新登入記錄 - 批量更新以減少寫入次數
+        update_data = {
             'last_login': datetime.now(),
-            'login_count': user_data.get('login_count', 0) + 1,
+            'login_count': firestore.Increment(1),
             'last_login_ip': client_ip
-        })
+        }
+        
+        # 每10次登入才更新一次詳細統計（減少寫入次數）
+        if user_data.get('login_count', 0) % 10 == 0:
+            update_data['login_history'] = firestore.ArrayUnion([{
+                'timestamp': datetime.now(),
+                'ip': client_ip
+            }])
+        
+        user_ref.update(update_data)
         
         return True, "認證成功", user_data
         
