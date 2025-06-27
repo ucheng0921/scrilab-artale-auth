@@ -270,13 +270,44 @@ ADMIN_TEMPLATE = """
         if (savedToken) {
             ADMIN_TOKEN = savedToken;
         } else {
-            ADMIN_TOKEN = prompt('請輸入管理員密碼:');
-            if (!ADMIN_TOKEN) {
-                alert('需要管理員權限');
-                window.location.href = '/';
-            } else {
-                // 儲存 token（可選）
-                localStorage.setItem('admin_token', ADMIN_TOKEN);
+            // 先嘗試預設密碼
+            ADMIN_TOKEN = 'your-secret-admin-token';
+        }
+        
+        // 測試 token 是否有效
+        async function validateToken() {
+            try {
+                const response = await fetch('/admin/users', {
+                    headers: { 'Admin-Token': ADMIN_TOKEN }
+                });
+                
+                if (response.status === 401) {
+                    // Token 無效，要求用戶輸入
+                    const userToken = prompt('管理員密碼錯誤，請輸入正確的管理員密碼:');
+                    if (!userToken) {
+                        alert('需要管理員權限');
+                        window.location.href = '/';
+                        return false;
+                    }
+                    ADMIN_TOKEN = userToken;
+                    localStorage.setItem('admin_token', ADMIN_TOKEN);
+                    
+                    // 再次測試
+                    const retestResponse = await fetch('/admin/users', {
+                        headers: { 'Admin-Token': ADMIN_TOKEN }
+                    });
+                    
+                    if (retestResponse.status === 401) {
+                        alert('密碼仍然錯誤，請聯繫管理員');
+                        localStorage.removeItem('admin_token');
+                        window.location.href = '/';
+                        return false;
+                    }
+                }
+                return true;
+            } catch (error) {
+                console.error('驗證 token 失敗:', error);
+                return false;
             }
         }
 
@@ -615,8 +646,41 @@ ADMIN_TEMPLATE = """
             }
         }
 
-        // 頁面載入時自動載入用戶
-        loadUsers();
+        // 調試功能
+        async function showDebugInfo() {
+            try {
+                const response = await fetch('/admin/debug');
+                const data = await response.json();
+                
+                const debugInfo = `
+調試信息：
+- Admin Token 已設定: ${data.admin_token_set}
+- Token 預覽: ${data.admin_token_value}
+- 預設值: ${data.expected_default}
+- 當前使用 Token: ${ADMIN_TOKEN.substring(0, 8)}...
+                `;
+                
+                alert(debugInfo);
+            } catch (error) {
+                alert('獲取調試信息失敗: ' + error.message);
+            }
+        }
+        
+        function clearToken() {
+            localStorage.removeItem('admin_token');
+            location.reload();
+        }
+        
+        // 頁面載入時自動驗證並載入用戶
+        async function initializePage() {
+            const tokenValid = await validateToken();
+            if (tokenValid) {
+                loadUsers();
+            }
+        }
+        
+        // 頁面載入時執行
+        initializePage();
     </script>
 </body>
 </html>
@@ -934,7 +998,30 @@ def check_uuid_exists():
         logger.error(f"Check UUID error: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
-@admin_bp.route('/generate-uuid', methods=['POST'])
+@admin_bp.route('/debug', methods=['GET'])
+def admin_debug():
+    """調試端點 - 檢查環境變數設定"""
+    admin_token = os.environ.get('ADMIN_TOKEN', 'NOT_SET')
+    return jsonify({
+        'admin_token_set': admin_token != 'NOT_SET',
+        'admin_token_value': admin_token[:8] + '...' if len(admin_token) > 8 else admin_token,
+        'expected_default': 'your-secret-admin-token'
+    })
+
+@admin_bp.route('/test-auth', methods=['POST'])
+def test_auth():
+    """測試認證端點"""
+    provided_token = request.headers.get('Admin-Token', '')
+    expected_token = os.environ.get('ADMIN_TOKEN', 'your-secret-admin-token')
+    
+    return jsonify({
+        'success': provided_token == expected_token,
+        'provided_token_length': len(provided_token),
+        'expected_token_length': len(expected_token),
+        'tokens_match': provided_token == expected_token,
+        'provided_preview': provided_token[:8] + '...' if len(provided_token) > 8 else provided_token,
+        'expected_preview': expected_token[:8] + '...' if len(expected_token) > 8 else expected_token
+    })
 def generate_uuid_api():
     """API 生成 UUID"""
     if not check_admin_token(request):
