@@ -263,10 +263,21 @@ ADMIN_TEMPLATE = """
     <script>
         let allUsers = [];
         let currentGeneratedUUID = '';
-        const ADMIN_TOKEN = prompt('請輸入管理員密碼:');
-        if (!ADMIN_TOKEN) {
-            alert('需要管理員權限');
-            window.location.href = '/';
+        let ADMIN_TOKEN = '';
+        
+        // 檢查是否已有儲存的 token
+        const savedToken = localStorage.getItem('admin_token');
+        if (savedToken) {
+            ADMIN_TOKEN = savedToken;
+        } else {
+            ADMIN_TOKEN = prompt('請輸入管理員密碼:');
+            if (!ADMIN_TOKEN) {
+                alert('需要管理員權限');
+                window.location.href = '/';
+            } else {
+                // 儲存 token（可選）
+                localStorage.setItem('admin_token', ADMIN_TOKEN);
+            }
         }
 
         // 分頁切換
