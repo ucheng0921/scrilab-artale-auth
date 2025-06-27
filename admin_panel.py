@@ -265,48 +265,65 @@ ADMIN_TEMPLATE = """
         let currentGeneratedUUID = '';
         let ADMIN_TOKEN = '';
         
-        // 檢查是否已有儲存的 token
-        const savedToken = localStorage.getItem('admin_token');
-        if (savedToken) {
-            ADMIN_TOKEN = savedToken;
-        } else {
-            // 先嘗試預設密碼
-            ADMIN_TOKEN = 'your-secret-admin-token';
+        // 檢查是否已有儲存的 token，如果沒有就要求輸入
+        let savedToken = localStorage.getItem('admin_token');
+        
+        if (!savedToken) {
+            // 沒有保存的 token，要求用戶輸入
+            savedToken = prompt('請輸入管理員密碼:');
+            if (!savedToken) {
+                alert('需要管理員權限才能訪問此頁面');
+                window.location.href = '/';
+            }
         }
+        
+        ADMIN_TOKEN = savedToken;
         
         // 測試 token 是否有效
         async function validateToken() {
             try {
+                console.log('正在驗證 token...');
                 const response = await fetch('/admin/users', {
                     headers: { 'Admin-Token': ADMIN_TOKEN }
                 });
                 
+                console.log('驗證回應狀態:', response.status);
+                
                 if (response.status === 401) {
-                    // Token 無效，要求用戶輸入
-                    const userToken = prompt('管理員密碼錯誤，請輸入正確的管理員密碼:');
+                    // Token 無效，清除並要求重新輸入
+                    localStorage.removeItem('admin_token');
+                    const userToken = prompt('管理員密碼錯誤或已過期，請重新輸入:');
                     if (!userToken) {
                         alert('需要管理員權限');
                         window.location.href = '/';
                         return false;
                     }
-                    ADMIN_TOKEN = userToken;
-                    localStorage.setItem('admin_token', ADMIN_TOKEN);
                     
-                    // 再次測試
+                    ADMIN_TOKEN = userToken;
+                    
+                    // 再次測試新密碼
                     const retestResponse = await fetch('/admin/users', {
                         headers: { 'Admin-Token': ADMIN_TOKEN }
                     });
                     
                     if (retestResponse.status === 401) {
-                        alert('密碼仍然錯誤，請聯繫管理員');
-                        localStorage.removeItem('admin_token');
+                        alert('密碼錯誤，請聯繫系統管理員');
                         window.location.href = '/';
                         return false;
+                    } else {
+                        // 新密碼有效，保存它
+                        localStorage.setItem('admin_token', ADMIN_TOKEN);
+                        console.log('新密碼驗證成功');
                     }
+                } else {
+                    // Token 有效，保存它
+                    localStorage.setItem('admin_token', ADMIN_TOKEN);
+                    console.log('現有密碼驗證成功');
                 }
                 return true;
             } catch (error) {
                 console.error('驗證 token 失敗:', error);
+                alert('網絡錯誤，請檢查連接: ' + error.message);
                 return false;
             }
         }
@@ -668,7 +685,18 @@ ADMIN_TEMPLATE = """
         
         function clearToken() {
             localStorage.removeItem('admin_token');
+            alert('已清除密碼，重新載入頁面...');
             location.reload();
+        }
+        
+        function manualLogin() {
+            const password = prompt('請輸入管理員密碼:');
+            if (password) {
+                ADMIN_TOKEN = password;
+                localStorage.setItem('admin_token', password);
+                alert('密碼已設定，正在重新載入...');
+                location.reload();
+            }
         }
         
         // 頁面載入時自動驗證並載入用戶
