@@ -600,7 +600,8 @@ def check_admin_token(request):
 def generate_secure_uuid(prefix='artale', custom_id=None, date_format='YYYYMMDD'):
     """生成安全的UUID"""
     if custom_id:
-        user_id = custom_id.replace(/[^a-zA-Z0-9]/g, '').lower()
+        import re
+        user_id = re.sub(r'[^a-zA-Z0-9]', '', custom_id).lower()
     else:
         user_id = uuid_lib.uuid4().hex[:8]
     
