@@ -135,6 +135,9 @@ ADMIN_TEMPLATE = """
             <input type="password" id="admin-password" placeholder="請輸入管理員密碼" autofocus>
             <button onclick="performLogin()" id="login-button">登入</button>
             <button onclick="window.location.href='/';" style="background: #666;">返回首頁</button>
+            <div style="margin-top: 15px; text-align: center;">
+                <small style="color: #666;">預設密碼: your-secret-admin-token</small>
+            </div>
         </div>
     </div>
 
@@ -357,10 +360,13 @@ ADMIN_TEMPLATE = """
         
         // 執行登入
         async function performLogin() {
+            console.log('開始執行登入...');
             const passwordInput = document.getElementById('admin-password');
             const password = passwordInput.value.trim();
             const loginButton = document.getElementById('login-button');
             const errorDiv = document.getElementById('login-error');
+            
+            console.log('密碼長度:', password.length);
             
             if (!password) {
                 errorDiv.textContent = '請輸入密碼';
@@ -374,15 +380,24 @@ ADMIN_TEMPLATE = """
             errorDiv.style.display = 'none';
             
             try {
+                console.log('發送驗證請求...');
                 // 測試密碼是否正確
                 const response = await fetch('/admin/users', {
-                    headers: { 'Admin-Token': password }
+                    method: 'GET',
+                    headers: { 
+                        'Admin-Token': password,
+                        'Content-Type': 'application/json'
+                    }
                 });
+                
+                console.log('回應狀態:', response.status);
                 
                 if (response.ok) {
                     // 密碼正確，保存並進入系統
                     ADMIN_TOKEN = password;
                     localStorage.setItem('admin_token', password);
+                    
+                    console.log('登入成功，切換介面...');
                     
                     // 隱藏登入對話框，顯示主內容
                     document.getElementById('login-overlay').style.display = 'none';
@@ -392,12 +407,15 @@ ADMIN_TEMPLATE = """
                     loadUsers();
                 } else {
                     // 密碼錯誤
-                    errorDiv.textContent = response.status === 401 ? '密碼錯誤，請重試' : '連接錯誤，請稍後再試';
+                    const errorText = response.status === 401 ? '密碼錯誤，請重試' : `連接錯誤 (${response.status})，請稍後再試`;
+                    console.error('登入失敗:', errorText);
+                    errorDiv.textContent = errorText;
                     errorDiv.style.display = 'block';
                     passwordInput.value = '';
                     passwordInput.focus();
                 }
             } catch (error) {
+                console.error('登入錯誤:', error);
                 errorDiv.textContent = '網絡錯誤: ' + error.message;
                 errorDiv.style.display = 'block';
             } finally {
