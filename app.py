@@ -14,9 +14,11 @@ import logging
 import uuid as uuid_lib
 from collections import defaultdict
 import threading
+import re
 
-# 導入管理員模組
+# 導入管理員模組和綠界模組
 from admin_panel import admin_bp
+from ecpay_integration import ecpay_bp
 
 # 設置日誌
 logging.basicConfig(level=logging.INFO)
@@ -31,8 +33,9 @@ app.config['SECRET_KEY'] = os.environ.get('APP_SECRET_KEY', 'dev-key-change-in-p
 allowed_origins = os.environ.get('ALLOWED_ORIGINS', '*').split(',')
 CORS(app, origins=allowed_origins, supports_credentials=True)
 
-# 註冊管理員藍圖
+# 註冊藍圖
 app.register_blueprint(admin_bp)
+app.register_blueprint(ecpay_bp)
 
 # 全局變數
 db = None
