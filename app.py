@@ -12,11 +12,11 @@ import time
 from functools import wraps
 import logging
 import uuid as uuid_lib
-from flask import render_template_string
-import csv
-from io import StringIO
 from collections import defaultdict
 import threading
+
+# 導入管理員模組
+from admin_panel import admin_bp
 
 # 設置日誌
 logging.basicConfig(level=logging.INFO)
@@ -31,12 +31,15 @@ app.config['SECRET_KEY'] = os.environ.get('APP_SECRET_KEY', 'dev-key-change-in-p
 allowed_origins = os.environ.get('ALLOWED_ORIGINS', '*').split(',')
 CORS(app, origins=allowed_origins, supports_credentials=True)
 
+# 註冊管理員藍圖
+app.register_blueprint(admin_bp)
+
 # 全局變數
 db = None
 firebase_initialized = False
 session_store = {}  # 在生產環境中應使用 Redis
 
-# ===== 新增：IP 封鎖機制 =====
+# ===== IP 封鎖機制 =====
 blocked_ips = {}  # {ip: block_until_timestamp}
 rate_limit_store = defaultdict(list)  # {ip: [timestamp1, timestamp2, ...]}
 cleanup_lock = threading.Lock()
@@ -174,7 +177,7 @@ def init_firebase():
         db = None
         return False
 
-# ===== 修改：更嚴格的速率限制 =====
+# ===== 速率限制 =====
 def rate_limit(max_requests=3, time_window=300, block_on_exceed=True):
     """速率限制裝飾器 - 更嚴格版本"""
     def decorator(f):
@@ -248,13 +251,22 @@ def root():
     """根路徑端點"""
     return jsonify({
         'service': 'Artale Authentication Service',
-        'version': '1.0.1',
+        'version': '2.0.0',
         'status': 'running',
+        'features': [
+            '🔐 用戶認證系統',
+            '👥 管理員面板',
+            '🎲 UUID 生成器',
+            '💳 綠界金流整合 (開發中)',
+            '🛡️ IP 封鎖保護',
+            '🚀 速率限制'
+        ],
         'endpoints': {
             'health': '/health',
             'login': '/auth/login',
             'logout': '/auth/logout',
-            'validate': '/auth/validate'
+            'validate': '/auth/validate',
+            'admin': '/admin'
         },
         'firebase_connected': firebase_initialized
     })
@@ -278,12 +290,13 @@ def health_check():
         'firebase_initialized': firebase_initialized,
         'db_object_exists': db is not None,
         'service': 'artale-auth-service',
-        'version': '1.0.1',
-        'environment': os.environ.get('FLASK_ENV', 'unknown')
+        'version': '2.0.0',
+        'environment': os.environ.get('FLASK_ENV', 'unknown'),
+        'admin_panel': 'available at /admin'
     })
 
 @app.route('/auth/login', methods=['POST'])
-@rate_limit(max_requests=3, time_window=300, block_on_exceed=True)  # 每5分鐘最多3次，超過自動封鎖30分鐘
+@rate_limit(max_requests=3, time_window=300, block_on_exceed=True)
 def login():
     """用戶登入端點 - 改進版本"""
     try:
@@ -371,7 +384,7 @@ def logout():
         }), 500
 
 @app.route('/auth/validate', methods=['POST'])
-@rate_limit(max_requests=120, time_window=60)  # 每分鐘最多120次驗證
+@rate_limit(max_requests=120, time_window=60)
 def validate_session():
     """驗證會話令牌"""
     try:
@@ -423,8 +436,7 @@ def authenticate_user(uuid, force_login=True, client_ip='unknown'):
         
         uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
         
-        # ===== 關鍵優化：直接使用 document().get() 而非 where() 查詢 =====
-        # 這樣每次認證只消耗 1 次讀取，而非掃描整個集合
+        # 直接使用 document().get() 而非 where() 查詢
         user_ref = db.collection('authorized_users').document(uuid_hash)
         user_doc = user_ref.get()
         
@@ -601,558 +613,6 @@ try:
 except Exception as e:
     logger.error(f"❌ 模塊級別 Firebase 初始化失敗: {str(e)}")
 
-# ================================
-# 🎛️ 用戶管理功能
-# ================================
-
-# 管理界面 HTML 模板
-ADMIN_TEMPLATE = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Artale Script 用戶管理</title>
-    <meta charset="utf-8">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { background: #1976d2; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .user-table { width: 100%; border-collapse: collapse; }
-        .user-table th, .user-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        .user-table th { background-color: #4CAF50; color: white; }
-        .user-table tr:nth-child(even) { background-color: #f2f2f2; }
-        .btn { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 2px; }
-        .btn:hover { background: #45a049; }
-        .btn-danger { background: #f44336; }
-        .btn-danger:hover { background: #da190b; }
-        .btn-warning { background: #ff9800; }
-        .btn-warning:hover { background: #e68900; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        .status-active { color: green; font-weight: bold; }
-        .status-inactive { color: red; font-weight: bold; }
-        .stats { display: flex; gap: 20px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .stat-card h3 { margin: 0; font-size: 2em; color: #1976d2; }
-        .form-row { display: flex; gap: 20px; }
-        .form-row .form-group { flex: 1; }
-        .search-box { width: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-left: 10px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎮 Artale Script 用戶管理系統</h1>
-            <p>管理所有授權用戶、權限和有效期</p>
-        </div>
-        
-        <!-- 統計資訊 -->
-        <div class="stats">
-            <div class="stat-card">
-                <h3 id="total-users">-</h3>
-                <p>總用戶數</p>
-            </div>
-            <div class="stat-card">
-                <h3 id="active-users">-</h3>
-                <p>活躍用戶</p>
-            </div>
-            <div class="stat-card">
-                <h3 id="expired-users">-</h3>
-                <p>已過期</p>
-            </div>
-        </div>
-        
-        <!-- 新增用戶表單 -->
-        <div class="section">
-            <h2>➕ 新增用戶</h2>
-            <form id="create-user-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>UUID</label>
-                        <input type="text" id="new-uuid" placeholder="artale_user001_20241217" required>
-                    </div>
-                    <div class="form-group">
-                        <label>顯示名稱</label>
-                        <input type="text" id="new-display-name" placeholder="用戶名稱" required>
-                    </div>
-                    <div class="form-group">
-                        <label>有效天數</label>
-                        <input type="number" id="new-days" value="30" min="1" max="365">
-                    </div>
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <button type="submit" class="btn">創建用戶</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-        
-        <!-- 用戶列表 -->
-        <div class="section">
-            <h2>👥 用戶列表</h2>
-            <div style="margin-bottom: 15px;">
-                <button onclick="loadUsers()" class="btn">🔄 刷新列表</button>
-                <input type="text" id="search-input" placeholder="搜尋用戶..." class="search-box" onkeyup="filterUsers()">
-            </div>
-            <table class="user-table" id="users-table">
-                <thead>
-                    <tr>
-                        <th>顯示名稱</th>
-                        <th>UUID (前16位)</th>
-                        <th>狀態</th>
-                        <th>到期時間</th>
-                        <th>登入次數</th>
-                        <th>創建時間</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody id="users-tbody">
-                    <tr><td colspan="7" style="text-align: center;">載入中...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <script>
-        let allUsers = [];
-        const ADMIN_TOKEN = prompt('請輸入管理員密碼:');
-        if (!ADMIN_TOKEN) {
-            alert('需要管理員權限');
-            window.location.href = '/';
-        }
-
-        // 載入用戶列表
-        async function loadUsers() {
-            try {
-                const response = await fetch('/admin/users', {
-                    headers: { 'Admin-Token': ADMIN_TOKEN }
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    allUsers = data.users;
-                    renderUsers(allUsers);
-                    updateStats(allUsers);
-                } else {
-                    alert('載入失敗: ' + data.error);
-                }
-            } catch (error) {
-                alert('載入錯誤: ' + error.message);
-            }
-        }
-
-        // 渲染用戶列表
-        function renderUsers(users) {
-            const tbody = document.getElementById('users-tbody');
-            tbody.innerHTML = '';
-            
-            users.forEach(user => {
-                const row = document.createElement('tr');
-                const isActive = user.active;
-                const isExpired = user.expires_at && new Date(user.expires_at) < new Date();
-                
-                row.innerHTML = `
-                    <td>${user.display_name}</td>
-                    <td><code>${user.uuid_preview}</code></td>
-                    <td class="${isActive ? 'status-active' : 'status-inactive'}">
-                        ${isActive ? '✅ 啟用' : '❌ 停用'}
-                        ${isExpired ? ' (已過期)' : ''}
-                    </td>
-                    <td>${user.expires_at || '永久'}</td>
-                    <td>${user.login_count}</td>
-                    <td>${user.created_at}</td>
-                    <td>
-                        <button onclick="editUser('${user.document_id}', '${user.display_name}')" class="btn">編輯</button>
-                        <button onclick="toggleUser('${user.document_id}', ${!isActive})" class="btn btn-warning">
-                            ${isActive ? '停用' : '啟用'}
-                        </button>
-                        <button onclick="deleteUser('${user.document_id}', '${user.display_name}')" class="btn btn-danger">刪除</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        // 搜尋過濾
-        function filterUsers() {
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
-            const filteredUsers = allUsers.filter(user => 
-                user.display_name.toLowerCase().includes(searchTerm) ||
-                user.uuid_preview.toLowerCase().includes(searchTerm)
-            );
-            renderUsers(filteredUsers);
-        }
-
-        // 更新統計
-        function updateStats(users) {
-            const total = users.length;
-            const active = users.filter(u => u.active).length;
-            const expired = users.filter(u => u.expires_at && new Date(u.expires_at) < new Date()).length;
-            
-            document.getElementById('total-users').textContent = total;
-            document.getElementById('active-users').textContent = active;
-            document.getElementById('expired-users').textContent = expired;
-        }
-
-        // 創建用戶
-        document.getElementById('create-user-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const uuid = document.getElementById('new-uuid').value;
-            const displayName = document.getElementById('new-display-name').value;
-            const days = document.getElementById('new-days').value;
-            
-            try {
-                const response = await fetch('/admin/create-user', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Admin-Token': ADMIN_TOKEN
-                    },
-                    body: JSON.stringify({
-                        uuid: uuid,
-                        display_name: displayName,
-                        days: parseInt(days)
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    alert('用戶創建成功!');
-                    document.getElementById('create-user-form').reset();
-                    loadUsers();
-                } else {
-                    alert('創建失敗: ' + data.error);
-                }
-            } catch (error) {
-                alert('創建錯誤: ' + error.message);
-            }
-        });
-
-        // 編輯用戶
-        async function editUser(documentId, currentName) {
-            const newName = prompt('新的顯示名稱:', currentName);
-            if (!newName || newName === currentName) return;
-            
-            const newDays = prompt('延長有效期天數:', '30');
-            if (!newDays) return;
-            
-            try {
-                const response = await fetch(`/admin/users/${documentId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Admin-Token': ADMIN_TOKEN
-                    },
-                    body: JSON.stringify({
-                        display_name: newName,
-                        extend_days: parseInt(newDays)
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    alert('用戶更新成功!');
-                    loadUsers();
-                } else {
-                    alert('更新失敗: ' + data.error);
-                }
-            } catch (error) {
-                alert('更新錯誤: ' + error.message);
-            }
-        }
-
-        // 啟用/停用用戶
-        async function toggleUser(documentId, newStatus) {
-            try {
-                const response = await fetch(`/admin/users/${documentId}/toggle`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Admin-Token': ADMIN_TOKEN
-                    },
-                    body: JSON.stringify({ active: newStatus })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    loadUsers();
-                } else {
-                    alert('操作失敗: ' + data.error);
-                }
-            } catch (error) {
-                alert('操作錯誤: ' + error.message);
-            }
-        }
-
-        // 刪除用戶
-        async function deleteUser(documentId, displayName) {
-            if (!confirm(`確定要刪除用戶 "${displayName}" 嗎？此操作無法撤銷！`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/admin/users/${documentId}`, {
-                    method: 'DELETE',
-                    headers: { 'Admin-Token': ADMIN_TOKEN }
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    alert('用戶已刪除');
-                    loadUsers();
-                } else {
-                    alert('刪除失敗: ' + data.error);
-                }
-            } catch (error) {
-                alert('刪除錯誤: ' + error.message);
-            }
-        }
-
-        // 頁面載入時自動載入用戶
-        loadUsers();
-    </script>
-</body>
-</html>
-"""
-
-def generate_secure_uuid():
-    """生成安全的UUID"""
-    random_part = uuid_lib.uuid4().hex[:12]
-    timestamp = datetime.now().strftime('%Y%m%d')
-    return f"artale_{random_part}_{timestamp}"
-
-@app.route('/admin', methods=['GET'])
-def admin_dashboard():
-    """管理員面板"""
-    return render_template_string(ADMIN_TEMPLATE)
-
-@app.route('/admin/users', methods=['GET'])
-def get_all_users():
-    """獲取所有用戶"""
-    admin_token = request.headers.get('Admin-Token')
-    if admin_token != os.environ.get('ADMIN_TOKEN', 'your-secret-admin-token'):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        users_ref = db.collection('authorized_users')
-        users = users_ref.stream()
-        
-        user_list = []
-        for user in users:
-            user_data = user.to_dict()
-            
-            # 處理時間格式
-            created_at = user_data.get('created_at')
-            if hasattr(created_at, 'strftime'):
-                created_at_str = created_at.strftime('%Y-%m-%d %H:%M')
-            else:
-                created_at_str = str(created_at)[:16] if created_at else 'Unknown'
-            
-            expires_at = user_data.get('expires_at')
-            if expires_at:
-                if isinstance(expires_at, str):
-                    expires_at_str = expires_at.split('T')[0] + ' ' + expires_at.split('T')[1][:5]
-                else:
-                    expires_at_str = str(expires_at)[:16]
-            else:
-                expires_at_str = None
-            
-            user_list.append({
-                'document_id': user.id,
-                'uuid_preview': user_data.get('original_uuid', user.id[:16] + '...'),
-                'original_uuid': user_data.get('original_uuid', 'Unknown'),
-                'display_name': user_data.get('display_name', 'Unknown'),
-                'active': user_data.get('active', False),
-                'expires_at': expires_at_str,
-                'login_count': user_data.get('login_count', 0),
-                'created_at': created_at_str,
-                'permissions': user_data.get('permissions', {}),
-                'notes': user_data.get('notes', '')
-            })
-        
-        # 按創建時間排序
-        user_list.sort(key=lambda x: x['created_at'], reverse=True)
-        
-        return jsonify({
-            'success': True,
-            'users': user_list,
-            'total_count': len(user_list)
-        })
-        
-    except Exception as e:
-        logger.error(f"Get users error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@app.route('/admin/create-user', methods=['POST'])
-def create_user_admin():
-    """創建新用戶（管理員）"""
-    admin_token = request.headers.get('Admin-Token')
-    if admin_token != os.environ.get('ADMIN_TOKEN', 'your-secret-admin-token'):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        data = request.get_json()
-        uuid_string = data.get('uuid', '').strip()
-        display_name = data.get('display_name', '').strip()
-        days_valid = data.get('days', 30)
-        
-        if not uuid_string or not display_name:
-            return jsonify({'success': False, 'error': 'UUID 和顯示名稱為必填'}), 400
-        
-        # 檢查 UUID 是否已存在
-        uuid_hash = hashlib.sha256(uuid_string.encode()).hexdigest()
-        user_ref = db.collection('authorized_users').document(uuid_hash)
-        
-        if user_ref.get().exists:
-            return jsonify({'success': False, 'error': 'UUID 已存在'}), 400
-        
-        # 創建用戶
-        expires_at = None
-        if days_valid > 0:
-            expires_at = (datetime.now() + timedelta(days=days_valid)).isoformat()
-        
-        user_data = {
-            "original_uuid": uuid_string,  # 🔥 新增：存儲原始 UUID
-            "display_name": display_name,
-            "permissions": {
-                "script_access": True,
-                "config_modify": True
-            },
-            "active": True,
-            "created_at": datetime.now(),
-            "created_by": "admin_dashboard",
-            "login_count": 0,
-            "notes": f"管理員創建 - {datetime.now().strftime('%Y-%m-%d')}"
-        }
-        
-        if expires_at:
-            user_data["expires_at"] = expires_at
-        
-        user_ref.set(user_data)
-        
-        return jsonify({
-            'success': True,
-            'message': '用戶創建成功',
-            'uuid': uuid_string,
-            'display_name': display_name
-        })
-        
-    except Exception as e:
-        logger.error(f"Create user admin error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@app.route('/admin/users/<document_id>', methods=['PUT'])
-def update_user_admin(document_id):
-    """更新用戶資訊"""
-    admin_token = request.headers.get('Admin-Token')
-    if admin_token != os.environ.get('ADMIN_TOKEN', 'your-secret-admin-token'):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        data = request.get_json()
-        user_ref = db.collection('authorized_users').document(document_id)
-        user_doc = user_ref.get()
-        
-        if not user_doc.exists:
-            return jsonify({'success': False, 'error': '用戶不存在'}), 404
-        
-        update_data = {}
-        
-        # 更新顯示名稱
-        if 'display_name' in data:
-            update_data['display_name'] = data['display_name']
-        
-        # 延長有效期
-        if 'extend_days' in data:
-            extend_days = data['extend_days']
-            current_data = user_doc.to_dict()
-            current_expires = current_data.get('expires_at')
-            
-            if current_expires:
-                if isinstance(current_expires, str):
-                    current_expires = datetime.fromisoformat(current_expires.replace('Z', ''))
-                
-                # 如果已過期，從現在開始計算
-                if current_expires < datetime.now():
-                    new_expires = datetime.now() + timedelta(days=extend_days)
-                else:
-                    new_expires = current_expires + timedelta(days=extend_days)
-            else:
-                # 如果原本是永久，從現在開始計算
-                new_expires = datetime.now() + timedelta(days=extend_days)
-            
-            update_data['expires_at'] = new_expires.isoformat()
-        
-        update_data['updated_at'] = datetime.now()
-        update_data['updated_by'] = 'admin_dashboard'
-        
-        user_ref.update(update_data)
-        
-        return jsonify({
-            'success': True,
-            'message': '用戶資訊已更新'
-        })
-        
-    except Exception as e:
-        logger.error(f"Update user admin error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@app.route('/admin/users/<document_id>/toggle', methods=['PUT'])
-def toggle_user_status(document_id):
-    """啟用/停用用戶"""
-    admin_token = request.headers.get('Admin-Token')
-    if admin_token != os.environ.get('ADMIN_TOKEN', 'your-secret-admin-token'):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        data = request.get_json()
-        new_status = data.get('active', True)
-        
-        user_ref = db.collection('authorized_users').document(document_id)
-        if not user_ref.get().exists:
-            return jsonify({'success': False, 'error': '用戶不存在'}), 404
-        
-        user_ref.update({
-            'active': new_status,
-            'status_changed_at': datetime.now(),
-            'status_changed_by': 'admin_dashboard'
-        })
-        
-        return jsonify({
-            'success': True,
-            'message': f'用戶已{"啟用" if new_status else "停用"}'
-        })
-        
-    except Exception as e:
-        logger.error(f"Toggle user status error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@app.route('/admin/users/<document_id>', methods=['DELETE'])
-def delete_user_admin(document_id):
-    """刪除用戶"""
-    admin_token = request.headers.get('Admin-Token')
-    if admin_token != os.environ.get('ADMIN_TOKEN', 'your-secret-admin-token'):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        user_ref = db.collection('authorized_users').document(document_id)
-        if not user_ref.get().exists:
-            return jsonify({'success': False, 'error': '用戶不存在'}), 404
-        
-        # 刪除用戶
-        user_ref.delete()
-        
-        return jsonify({
-            'success': True,
-            'message': '用戶已刪除'
-        })
-        
-    except Exception as e:
-        logger.error(f"Delete user admin error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
 if __name__ == '__main__':
     # 這裡只處理開發環境的直接運行
     port = int(os.environ.get('PORT', 5000))
@@ -1163,5 +623,6 @@ if __name__ == '__main__':
     logger.info(f"   Debug: {debug}")
     logger.info(f"   Firebase initialized: {firebase_initialized}")
     logger.info(f"   Database object exists: {db is not None}")
+    logger.info(f"   Admin panel: http://localhost:{port}/admin")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
