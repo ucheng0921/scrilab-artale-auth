@@ -4,6 +4,7 @@ import hashlib
 import uuid as uuid_lib
 from datetime import datetime, timedelta
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -54,292 +55,183 @@ ADMIN_TEMPLATE = """
         .uuid-preview { background: #333; color: #0f0; padding: 10px; border-radius: 4px; font-family: monospace; margin: 10px 0; }
         .payment-section { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
         .payment-info { background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 15px; margin-bottom: 15px; }
-        /* 登入對話框樣式 */
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-        .login-dialog {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 400px;
-            width: 90%;
-        }
-        .login-dialog h2 {
-            margin: 0 0 20px 0;
-            color: #333;
-            text-align: center;
-        }
-        .login-dialog input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
-        .login-dialog input:focus {
-            outline: none;
-            border-color: #4CAF50;
-        }
-        .login-dialog button {
-            width: 100%;
-            padding: 12px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        .login-dialog button:hover {
-            background: #45a049;
-        }
-        .login-error {
-            color: #f44336;
-            text-align: center;
-            margin-bottom: 15px;
-            display: none;
-        }
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        .login-prompt { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
+        .login-form { max-width: 400px; margin: 0 auto; }
+        .login-form input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <!-- 登入對話框 -->
-    <div id="login-overlay" class="login-overlay">
-        <div class="login-dialog">
-            <h2>🔐 管理員登入</h2>
-            <div id="login-error" class="login-error">密碼錯誤，請重試</div>
-            <input type="password" id="admin-password" placeholder="請輸入管理員密碼" autofocus>
-            <button onclick="performLogin()" id="login-button">登入</button>
-            <button onclick="window.location.href='/';" style="background: #666;">返回首頁</button>
-            <div style="margin-top: 15px; text-align: center;">
-                <small style="color: #666;">預設密碼: your-secret-admin-token</small>
-            </div>
-        </div>
-    </div>
-
-    <!-- 主內容區（初始隱藏） -->
-    <div class="container" id="main-container" style="display: none;">
+    <div class="container">
         <div class="header">
             <h1>🎮 Artale Script 用戶管理系統</h1>
             <p>管理所有授權用戶、權限和有效期 | 🔗 綠界金流整合</p>
-            <button onclick="logout()" class="btn" style="float: right; background: #f44336;">登出</button>
-        </div>
-        
-        <!-- 統計資訊 -->
-        <div class="stats">
-            <div class="stat-card">
-                <h3 id="total-users">-</h3>
-                <p>總用戶數</p>
-            </div>
-            <div class="stat-card">
-                <h3 id="active-users">-</h3>
-                <p>活躍用戶</p>
-            </div>
-            <div class="stat-card">
-                <h3 id="expired-users">-</h3>
-                <p>已過期</p>
-            </div>
-            <div class="stat-card">
-                <h3 id="total-revenue">-</h3>
-                <p>總收益 (NT$)</p>
+            <div style="margin-top: 10px;">
+                <button onclick="showDebugInfo()" class="btn btn-info" style="font-size: 12px;">🔍 調試信息</button>
+                <button onclick="clearToken()" class="btn btn-warning" style="font-size: 12px;">🔄 重置密碼</button>
+                <button onclick="manualLogin()" class="btn" style="font-size: 12px;">🔐 手動登入</button>
             </div>
         </div>
         
-        <!-- 分頁標籤 -->
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('user-management')">👥 用戶管理</div>
-            <div class="tab" onclick="switchTab('payment-management')">💳 付款管理</div>
-            <div class="tab" onclick="switchTab('uuid-generator')">🔧 UUID 生成器</div>
+        <!-- 登入提示區域 -->
+        <div id="login-prompt" class="login-prompt" style="display: none;">
+            <h3>🔐 管理員登入</h3>
+            <div class="login-form">
+                <input type="password" id="admin-password" placeholder="請輸入管理員密碼" />
+                <button onclick="submitLogin()" class="btn" style="width: 100%; padding: 12px;">登入</button>
+            </div>
         </div>
         
-        <!-- 用戶管理分頁 -->
-        <div id="user-management" class="tab-content active">
-            <!-- 新增用戶表單 -->
-            <div class="section">
-                <h2>➕ 新增用戶</h2>
-                <form id="create-user-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>UUID</label>
-                            <input type="text" id="new-uuid" placeholder="artale_user001_20241217" required>
-                            <small>建議使用 UUID 生成器確保格式正確</small>
-                        </div>
-                        <div class="form-group">
-                            <label>顯示名稱</label>
-                            <input type="text" id="new-display-name" placeholder="用戶名稱" required>
-                        </div>
-                        <div class="form-group">
-                            <label>有效天數</label>
-                            <select id="new-days">
-                                <option value="7">7天 (體驗版)</option>
-                                <option value="30" selected>30天 (月費版)</option>
-                                <option value="90">90天 (季費版)</option>
-                                <option value="365">365天 (年費版)</option>
-                                <option value="0">永久 (特殊版)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button type="submit" class="btn">創建用戶</button>
-                        </div>
-                    </div>
-                </form>
+        <!-- 主要內容區域 -->
+        <div id="main-content" style="display: none;">
+            <!-- 統計資訊 -->
+            <div class="stats">
+                <div class="stat-card">
+                    <h3 id="total-users">-</h3>
+                    <p>總用戶數</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="active-users">-</h3>
+                    <p>活躍用戶</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="expired-users">-</h3>
+                    <p>已過期</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="total-revenue">-</h3>
+                    <p>總收益 (NT$)</p>
+                </div>
             </div>
             
-            <!-- 用戶列表 -->
-            <div class="section">
-                <h2>👥 用戶列表</h2>
-                <div style="margin-bottom: 15px;">
-                    <button onclick="loadUsers()" class="btn">🔄 刷新列表</button>
-                    <input type="text" id="search-input" placeholder="搜尋用戶..." class="search-box" onkeyup="filterUsers()">
-                    <button onclick="exportUsers()" class="btn btn-info">📊 匯出 CSV</button>
-                </div>
-                <table class="user-table" id="users-table">
-                    <thead>
-                        <tr>
-                            <th>顯示名稱</th>
-                            <th>UUID</th>
-                            <th>狀態</th>
-                            <th>到期時間</th>
-                            <th>登入次數</th>
-                            <th>創建時間</th>
-                            <th>付款狀態</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="users-tbody">
-                        <tr><td colspan="8" style="text-align: center;" id="loading-message">載入中...</td></tr>
-                    </tbody>
-                </table>
+            <!-- 分頁標籤 -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('user-management')">👥 用戶管理</div>
+                <div class="tab" onclick="switchTab('payment-management')">💳 付款管理</div>
+                <div class="tab" onclick="switchTab('uuid-generator')">🔧 UUID 生成器</div>
             </div>
-        </div>
-        
-        <!-- UUID 生成器分頁 -->
-        <div id="uuid-generator" class="tab-content">
-            <div class="section">
-                <h2>🔧 UUID 生成器</h2>
-                <div class="uuid-generator">
-                    <h3>自動生成 UUID</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>前綴</label>
-                            <select id="uuid-prefix">
-                                <option value="artale">artale (一般用戶)</option>
-                                <option value="artale_vip">artale_vip (VIP用戶)</option>
-                                <option value="artale_trial">artale_trial (試用用戶)</option>
-                                <option value="artale_premium">artale_premium (高級用戶)</option>
-                            </select>
+            
+            <!-- 用戶管理分頁 -->
+            <div id="user-management" class="tab-content active">
+                <!-- 新增用戶表單 -->
+                <div class="section">
+                    <h2>➕ 新增用戶</h2>
+                    <form id="create-user-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>UUID</label>
+                                <input type="text" id="new-uuid" placeholder="artale_user001_20241217" required>
+                                <small>建議使用 UUID 生成器確保格式正確</small>
+                            </div>
+                            <div class="form-group">
+                                <label>顯示名稱</label>
+                                <input type="text" id="new-display-name" placeholder="用戶名稱" required>
+                            </div>
+                            <div class="form-group">
+                                <label>有效天數</label>
+                                <select id="new-days">
+                                    <option value="7">7天 (體驗版)</option>
+                                    <option value="30" selected>30天 (月費版)</option>
+                                    <option value="90">90天 (季費版)</option>
+                                    <option value="365">365天 (年費版)</option>
+                                    <option value="0">永久 (特殊版)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn">創建用戶</button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>用戶編號 (可選)</label>
-                            <input type="text" id="uuid-custom-id" placeholder="留空自動生成">
-                        </div>
-                        <div class="form-group">
-                            <label>日期格式</label>
-                            <select id="uuid-date-format">
-                                <option value="YYYYMMDD">20241217 (完整日期)</option>
-                                <option value="YYYYMM">202412 (年月)</option>
-                                <option value="YYYY">2024 (年份)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button type="button" onclick="generateUUID()" class="btn">🎲 生成 UUID</button>
-                        </div>
-                    </div>
-                    
-                    <div class="uuid-preview" id="uuid-preview">
-                        點擊生成按鈕產生 UUID...
-                    </div>
-                    
-                    <div style="margin-top: 15px;">
-                        <button onclick="copyUUID()" class="btn btn-info">📋 複製 UUID</button>
-                        <button onclick="useGeneratedUUID()" class="btn">➡️ 使用此 UUID 創建用戶</button>
-                        <button onclick="checkUUIDExists()" class="btn btn-warning">🔍 檢查是否已存在</button>
-                    </div>
+                    </form>
                 </div>
                 
+                <!-- 用戶列表 -->
                 <div class="section">
-                    <h3>📝 UUID 規則說明</h3>
-                    <ul>
-                        <li><strong>格式:</strong> [前綴]_[編號]_[日期]</li>
-                        <li><strong>前綴:</strong> 區分用戶類型 (artale, artale_vip, artale_trial, artale_premium)</li>
-                        <li><strong>編號:</strong> 用戶唯一識別碼，可自訂或自動生成 8 位隨機字符</li>
-                        <li><strong>日期:</strong> 創建日期，支援多種格式</li>
-                        <li><strong>範例:</strong> artale_a1b2c3d4_20241217</li>
-                    </ul>
+                    <h2>👥 用戶列表</h2>
+                    <div style="margin-bottom: 15px;">
+                        <button onclick="loadUsers()" class="btn">🔄 刷新列表</button>
+                        <input type="text" id="search-input" placeholder="搜尋用戶..." class="search-box" onkeyup="filterUsers()">
+                        <button onclick="exportUsers()" class="btn btn-info">📊 匯出 CSV</button>
+                    </div>
+                    <table class="user-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th>顯示名稱</th>
+                                <th>UUID</th>
+                                <th>狀態</th>
+                                <th>到期時間</th>
+                                <th>登入次數</th>
+                                <th>創建時間</th>
+                                <th>付款狀態</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <tr><td colspan="8" style="text-align: center;" id="loading-message">載入中...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
-        
-        <!-- 付款管理分頁 -->
-        <div id="payment-management" class="tab-content">
-            <div class="payment-section">
-                <h2>💳 綠界金流整合</h2>
-                <div class="payment-info">
-                    <h4>🚀 即將推出功能:</h4>
-                    <ul>
-                        <li>✅ 自動付款處理</li>
-                        <li>✅ 付款成功自動發放序號</li>
-                        <li>✅ 訂單狀態追蹤</li>
-                        <li>✅ 退款處理</li>
-                        <li>✅ 收益統計</li>
-                    </ul>
-                </div>
-                
-                <!-- 訂單列表 (預留) -->
+            
+            <!-- UUID 生成器分頁 -->
+            <div id="uuid-generator" class="tab-content">
                 <div class="section">
-                    <h3>📋 訂單管理</h3>
-                    <p style="text-align: center; color: #666; padding: 40px;">
-                        綠界 API 整合開發中...<br>
-                        <small>將支援信用卡、ATM轉帳、超商付款等多種支付方式</small>
-                    </p>
+                    <h2>🔧 UUID 生成器</h2>
+                    <div class="uuid-generator">
+                        <h3>自動生成 UUID</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>前綴</label>
+                                <select id="uuid-prefix">
+                                    <option value="artale">artale (一般用戶)</option>
+                                    <option value="artale_vip">artale_vip (VIP用戶)</option>
+                                    <option value="artale_trial">artale_trial (試用用戶)</option>
+                                    <option value="artale_premium">artale_premium (高級用戶)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>用戶編號 (可選)</label>
+                                <input type="text" id="uuid-custom-id" placeholder="留空自動生成">
+                            </div>
+                            <div class="form-group">
+                                <label>日期格式</label>
+                                <select id="uuid-date-format">
+                                    <option value="YYYYMMDD">20241217 (完整日期)</option>
+                                    <option value="YYYYMM">202412 (年月)</option>
+                                    <option value="YYYY">2024 (年份)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="button" onclick="generateUUID()" class="btn">🎲 生成 UUID</button>
+                            </div>
+                        </div>
+                        
+                        <div class="uuid-preview" id="uuid-preview">
+                            點擊生成按鈕產生 UUID...
+                        </div>
+                        
+                        <div style="margin-top: 15px;">
+                            <button onclick="copyUUID()" class="btn btn-info">📋 複製 UUID</button>
+                            <button onclick="useGeneratedUUID()" class="btn">➡️ 使用此 UUID 創建用戶</button>
+                            <button onclick="checkUUIDExists()" class="btn btn-warning">🔍 檢查是否已存在</button>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- 收益統計 (預留) -->
-                <div class="section">
-                    <h3>📊 收益分析</h3>
-                    <div class="stats">
-                        <div class="stat-card">
-                            <h3>NT$ 0</h3>
-                            <p>今日收益</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>NT$ 0</h3>
-                            <p>本月收益</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>0</h3>
-                            <p>待處理訂單</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>0</h3>
-                            <p>成功交易</p>
-                        </div>
+            </div>
+            
+            <!-- 付款管理分頁 -->
+            <div id="payment-management" class="tab-content">
+                <div class="payment-section">
+                    <h2>💳 綠界金流整合</h2>
+                    <div class="payment-info">
+                        <h4>🚀 即將推出功能:</h4>
+                        <ul>
+                            <li>✅ 自動付款處理</li>
+                            <li>✅ 付款成功自動發放序號</li>
+                            <li>✅ 訂單狀態追蹤</li>
+                            <li>✅ 退款處理</li>
+                            <li>✅ 收益統計</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -350,126 +242,146 @@ ADMIN_TEMPLATE = """
         let allUsers = [];
         let currentGeneratedUUID = '';
         let ADMIN_TOKEN = '';
-        
-        // 密碼輸入框支援 Enter 鍵
-        document.getElementById('admin-password').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                performLogin();
-            }
-        });
-        
-        // 執行登入
-        async function performLogin() {
-            console.log('開始執行登入...');
-            const passwordInput = document.getElementById('admin-password');
-            const password = passwordInput.value.trim();
-            const loginButton = document.getElementById('login-button');
-            const errorDiv = document.getElementById('login-error');
-            
-            console.log('密碼長度:', password.length);
-            
-            if (!password) {
-                errorDiv.textContent = '請輸入密碼';
-                errorDiv.style.display = 'block';
-                return;
-            }
-            
-            // 顯示載入中
-            loginButton.innerHTML = '<span class="loading-spinner"></span> 驗證中...';
-            loginButton.disabled = true;
-            errorDiv.style.display = 'none';
-            
-            try {
-                console.log('發送驗證請求...');
-                // 測試密碼是否正確
-                const response = await fetch('/admin/users', {
-                    method: 'GET',
-                    headers: { 
-                        'Admin-Token': password,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('回應狀態:', response.status);
-                
-                if (response.ok) {
-                    // 密碼正確，保存並進入系統
-                    ADMIN_TOKEN = password;
-                    localStorage.setItem('admin_token', password);
-                    
-                    console.log('登入成功，切換介面...');
-                    
-                    // 隱藏登入對話框，顯示主內容
-                    document.getElementById('login-overlay').style.display = 'none';
-                    document.getElementById('main-container').style.display = 'block';
-                    
-                    // 載入用戶列表
-                    loadUsers();
-                } else {
-                    // 密碼錯誤
-                    const errorText = response.status === 401 ? '密碼錯誤，請重試' : `連接錯誤 (${response.status})，請稍後再試`;
-                    console.error('登入失敗:', errorText);
-                    errorDiv.textContent = errorText;
-                    errorDiv.style.display = 'block';
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                }
-            } catch (error) {
-                console.error('登入錯誤:', error);
-                errorDiv.textContent = '網絡錯誤: ' + error.message;
-                errorDiv.style.display = 'block';
-            } finally {
-                loginButton.innerHTML = '登入';
-                loginButton.disabled = false;
-            }
-        }
-        
-        // 登出功能
-        function logout() {
-            if (confirm('確定要登出嗎？')) {
-                localStorage.removeItem('admin_token');
-                ADMIN_TOKEN = '';
-                location.reload();
-            }
-        }
-        
-        // 初始化檢查
-        async function initializeAuth() {
-            // 先清除可能存在的無效 token
+        let isLoggedIn = false;
+
+        // 頁面載入時檢查登入狀態
+        window.onload = function() {
+            checkLoginStatus();
+        };
+
+        function checkLoginStatus() {
+            // 檢查是否有保存的 token
             const savedToken = localStorage.getItem('admin_token');
             
             if (savedToken) {
-                // 測試保存的 token 是否有效
-                try {
-                    const response = await fetch('/admin/users', {
-                        headers: { 'Admin-Token': savedToken }
-                    });
-                    
-                    if (response.ok) {
-                        // Token 有效，直接進入系統
-                        ADMIN_TOKEN = savedToken;
-                        document.getElementById('login-overlay').style.display = 'none';
-                        document.getElementById('main-container').style.display = 'block';
-                        loadUsers();
-                        return;
-                    }
-                } catch (error) {
-                    console.error('Token 驗證失敗:', error);
-                }
+                ADMIN_TOKEN = savedToken;
+                // 驗證 token 是否仍然有效
+                validateTokenAndShowContent();
+            } else {
+                // 沒有 token，顯示登入提示
+                showLoginPrompt();
+            }
+        }
+
+        function showLoginPrompt() {
+            document.getElementById('login-prompt').style.display = 'block';
+            document.getElementById('main-content').style.display = 'none';
+            isLoggedIn = false;
+        }
+
+        function showMainContent() {
+            document.getElementById('login-prompt').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            isLoggedIn = true;
+            // 載入數據
+            loadUsers();
+        }
+
+        async function validateTokenAndShowContent() {
+            try {
+                console.log('正在驗證 token...');
+                const response = await fetch('/admin/users', {
+                    headers: { 'Admin-Token': ADMIN_TOKEN }
+                });
                 
-                // Token 無效，清除它
-                localStorage.removeItem('admin_token');
+                if (response.status === 401) {
+                    console.log('Token 無效，要求重新登入');
+                    localStorage.removeItem('admin_token');
+                    showLoginPrompt();
+                } else {
+                    console.log('Token 有效，顯示主要內容');
+                    showMainContent();
+                }
+            } catch (error) {
+                console.error('驗證失敗:', error);
+                showLoginPrompt();
+            }
+        }
+
+        function submitLogin() {
+            const password = document.getElementById('admin-password').value.trim();
+            if (!password) {
+                alert('請輸入密碼');
+                return;
             }
             
-            // 需要登入，確保顯示登入對話框
-            document.getElementById('login-overlay').style.display = 'flex';
-            document.getElementById('main-container').style.display = 'none';
-            document.getElementById('admin-password').focus();
+            ADMIN_TOKEN = password;
+            
+            // 驗證密碼
+            fetch('/admin/users', {
+                headers: { 'Admin-Token': ADMIN_TOKEN }
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    alert('密碼錯誤，請重新輸入');
+                    document.getElementById('admin-password').value = '';
+                } else {
+                    // 登入成功
+                    localStorage.setItem('admin_token', ADMIN_TOKEN);
+                    showMainContent();
+                }
+            })
+            .catch(error => {
+                console.error('登入驗證失敗:', error);
+                alert('登入失敗: ' + error.message);
+            });
+        }
+
+        function manualLogin() {
+            const password = prompt('請輸入管理員密碼:');
+            if (password) {
+                ADMIN_TOKEN = password;
+                
+                // 驗證密碼
+                fetch('/admin/users', {
+                    headers: { 'Admin-Token': ADMIN_TOKEN }
+                })
+                .then(response => {
+                    if (response.status === 401) {
+                        alert('密碼錯誤');
+                    } else {
+                        localStorage.setItem('admin_token', ADMIN_TOKEN);
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    alert('驗證失敗: ' + error.message);
+                });
+            }
+        }
+
+        function clearToken() {
+            localStorage.removeItem('admin_token');
+            alert('已清除登入信息');
+            location.reload();
+        }
+
+        // 調試功能
+        async function showDebugInfo() {
+            try {
+                const response = await fetch('/admin/debug');
+                const data = await response.json();
+                
+                const debugInfo = `調試信息：
+- Admin Token 已設定: ${data.admin_token_set}
+- Token 預覽: ${data.admin_token_value}
+- 預設值: ${data.expected_default}
+- 當前登入狀態: ${isLoggedIn}
+- 當前使用 Token: ${ADMIN_TOKEN ? ADMIN_TOKEN.substring(0, 8) + '...' : '未設定'}`;
+                
+                alert(debugInfo);
+            } catch (error) {
+                alert('獲取調試信息失敗: ' + error.message);
+            }
         }
 
         // 分頁切換
         function switchTab(tabId) {
-            // 隱藏所有分頁內容
+            if (!isLoggedIn) {
+                alert('請先登入');
+                return;
+            }
+            
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
@@ -477,7 +389,6 @@ ADMIN_TEMPLATE = """
                 tab.classList.remove('active');
             });
             
-            // 顯示選中的分頁
             document.getElementById(tabId).classList.add('active');
             event.target.classList.add('active');
         }
@@ -488,7 +399,6 @@ ADMIN_TEMPLATE = """
             const customId = document.getElementById('uuid-custom-id').value.trim();
             const dateFormat = document.getElementById('uuid-date-format').value;
             
-            // 生成用戶ID
             let userId;
             if (customId) {
                 userId = customId.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
@@ -496,7 +406,6 @@ ADMIN_TEMPLATE = """
                 userId = Math.random().toString(36).substring(2, 10);
             }
             
-            // 生成日期
             const now = new Date();
             let dateStr;
             switch(dateFormat) {
@@ -532,16 +441,7 @@ ADMIN_TEMPLATE = """
                 alert('請先生成 UUID');
                 return;
             }
-            // 切換到用戶管理分頁
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.getElementById('user-management').classList.add('active');
-            document.querySelectorAll('.tab')[0].classList.add('active');
-            
+            switchTab('user-management');
             document.getElementById('new-uuid').value = currentGeneratedUUID;
             document.getElementById('new-uuid').focus();
         }
@@ -575,17 +475,18 @@ ADMIN_TEMPLATE = """
 
         // 載入用戶列表
         async function loadUsers() {
+            if (!isLoggedIn) return;
+            
             try {
                 console.log('開始載入用戶列表...');
                 const response = await fetch('/admin/users', {
                     headers: { 'Admin-Token': ADMIN_TOKEN }
                 });
                 
-                console.log('Response status:', response.status);
-                
                 if (response.status === 401) {
-                    alert('管理員密碼錯誤或已過期');
-                    logout();
+                    alert('登入已過期，請重新登入');
+                    localStorage.removeItem('admin_token');
+                    location.reload();
                     return;
                 }
                 
@@ -664,7 +565,7 @@ ADMIN_TEMPLATE = """
             document.getElementById('total-users').textContent = total;
             document.getElementById('active-users').textContent = active;
             document.getElementById('expired-users').textContent = expired;
-            document.getElementById('total-revenue').textContent = '0'; // 待綠界整合
+            document.getElementById('total-revenue').textContent = '0';
         }
 
         // 匯出 CSV
@@ -685,9 +586,9 @@ ADMIN_TEMPLATE = """
                     user.created_at,
                     user.payment_status || '手動創建'
                 ].join(','))
-            ].join('\n');
+            ].join('\\n');
             
-            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob(['\\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `artale_users_${new Date().toISOString().split('T')[0]}.csv`;
@@ -695,42 +596,54 @@ ADMIN_TEMPLATE = """
         }
 
         // 創建用戶
-        document.getElementById('create-user-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const uuid = document.getElementById('new-uuid').value;
-            const displayName = document.getElementById('new-display-name').value;
-            const days = document.getElementById('new-days').value;
-            
-            try {
-                const response = await fetch('/admin/create-user', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Admin-Token': ADMIN_TOKEN
-                    },
-                    body: JSON.stringify({
-                        uuid: uuid,
-                        display_name: displayName,
-                        days: parseInt(days)
-                    })
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('create-user-form');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    if (!isLoggedIn) {
+                        alert('請先登入');
+                        return;
+                    }
+                    
+                    const uuid = document.getElementById('new-uuid').value;
+                    const displayName = document.getElementById('new-display-name').value;
+                    const days = document.getElementById('new-days').value;
+                    
+                    try {
+                        const response = await fetch('/admin/create-user', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Admin-Token': ADMIN_TOKEN
+                            },
+                            body: JSON.stringify({
+                                uuid: uuid,
+                                display_name: displayName,
+                                days: parseInt(days)
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        if (data.success) {
+                            alert('用戶創建成功!');
+                            form.reset();
+                            loadUsers();
+                        } else {
+                            alert('創建失敗: ' + data.error);
+                        }
+                    } catch (error) {
+                        alert('創建錯誤: ' + error.message);
+                    }
                 });
-                
-                const data = await response.json();
-                if (data.success) {
-                    alert('用戶創建成功!');
-                    document.getElementById('create-user-form').reset();
-                    loadUsers();
-                } else {
-                    alert('創建失敗: ' + data.error);
-                }
-            } catch (error) {
-                alert('創建錯誤: ' + error.message);
             }
         });
 
-        // 編輯用戶
+        // 其他用戶操作函數
         async function editUser(documentId, currentName) {
+            if (!isLoggedIn) return;
+            
             const newName = prompt('新的顯示名稱:', currentName);
             if (!newName || newName === currentName) return;
             
@@ -762,8 +675,9 @@ ADMIN_TEMPLATE = """
             }
         }
 
-        // 啟用/停用用戶
         async function toggleUser(documentId, newStatus) {
+            if (!isLoggedIn) return;
+            
             try {
                 const response = await fetch(`/admin/users/${documentId}/toggle`, {
                     method: 'PUT',
@@ -785,8 +699,9 @@ ADMIN_TEMPLATE = """
             }
         }
 
-        // 刪除用戶
         async function deleteUser(documentId, displayName) {
+            if (!isLoggedIn) return;
+            
             if (!confirm(`確定要刪除用戶 "${displayName}" 嗎？此操作無法撤銷！`)) {
                 return;
             }
@@ -808,9 +723,18 @@ ADMIN_TEMPLATE = """
                 alert('刪除錯誤: ' + error.message);
             }
         }
-        
-        // 頁面載入時初始化認證
-        window.addEventListener('DOMContentLoaded', initializeAuth);
+
+        // 讓密碼輸入框支援 Enter 鍵
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('admin-password');
+            if (passwordInput) {
+                passwordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        submitLogin();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
@@ -825,7 +749,6 @@ def check_admin_token(request):
 def generate_secure_uuid(prefix='artale', custom_id=None, date_format='YYYYMMDD'):
     """生成安全的UUID"""
     if custom_id:
-        import re
         user_id = re.sub(r'[^a-zA-Z0-9]', '', custom_id).lower()
     else:
         user_id = uuid_lib.uuid4().hex[:8]
@@ -848,6 +771,31 @@ def generate_secure_uuid(prefix='artale', custom_id=None, date_format='YYYYMMDD'
 def admin_dashboard():
     """管理員面板"""
     return render_template_string(ADMIN_TEMPLATE)
+
+@admin_bp.route('/debug', methods=['GET'])
+def admin_debug():
+    """調試端點 - 檢查環境變數設定"""
+    admin_token = os.environ.get('ADMIN_TOKEN', 'NOT_SET')
+    return jsonify({
+        'admin_token_set': admin_token != 'NOT_SET',
+        'admin_token_value': admin_token[:8] + '...' if len(admin_token) > 8 else admin_token,
+        'expected_default': 'your-secret-admin-token'
+    })
+
+@admin_bp.route('/test-auth', methods=['POST'])
+def test_auth():
+    """測試認證端點"""
+    provided_token = request.headers.get('Admin-Token', '')
+    expected_token = os.environ.get('ADMIN_TOKEN', 'your-secret-admin-token')
+    
+    return jsonify({
+        'success': provided_token == expected_token,
+        'provided_token_length': len(provided_token),
+        'expected_token_length': len(expected_token),
+        'tokens_match': provided_token == expected_token,
+        'provided_preview': provided_token[:8] + '...' if len(provided_token) > 8 else provided_token,
+        'expected_preview': expected_token[:8] + '...' if len(expected_token) > 8 else expected_token
+    })
 
 @admin_bp.route('/users', methods=['GET'])
 def get_all_users():
@@ -1128,31 +1076,7 @@ def check_uuid_exists():
         logger.error(f"Check UUID error: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
-@admin_bp.route('/debug', methods=['GET'])
-def admin_debug():
-    """調試端點 - 檢查環境變數設定"""
-    admin_token = os.environ.get('ADMIN_TOKEN', 'NOT_SET')
-    return jsonify({
-        'admin_token_set': admin_token != 'NOT_SET',
-        'admin_token_value': admin_token[:8] + '...' if len(admin_token) > 8 else admin_token,
-        'expected_default': 'your-secret-admin-token'
-    })
-
-@admin_bp.route('/test-auth', methods=['POST'])
-def test_auth():
-    """測試認證端點"""
-    provided_token = request.headers.get('Admin-Token', '')
-    expected_token = os.environ.get('ADMIN_TOKEN', 'your-secret-admin-token')
-    
-    return jsonify({
-        'success': provided_token == expected_token,
-        'provided_token_length': len(provided_token),
-        'expected_token_length': len(expected_token),
-        'tokens_match': provided_token == expected_token,
-        'provided_preview': provided_token[:8] + '...' if len(provided_token) > 8 else provided_token,
-        'expected_preview': expected_token[:8] + '...' if len(expected_token) > 8 else expected_token
-    })
-
+@admin_bp.route('/generate-uuid', methods=['POST'])
 def generate_uuid_api():
     """API 生成 UUID"""
     if not check_admin_token(request):
