@@ -146,7 +146,7 @@ ADMIN_TEMPLATE = """
                         </tr>
                     </thead>
                     <tbody id="users-tbody">
-                        <tr><td colspan="8" style="text-align: center;">載入中...</td></tr>
+                        <tr><td colspan="8" style="text-align: center;" id="loading-message">載入中...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -381,19 +381,34 @@ ADMIN_TEMPLATE = """
         // 載入用戶列表
         async function loadUsers() {
             try {
+                console.log('開始載入用戶列表...');
                 const response = await fetch('/admin/users', {
                     headers: { 'Admin-Token': ADMIN_TOKEN }
                 });
+                
+                console.log('Response status:', response.status);
+                
+                if (response.status === 401) {
+                    alert('管理員密碼錯誤，請重新輸入');
+                    localStorage.removeItem('admin_token');
+                    location.reload();
+                    return;
+                }
+                
                 const data = await response.json();
+                console.log('Response data:', data);
                 
                 if (data.success) {
                     allUsers = data.users;
                     renderUsers(allUsers);
                     updateStats(allUsers);
+                    console.log('載入成功，用戶數量:', allUsers.length);
                 } else {
+                    console.error('載入失敗:', data.error);
                     alert('載入失敗: ' + data.error);
                 }
             } catch (error) {
+                console.error('載入錯誤:', error);
                 alert('載入錯誤: ' + error.message);
             }
         }
@@ -403,21 +418,26 @@ ADMIN_TEMPLATE = """
             const tbody = document.getElementById('users-tbody');
             tbody.innerHTML = '';
             
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">暫無用戶數據</td></tr>';
+                return;
+            }
+            
             users.forEach(user => {
                 const row = document.createElement('tr');
                 const isActive = user.active;
                 const isExpired = user.expires_at && new Date(user.expires_at) < new Date();
                 
                 row.innerHTML = `
-                    <td>${user.display_name}</td>
-                    <td><code style="font-size: 11px;">${user.uuid_preview}</code></td>
+                    <td>${user.display_name || 'Unknown'}</td>
+                    <td><code style="font-size: 11px;">${user.uuid_preview || 'N/A'}</code></td>
                     <td class="${isActive ? 'status-active' : 'status-inactive'}">
                         ${isActive ? '✅ 啟用' : '❌ 停用'}
                         ${isExpired ? ' (已過期)' : ''}
                     </td>
                     <td>${user.expires_at || '永久'}</td>
-                    <td>${user.login_count}</td>
-                    <td>${user.created_at}</td>
+                    <td>${user.login_count || 0}</td>
+                    <td>${user.created_at || 'Unknown'}</td>
                     <td>${user.payment_status || '手動創建'}</td>
                     <td>
                         <button onclick="editUser('${user.document_id}', '${user.display_name}')" class="btn">編輯</button>
