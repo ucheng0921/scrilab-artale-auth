@@ -605,7 +605,7 @@ def auto_generate_user_uuid(order_data):
     """自動生成用戶 UUID 並創建用戶"""
     try:
         from app import db
-        from admin_panel import generate_secure_uuid
+        import re
         
         if db is None:
             logger.error("Database not available")
@@ -625,7 +625,11 @@ def auto_generate_user_uuid(order_data):
         # 生成唯一 UUID
         max_attempts = 10
         for attempt in range(max_attempts):
-            new_uuid = generate_secure_uuid(prefix=prefix)
+            # 直接生成 UUID（不需要呼叫 admin_panel 的函數）
+            user_id = uuid_lib.uuid4().hex[:8]
+            now = datetime.now()
+            date_str = now.strftime('%Y%m%d')
+            new_uuid = f"{prefix}_{user_id}_{date_str}"
             
             # 檢查是否已存在
             uuid_hash = hashlib.sha256(new_uuid.encode()).hexdigest()
