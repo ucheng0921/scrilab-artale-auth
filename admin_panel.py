@@ -54,13 +54,96 @@ ADMIN_TEMPLATE = """
         .uuid-preview { background: #333; color: #0f0; padding: 10px; border-radius: 4px; font-family: monospace; margin: 10px 0; }
         .payment-section { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
         .payment-info { background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 15px; margin-bottom: 15px; }
+        /* 登入對話框樣式 */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .login-dialog {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+        .login-dialog h2 {
+            margin: 0 0 20px 0;
+            color: #333;
+            text-align: center;
+        }
+        .login-dialog input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .login-dialog input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .login-dialog button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .login-dialog button:hover {
+            background: #45a049;
+        }
+        .login-error {
+            color: #f44336;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- 登入對話框 -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-dialog">
+            <h2>🔐 管理員登入</h2>
+            <div id="login-error" class="login-error">密碼錯誤，請重試</div>
+            <input type="password" id="admin-password" placeholder="請輸入管理員密碼" autofocus>
+            <button onclick="performLogin()" id="login-button">登入</button>
+            <button onclick="window.location.href='/';" style="background: #666;">返回首頁</button>
+        </div>
+    </div>
+
+    <!-- 主內容區（初始隱藏） -->
+    <div class="container" id="main-container" style="display: none;">
         <div class="header">
             <h1>🎮 Artale Script 用戶管理系統</h1>
             <p>管理所有授權用戶、權限和有效期 | 🔗 綠界金流整合</p>
+            <button onclick="logout()" class="btn" style="float: right; background: #f44336;">登出</button>
         </div>
         
         <!-- 統計資訊 -->
@@ -265,67 +348,105 @@ ADMIN_TEMPLATE = """
         let currentGeneratedUUID = '';
         let ADMIN_TOKEN = '';
         
-        // 檢查是否已有儲存的 token，如果沒有就要求輸入
-        let savedToken = localStorage.getItem('admin_token');
+        // 密碼輸入框支援 Enter 鍵
+        document.getElementById('admin-password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performLogin();
+            }
+        });
         
-        if (!savedToken) {
-            // 沒有保存的 token，要求用戶輸入
-            savedToken = prompt('請輸入管理員密碼:');
-            if (!savedToken) {
-                alert('需要管理員權限才能訪問此頁面');
-                window.location.href = '/';
+        // 執行登入
+        async function performLogin() {
+            const passwordInput = document.getElementById('admin-password');
+            const password = passwordInput.value.trim();
+            const loginButton = document.getElementById('login-button');
+            const errorDiv = document.getElementById('login-error');
+            
+            if (!password) {
+                errorDiv.textContent = '請輸入密碼';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            // 顯示載入中
+            loginButton.innerHTML = '<span class="loading-spinner"></span> 驗證中...';
+            loginButton.disabled = true;
+            errorDiv.style.display = 'none';
+            
+            try {
+                // 測試密碼是否正確
+                const response = await fetch('/admin/users', {
+                    headers: { 'Admin-Token': password }
+                });
+                
+                if (response.ok) {
+                    // 密碼正確，保存並進入系統
+                    ADMIN_TOKEN = password;
+                    localStorage.setItem('admin_token', password);
+                    
+                    // 隱藏登入對話框，顯示主內容
+                    document.getElementById('login-overlay').style.display = 'none';
+                    document.getElementById('main-container').style.display = 'block';
+                    
+                    // 載入用戶列表
+                    loadUsers();
+                } else {
+                    // 密碼錯誤
+                    errorDiv.textContent = response.status === 401 ? '密碼錯誤，請重試' : '連接錯誤，請稍後再試';
+                    errorDiv.style.display = 'block';
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            } catch (error) {
+                errorDiv.textContent = '網絡錯誤: ' + error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loginButton.innerHTML = '登入';
+                loginButton.disabled = false;
             }
         }
         
-        ADMIN_TOKEN = savedToken;
+        // 登出功能
+        function logout() {
+            if (confirm('確定要登出嗎？')) {
+                localStorage.removeItem('admin_token');
+                ADMIN_TOKEN = '';
+                location.reload();
+            }
+        }
         
-        // 測試 token 是否有效
-        async function validateToken() {
-            try {
-                console.log('正在驗證 token...');
-                const response = await fetch('/admin/users', {
-                    headers: { 'Admin-Token': ADMIN_TOKEN }
-                });
-                
-                console.log('驗證回應狀態:', response.status);
-                
-                if (response.status === 401) {
-                    // Token 無效，清除並要求重新輸入
-                    localStorage.removeItem('admin_token');
-                    const userToken = prompt('管理員密碼錯誤或已過期，請重新輸入:');
-                    if (!userToken) {
-                        alert('需要管理員權限');
-                        window.location.href = '/';
-                        return false;
-                    }
-                    
-                    ADMIN_TOKEN = userToken;
-                    
-                    // 再次測試新密碼
-                    const retestResponse = await fetch('/admin/users', {
-                        headers: { 'Admin-Token': ADMIN_TOKEN }
+        // 初始化檢查
+        async function initializeAuth() {
+            // 先清除可能存在的無效 token
+            const savedToken = localStorage.getItem('admin_token');
+            
+            if (savedToken) {
+                // 測試保存的 token 是否有效
+                try {
+                    const response = await fetch('/admin/users', {
+                        headers: { 'Admin-Token': savedToken }
                     });
                     
-                    if (retestResponse.status === 401) {
-                        alert('密碼錯誤，請聯繫系統管理員');
-                        window.location.href = '/';
-                        return false;
-                    } else {
-                        // 新密碼有效，保存它
-                        localStorage.setItem('admin_token', ADMIN_TOKEN);
-                        console.log('新密碼驗證成功');
+                    if (response.ok) {
+                        // Token 有效，直接進入系統
+                        ADMIN_TOKEN = savedToken;
+                        document.getElementById('login-overlay').style.display = 'none';
+                        document.getElementById('main-container').style.display = 'block';
+                        loadUsers();
+                        return;
                     }
-                } else {
-                    // Token 有效，保存它
-                    localStorage.setItem('admin_token', ADMIN_TOKEN);
-                    console.log('現有密碼驗證成功');
+                } catch (error) {
+                    console.error('Token 驗證失敗:', error);
                 }
-                return true;
-            } catch (error) {
-                console.error('驗證 token 失敗:', error);
-                alert('網絡錯誤，請檢查連接: ' + error.message);
-                return false;
+                
+                // Token 無效，清除它
+                localStorage.removeItem('admin_token');
             }
+            
+            // 需要登入，確保顯示登入對話框
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('main-container').style.display = 'none';
+            document.getElementById('admin-password').focus();
         }
 
         // 分頁切換
@@ -394,7 +515,15 @@ ADMIN_TEMPLATE = """
                 return;
             }
             // 切換到用戶管理分頁
-            switchTab('user-management');
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById('user-management').classList.add('active');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            
             document.getElementById('new-uuid').value = currentGeneratedUUID;
             document.getElementById('new-uuid').focus();
         }
@@ -437,9 +566,8 @@ ADMIN_TEMPLATE = """
                 console.log('Response status:', response.status);
                 
                 if (response.status === 401) {
-                    alert('管理員密碼錯誤，請重新輸入');
-                    localStorage.removeItem('admin_token');
-                    location.reload();
+                    alert('管理員密碼錯誤或已過期');
+                    logout();
                     return;
                 }
                 
@@ -662,423 +790,6 @@ ADMIN_TEMPLATE = """
                 alert('刪除錯誤: ' + error.message);
             }
         }
-
-        // 調試功能
-        async function showDebugInfo() {
-            try {
-                const response = await fetch('/admin/debug');
-                const data = await response.json();
-                
-                const debugInfo = `
-調試信息：
-- Admin Token 已設定: ${data.admin_token_set}
-- Token 預覽: ${data.admin_token_value}
-- 預設值: ${data.expected_default}
-- 當前使用 Token: ${ADMIN_TOKEN.substring(0, 8)}...
-                `;
-                
-                alert(debugInfo);
-            } catch (error) {
-                alert('獲取調試信息失敗: ' + error.message);
-            }
-        }
         
-        function clearToken() {
-            localStorage.removeItem('admin_token');
-            alert('已清除密碼，重新載入頁面...');
-            location.reload();
-        }
-        
-        function manualLogin() {
-            const password = prompt('請輸入管理員密碼:');
-            if (password) {
-                ADMIN_TOKEN = password;
-                localStorage.setItem('admin_token', password);
-                alert('密碼已設定，正在重新載入...');
-                location.reload();
-            }
-        }
-        
-        // 頁面載入時自動驗證並載入用戶
-        async function initializePage() {
-            const tokenValid = await validateToken();
-            if (tokenValid) {
-                loadUsers();
-            }
-        }
-        
-        // 頁面載入時執行
-        initializePage();
-    </script>
-</body>
-</html>
-"""
-
-def check_admin_token(request):
-    """驗證管理員權限"""
-    admin_token = request.headers.get('Admin-Token')
-    expected_token = os.environ.get('ADMIN_TOKEN', 'your-secret-admin-token')
-    return admin_token == expected_token
-
-def generate_secure_uuid(prefix='artale', custom_id=None, date_format='YYYYMMDD'):
-    """生成安全的UUID"""
-    if custom_id:
-        import re
-        user_id = re.sub(r'[^a-zA-Z0-9]', '', custom_id).lower()
-    else:
-        user_id = uuid_lib.uuid4().hex[:8]
-    
-    now = datetime.now()
-    if date_format == 'YYYYMMDD':
-        date_str = now.strftime('%Y%m%d')
-    elif date_format == 'YYYYMM':
-        date_str = now.strftime('%Y%m')
-    elif date_format == 'YYYY':
-        date_str = now.strftime('%Y')
-    else:
-        date_str = now.strftime('%Y%m%d')
-    
-    return f"{prefix}_{user_id}_{date_str}"
-
-# ===== 管理員路由 =====
-
-@admin_bp.route('', methods=['GET'])
-def admin_dashboard():
-    """管理員面板"""
-    return render_template_string(ADMIN_TEMPLATE)
-
-@admin_bp.route('/users', methods=['GET'])
-def get_all_users():
-    """獲取所有用戶"""
-    if not check_admin_token(request):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        from app import db
-        if db is None:
-            return jsonify({'success': False, 'error': 'Database not available'}), 503
-            
-        users_ref = db.collection('authorized_users')
-        users = users_ref.stream()
-        
-        user_list = []
-        for user in users:
-            user_data = user.to_dict()
-            
-            # 處理時間格式
-            created_at = user_data.get('created_at')
-            if hasattr(created_at, 'strftime'):
-                created_at_str = created_at.strftime('%Y-%m-%d %H:%M')
-            else:
-                created_at_str = str(created_at)[:16] if created_at else 'Unknown'
-            
-            expires_at = user_data.get('expires_at')
-            if expires_at:
-                if isinstance(expires_at, str):
-                    expires_at_str = expires_at.split('T')[0] + ' ' + expires_at.split('T')[1][:5]
-                else:
-                    expires_at_str = str(expires_at)[:16]
-            else:
-                expires_at_str = None
-            
-            # 生成顯示用的 UUID (前16位)
-            original_uuid = user_data.get('original_uuid', 'Unknown')
-            uuid_preview = original_uuid[:16] + '...' if len(original_uuid) > 16 else original_uuid
-            
-            user_list.append({
-                'document_id': user.id,
-                'uuid_preview': uuid_preview,
-                'original_uuid': original_uuid,
-                'display_name': user_data.get('display_name', 'Unknown'),
-                'active': user_data.get('active', False),
-                'expires_at': expires_at_str,
-                'login_count': user_data.get('login_count', 0),
-                'created_at': created_at_str,
-                'permissions': user_data.get('permissions', {}),
-                'notes': user_data.get('notes', ''),
-                'payment_status': user_data.get('payment_status', '手動創建')
-            })
-        
-        # 按創建時間排序
-        user_list.sort(key=lambda x: x['created_at'], reverse=True)
-        
-        return jsonify({
-            'success': True,
-            'users': user_list,
-            'total_count': len(user_list)
-        })
-        
-    except Exception as e:
-        logger.error(f"Get users error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@admin_bp.route('/create-user', methods=['POST'])
-def create_user_admin():
-    """創建新用戶（管理員）"""
-    if not check_admin_token(request):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        from app import db
-        if db is None:
-            return jsonify({'success': False, 'error': 'Database not available'}), 503
-            
-        data = request.get_json()
-        uuid_string = data.get('uuid', '').strip()
-        display_name = data.get('display_name', '').strip()
-        days_valid = data.get('days', 30)
-        
-        if not uuid_string or not display_name:
-            return jsonify({'success': False, 'error': 'UUID 和顯示名稱為必填'}), 400
-        
-        # 檢查 UUID 是否已存在
-        uuid_hash = hashlib.sha256(uuid_string.encode()).hexdigest()
-        user_ref = db.collection('authorized_users').document(uuid_hash)
-        
-        if user_ref.get().exists:
-            return jsonify({'success': False, 'error': 'UUID 已存在'}), 400
-        
-        # 創建用戶
-        expires_at = None
-        if days_valid > 0:
-            expires_at = (datetime.now() + timedelta(days=days_valid)).isoformat()
-        
-        user_data = {
-            "original_uuid": uuid_string,
-            "display_name": display_name,
-            "permissions": {
-                "script_access": True,
-                "config_modify": True
-            },
-            "active": True,
-            "created_at": datetime.now(),
-            "created_by": "admin_dashboard",
-            "login_count": 0,
-            "notes": f"管理員創建 - {datetime.now().strftime('%Y-%m-%d')}",
-            "payment_status": "手動創建"
-        }
-        
-        if expires_at:
-            user_data["expires_at"] = expires_at
-        
-        user_ref.set(user_data)
-        
-        return jsonify({
-            'success': True,
-            'message': '用戶創建成功',
-            'uuid': uuid_string,
-            'display_name': display_name
-        })
-        
-    except Exception as e:
-        logger.error(f"Create user admin error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@admin_bp.route('/users/<document_id>', methods=['PUT'])
-def update_user_admin(document_id):
-    """更新用戶資訊"""
-    if not check_admin_token(request):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        from app import db
-        if db is None:
-            return jsonify({'success': False, 'error': 'Database not available'}), 503
-            
-        data = request.get_json()
-        user_ref = db.collection('authorized_users').document(document_id)
-        user_doc = user_ref.get()
-        
-        if not user_doc.exists:
-            return jsonify({'success': False, 'error': '用戶不存在'}), 404
-        
-        update_data = {}
-        
-        # 更新顯示名稱
-        if 'display_name' in data:
-            update_data['display_name'] = data['display_name']
-        
-        # 延長有效期
-        if 'extend_days' in data:
-            from firebase_admin import firestore
-            extend_days = data['extend_days']
-            current_data = user_doc.to_dict()
-            current_expires = current_data.get('expires_at')
-            
-            if current_expires:
-                if isinstance(current_expires, str):
-                    current_expires = datetime.fromisoformat(current_expires.replace('Z', ''))
-                
-                # 如果已過期，從現在開始計算
-                if current_expires < datetime.now():
-                    new_expires = datetime.now() + timedelta(days=extend_days)
-                else:
-                    new_expires = current_expires + timedelta(days=extend_days)
-            else:
-                # 如果原本是永久，從現在開始計算
-                new_expires = datetime.now() + timedelta(days=extend_days)
-            
-            update_data['expires_at'] = new_expires.isoformat()
-        
-        update_data['updated_at'] = datetime.now()
-        update_data['updated_by'] = 'admin_dashboard'
-        
-        user_ref.update(update_data)
-        
-        return jsonify({
-            'success': True,
-            'message': '用戶資訊已更新'
-        })
-        
-    except Exception as e:
-        logger.error(f"Update user admin error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@admin_bp.route('/users/<document_id>/toggle', methods=['PUT'])
-def toggle_user_status(document_id):
-    """啟用/停用用戶"""
-    if not check_admin_token(request):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        from app import db
-        if db is None:
-            return jsonify({'success': False, 'error': 'Database not available'}), 503
-            
-        data = request.get_json()
-        new_status = data.get('active', True)
-        
-        user_ref = db.collection('authorized_users').document(document_id)
-        if not user_ref.get().exists:
-            return jsonify({'success': False, 'error': '用戶不存在'}), 404
-        
-        user_ref.update({
-            'active': new_status,
-            'status_changed_at': datetime.now(),
-            'status_changed_by': 'admin_dashboard'
-        })
-        
-        return jsonify({
-            'success': True,
-            'message': f'用戶已{"啟用" if new_status else "停用"}'
-        })
-        
-    except Exception as e:
-        logger.error(f"Toggle user status error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@admin_bp.route('/users/<document_id>', methods=['DELETE'])
-def delete_user_admin(document_id):
-    """刪除用戶"""
-    if not check_admin_token(request):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        from app import db
-        if db is None:
-            return jsonify({'success': False, 'error': 'Database not available'}), 503
-            
-        user_ref = db.collection('authorized_users').document(document_id)
-        if not user_ref.get().exists:
-            return jsonify({'success': False, 'error': '用戶不存在'}), 404
-        
-        # 刪除用戶
-        user_ref.delete()
-        
-        return jsonify({
-            'success': True,
-            'message': '用戶已刪除'
-        })
-        
-    except Exception as e:
-        logger.error(f"Delete user admin error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@admin_bp.route('/check-uuid', methods=['POST'])
-def check_uuid_exists():
-    """檢查 UUID 是否已存在"""
-    if not check_admin_token(request):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        from app import db
-        if db is None:
-            return jsonify({'success': False, 'error': 'Database not available'}), 503
-            
-        data = request.get_json()
-        uuid_string = data.get('uuid', '').strip()
-        
-        if not uuid_string:
-            return jsonify({'success': False, 'error': 'UUID 為必填'}), 400
-        
-        # 檢查 UUID 是否已存在
-        uuid_hash = hashlib.sha256(uuid_string.encode()).hexdigest()
-        user_ref = db.collection('authorized_users').document(uuid_hash)
-        user_doc = user_ref.get()
-        
-        return jsonify({
-            'success': True,
-            'exists': user_doc.exists,
-            'uuid': uuid_string
-        })
-        
-    except Exception as e:
-        logger.error(f"Check UUID error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@admin_bp.route('/debug', methods=['GET'])
-def admin_debug():
-    """調試端點 - 檢查環境變數設定"""
-    admin_token = os.environ.get('ADMIN_TOKEN', 'NOT_SET')
-    return jsonify({
-        'admin_token_set': admin_token != 'NOT_SET',
-        'admin_token_value': admin_token[:8] + '...' if len(admin_token) > 8 else admin_token,
-        'expected_default': 'your-secret-admin-token'
-    })
-
-@admin_bp.route('/test-auth', methods=['POST'])
-def test_auth():
-    """測試認證端點"""
-    provided_token = request.headers.get('Admin-Token', '')
-    expected_token = os.environ.get('ADMIN_TOKEN', 'your-secret-admin-token')
-    
-    return jsonify({
-        'success': provided_token == expected_token,
-        'provided_token_length': len(provided_token),
-        'expected_token_length': len(expected_token),
-        'tokens_match': provided_token == expected_token,
-        'provided_preview': provided_token[:8] + '...' if len(provided_token) > 8 else provided_token,
-        'expected_preview': expected_token[:8] + '...' if len(expected_token) > 8 else expected_token
-    })
-def generate_uuid_api():
-    """API 生成 UUID"""
-    if not check_admin_token(request):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        data = request.get_json() or {}
-        prefix = data.get('prefix', 'artale')
-        custom_id = data.get('custom_id', '')
-        date_format = data.get('date_format', 'YYYYMMDD')
-        
-        # 生成 UUID
-        new_uuid = generate_secure_uuid(prefix, custom_id, date_format)
-        
-        # 檢查是否已存在
-        from app import db
-        if db is not None:
-            uuid_hash = hashlib.sha256(new_uuid.encode()).hexdigest()
-            user_ref = db.collection('authorized_users').document(uuid_hash)
-            exists = user_ref.get().exists
-        else:
-            exists = False
-        
-        return jsonify({
-            'success': True,
-            'uuid': new_uuid,
-            'exists': exists
-        })
-        
-    except Exception as e:
-        logger.error(f"Generate UUID API error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+        // 頁面載入時初始化認證
+        window.addEventListener('DOMContentLoaded', initializeAuth);
