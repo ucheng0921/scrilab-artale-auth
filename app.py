@@ -42,23 +42,45 @@ db = None
 firebase_initialized = False
 session_store = {}  # 在生產環境中應使用 Redis
 
-# ===== IP 封鎖機制 =====
+# ===== 改進的IP封鎖和速率限制機制 =====
 blocked_ips = {}  # {ip: block_until_timestamp}
-rate_limit_store = defaultdict(list)  # {ip: [timestamp1, timestamp2, ...]}
+rate_limit_store = defaultdict(list)  # {ip: [timestamp1, timestamp2, ...]} - 一般API請求
+failed_login_attempts = defaultdict(list)  # {ip: [timestamp1, timestamp2, ...]} - 只記錄失敗的登入
+successful_logins = defaultdict(list)      # {ip: [timestamp1, timestamp2, ...]} - 記錄成功的登入
 cleanup_lock = threading.Lock()
 
-def cleanup_expired_blocks():
-    """清理過期的封鎖記錄"""
+def cleanup_expired_records():
+    """清理過期的記錄"""
     with cleanup_lock:
         now = time.time()
+        
+        # 清理過期的封鎖記錄
         expired_ips = [ip for ip, block_until in blocked_ips.items() if block_until < now]
         for ip in expired_ips:
             del blocked_ips[ip]
             logger.info(f"IP {ip} 解除封鎖")
+        
+        # 清理過期的失敗登入記錄（保留24小時）
+        for ip in list(failed_login_attempts.keys()):
+            failed_login_attempts[ip] = [
+                timestamp for timestamp in failed_login_attempts[ip]
+                if now - timestamp < 86400  # 24小時
+            ]
+            if not failed_login_attempts[ip]:
+                del failed_login_attempts[ip]
+        
+        # 清理過期的成功登入記錄（保留24小時）
+        for ip in list(successful_logins.keys()):
+            successful_logins[ip] = [
+                timestamp for timestamp in successful_logins[ip]
+                if now - timestamp < 86400  # 24小時
+            ]
+            if not successful_logins[ip]:
+                del successful_logins[ip]
 
 def is_ip_blocked(ip):
     """檢查 IP 是否被封鎖"""
-    cleanup_expired_blocks()
+    cleanup_expired_records()
     return ip in blocked_ips and blocked_ips[ip] > time.time()
 
 def block_ip(ip, duration_minutes=30):
@@ -70,6 +92,79 @@ def block_ip(ip, duration_minutes=30):
 def get_client_ip():
     """獲取客戶端真實 IP"""
     return request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr).split(',')[0].strip()
+
+def check_login_rate_limit(client_ip):
+    """檢查登入速率限制 - 智能策略"""
+    cleanup_expired_records()
+    
+    # 檢查 IP 是否被封鎖
+    if is_ip_blocked(client_ip):
+        remaining_time = int((blocked_ips[client_ip] - time.time()) / 60)
+        return False, f'您的 IP 已被暫時封鎖。請在 {remaining_time} 分鐘後再試。'
+    
+    now = time.time()
+    
+    # 檢查短期內的失敗登入次數（5分鐘內）
+    recent_failures = [
+        timestamp for timestamp in failed_login_attempts.get(client_ip, [])
+        if now - timestamp < 300  # 5分鐘
+    ]
+    
+    # 檢查中期內的失敗登入次數（1小時內）
+    hourly_failures = [
+        timestamp for timestamp in failed_login_attempts.get(client_ip, [])
+        if now - timestamp < 3600  # 1小時
+    ]
+    
+    # 檢查今日成功登入次數（用於放寬限制）
+    daily_successes = [
+        timestamp for timestamp in successful_logins.get(client_ip, [])
+        if now - timestamp < 86400  # 24小時
+    ]
+    
+    # 動態調整限制策略
+    if daily_successes:
+        # 如果今日有成功登入記錄，適度放寬限制
+        max_recent_failures = 5  # 5分鐘內最多5次失敗
+        max_hourly_failures = 15  # 1小時內最多15次失敗
+        logger.debug(f"IP {client_ip} 有成功記錄，使用寬鬆策略")
+    else:
+        # 新IP或無成功記錄，較嚴格限制
+        max_recent_failures = 3  # 5分鐘內最多3次失敗
+        max_hourly_failures = 10  # 1小時內最多10次失敗
+        logger.debug(f"IP {client_ip} 無成功記錄，使用嚴格策略")
+    
+    # 檢查是否超過限制
+    if len(recent_failures) >= max_recent_failures:
+        block_duration = min(30 + len(recent_failures) * 5, 120)  # 動態封鎖時間，最多2小時
+        block_ip(client_ip, block_duration)
+        return False, f'短時間內登入失敗次數過多。您的 IP 已被封鎖 {block_duration} 分鐘。'
+    
+    if len(hourly_failures) >= max_hourly_failures:
+        block_ip(client_ip, 60)  # 封鎖1小時
+        return False, '1小時內登入失敗次數過多。您的 IP 已被封鎖 60 分鐘。'
+    
+    return True, 'OK'
+
+def record_login_attempt(client_ip, success):
+    """記錄登入嘗試結果"""
+    now = time.time()
+    
+    if success:
+        # 記錄成功登入
+        successful_logins[client_ip].append(now)
+        logger.info(f"記錄成功登入: {client_ip}")
+        
+        # 成功登入後，清除部分失敗記錄（給予二次機會）
+        if client_ip in failed_login_attempts:
+            recent_failures = failed_login_attempts[client_ip]
+            # 只保留最近2次失敗記錄
+            failed_login_attempts[client_ip] = recent_failures[-2:] if len(recent_failures) > 2 else recent_failures
+            logger.debug(f"清除部分失敗記錄，剩餘: {len(failed_login_attempts[client_ip])}")
+    else:
+        # 記錄失敗登入
+        failed_login_attempts[client_ip].append(now)
+        logger.warning(f"記錄失敗登入: {client_ip} (總計: {len(failed_login_attempts[client_ip])})")
 
 def init_firebase():
     """初始化 Firebase - 改進版本"""
@@ -180,9 +275,10 @@ def init_firebase():
         db = None
         return False
 
-# ===== 速率限制 =====
-def rate_limit(max_requests=3, time_window=300, block_on_exceed=True):
-    """速率限制裝飾器 - 更嚴格版本"""
+# ===== 改進的速率限制裝飾器 =====
+
+def rate_limit(max_requests=60, time_window=60, block_on_exceed=False):
+    """一般 API 速率限制裝飾器"""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -211,19 +307,46 @@ def rate_limit(max_requests=3, time_window=300, block_on_exceed=True):
                 
                 # 檢查是否超過限制
                 if len(rate_limit_store[client_ip]) >= max_requests:
-                    logger.warning(f"IP {client_ip} 超過速率限制")
+                    logger.warning(f"IP {client_ip} 超過一般 API 速率限制")
                     
-                    # 自動封鎖違規 IP
+                    # 自動封鎖違規 IP（較短時間）
                     if block_on_exceed:
-                        block_ip(client_ip, 30)
-                    
-                    return jsonify({
-                        'success': False,
-                        'error': '請求過於頻繁。您的 IP 已被暫時封鎖 30 分鐘。'
-                    }), 429
+                        block_ip(client_ip, 15)  # 封鎖15分鐘
+                        return jsonify({
+                            'success': False,
+                            'error': '請求過於頻繁。您的 IP 已被暫時封鎖 15 分鐘。'
+                        }), 429
+                    else:
+                        return jsonify({
+                            'success': False,
+                            'error': '請求過於頻繁，請稍後再試。'
+                        }), 429
                 
                 # 記錄此次請求
                 rate_limit_store[client_ip].append(now)
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def login_rate_limit():
+    """登入專用速率限制裝飾器"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not os.environ.get('RATE_LIMIT_ENABLED', 'true').lower() == 'true':
+                return f(*args, **kwargs)
+            
+            client_ip = get_client_ip()
+            
+            # 檢查登入速率限制
+            allowed, message = check_login_rate_limit(client_ip)
+            if not allowed:
+                logger.warning(f"登入速率限制阻止 IP {client_ip}: {message}")
+                return jsonify({
+                    'success': False,
+                    'error': message
+                }), 429
             
             return f(*args, **kwargs)
         return decorated_function
@@ -254,15 +377,16 @@ def root():
     """根路徑端點"""
     return jsonify({
         'service': 'Artale Authentication Service',
-        'version': '2.0.0',
+        'version': '2.1.0',
         'status': 'running',
         'features': [
             '🔐 用戶認證系統',
             '👥 管理員面板',
             '🎲 UUID 生成器',
             '💳 綠界金流整合 (開發中)',
-            '🛡️ IP 封鎖保護',
-            '🚀 速率限制'
+            '🛡️ 智能IP封鎖保護',
+            '🚀 分級速率限制',
+            '📊 登入統計分析'
         ],
         'endpoints': {
             'health': '/health',
@@ -293,15 +417,20 @@ def health_check():
         'firebase_initialized': firebase_initialized,
         'db_object_exists': db is not None,
         'service': 'artale-auth-service',
-        'version': '2.0.0',
+        'version': '2.1.0',
         'environment': os.environ.get('FLASK_ENV', 'unknown'),
-        'admin_panel': 'available at /admin'
+        'admin_panel': 'available at /admin',
+        'rate_limit_enabled': os.environ.get('RATE_LIMIT_ENABLED', 'true').lower() == 'true',
+        'current_blocked_ips': len(blocked_ips)
     })
 
 @app.route('/auth/login', methods=['POST'])
-@rate_limit(max_requests=3, time_window=300, block_on_exceed=True)
+@login_rate_limit()  # 使用專門的登入速率限制
 def login():
     """用戶登入端點 - 改進版本"""
+    client_ip = get_client_ip()
+    login_success = False
+    
     try:
         # 檢查 Firebase 狀態
         if not firebase_initialized or db is None:
@@ -314,6 +443,7 @@ def login():
         data = request.get_json()
         
         if not data or 'uuid' not in data:
+            record_login_attempt(client_ip, False)
             return jsonify({
                 'success': False,
                 'error': 'Missing UUID'
@@ -323,23 +453,27 @@ def login():
         force_login = data.get('force_login', True)
         
         if not uuid:
+            record_login_attempt(client_ip, False)
             return jsonify({
                 'success': False,
                 'error': 'UUID cannot be empty'
             }), 400
         
         # 記錄登入嘗試
-        client_ip = get_client_ip()
         logger.info(f"Login attempt from {client_ip} for UUID: {uuid[:8]}...")
         
         # 呼叫認證邏輯
         success, message, user_data = authenticate_user(uuid, force_login, client_ip)
         
         if success:
+            login_success = True
             # 生成會話令牌
             session_token = generate_session_token(uuid, client_ip)
             
             logger.info(f"Login successful for UUID: {uuid[:8]}...")
+            
+            # 記錄成功登入
+            record_login_attempt(client_ip, True)
             
             return jsonify({
                 'success': True,
@@ -348,6 +482,9 @@ def login():
                 'session_token': session_token
             })
         else:
+            # 記錄失敗登入
+            record_login_attempt(client_ip, False)
+            
             logger.warning(f"Login failed for UUID: {uuid[:8]}... - {message}")
             return jsonify({
                 'success': False,
@@ -355,6 +492,10 @@ def login():
             }), 401
             
     except Exception as e:
+        # 記錄失敗登入
+        if not login_success:
+            record_login_attempt(client_ip, False)
+        
         logger.error(f"Login error: {str(e)}")
         return jsonify({
             'success': False,
@@ -606,6 +747,90 @@ def log_unauthorized_attempt(uuid_hash, client_ip):
     except Exception as e:
         logger.error(f"Failed to log unauthorized attempt: {str(e)}")
 
+# ===== 新增管理員統計端點 =====
+
+# 將這些函數添加到 admin_panel.py 的 admin_bp 藍圖中
+@admin_bp.route('/login-stats', methods=['GET'])
+def get_login_stats():
+    """獲取登入統計信息"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        cleanup_expired_records()
+        
+        stats = {
+            'blocked_ips': len(blocked_ips),
+            'blocked_ip_list': [
+                {
+                    'ip': ip,
+                    'blocked_until': datetime.fromtimestamp(block_until).strftime('%Y-%m-%d %H:%M:%S'),
+                    'remaining_minutes': max(0, int((block_until - time.time()) / 60))
+                }
+                for ip, block_until in blocked_ips.items()
+            ],
+            'failed_attempts_by_ip': {
+                ip: {
+                    'count': len(attempts),
+                    'latest': datetime.fromtimestamp(max(attempts)).strftime('%Y-%m-%d %H:%M:%S') if attempts else None
+                }
+                for ip, attempts in failed_login_attempts.items()
+            },
+            'successful_logins_by_ip': {
+                ip: {
+                    'count': len(attempts),
+                    'latest': datetime.fromtimestamp(max(attempts)).strftime('%Y-%m-%d %H:%M:%S') if attempts else None
+                }
+                for ip, attempts in successful_logins.items()
+            },
+            'total_failed_attempts': sum(len(attempts) for attempts in failed_login_attempts.values()),
+            'total_successful_logins': sum(len(attempts) for attempts in successful_logins.values())
+        }
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Get login stats error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/unblock-ip', methods=['POST'])
+def unblock_ip():
+    """手動解封 IP"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        ip_address = data.get('ip', '').strip()
+        
+        if not ip_address:
+            return jsonify({'success': False, 'error': 'IP地址為必填'}), 400
+        
+        if ip_address in blocked_ips:
+            del blocked_ips[ip_address]
+            logger.info(f"管理員手動解封 IP: {ip_address}")
+            
+            # 同時清除失敗記錄
+            if ip_address in failed_login_attempts:
+                del failed_login_attempts[ip_address]
+            
+            return jsonify({
+                'success': True,
+                'message': f'IP {ip_address} 已解封'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'IP未被封鎖'
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"Unblock IP error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
 # ================================
 # 🔥 關鍵修復：將 Firebase 初始化移到模塊級別
 # ================================
@@ -627,5 +852,6 @@ if __name__ == '__main__':
     logger.info(f"   Firebase initialized: {firebase_initialized}")
     logger.info(f"   Database object exists: {db is not None}")
     logger.info(f"   Admin panel: http://localhost:{port}/admin")
+    logger.info(f"   Rate limit enabled: {os.environ.get('RATE_LIMIT_ENABLED', 'true')}")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
