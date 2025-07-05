@@ -54,11 +54,12 @@ PRODUCT_PLANS = {
 }
 
 def generate_check_mac_value(params, hash_key, hash_iv):
-    """生成綠界檢查碼"""
-    # 1. 移除空值參數
-    filtered_params = {k: v for k, v in params.items() if v is not None and v != ''}
+    """生成綠界檢查碼 - 修正版"""
+    # 1. 移除空值和 CheckMacValue
+    filtered_params = {k: v for k, v in params.items() 
+                      if v is not None and v != '' and k != 'CheckMacValue'}
     
-    # 2. 按照 Key 值英文字母順序排序
+    # 2. 按照 Key 值排序
     sorted_params = dict(sorted(filtered_params.items()))
     
     # 3. 組合參數字串
@@ -67,50 +68,50 @@ def generate_check_mac_value(params, hash_key, hash_iv):
     # 4. 前後加上 HashKey 和 HashIV
     raw_string = f"HashKey={hash_key}&{param_string}&HashIV={hash_iv}"
     
-    # 5. URL encode (小寫)
-    encoded_string = urllib.parse.quote_plus(raw_string).lower()
+    # 5. URL encode 特殊字符處理
+    encoded_string = urllib.parse.quote_plus(raw_string, safe='')
+    encoded_string = encoded_string.replace('%2d', '-').replace('%5f', '_').replace('%2e', '.').replace('%21', '!').replace('%2a', '*').replace('%28', '(').replace('%29', ')')
+    encoded_string = encoded_string.lower()
     
-    # 6. SHA256 加密並轉大寫
+    # 6. SHA256 加密
     check_mac_value = hashlib.sha256(encoded_string.encode('utf-8')).hexdigest().upper()
     
     return check_mac_value
 
 def create_ecpay_order(plan_id, user_email, return_url=None):
-    """創建綠界訂單"""
+    """創建綠界訂單 - 改善版"""
     if plan_id not in PRODUCT_PLANS:
         raise ValueError(f"Invalid plan_id: {plan_id}")
     
     plan = PRODUCT_PLANS[plan_id]
     
-    # 生成訂單編號
-    order_id = f"ARTALE_{datetime.now().strftime('%Y%m%d')}_{secrets.token_hex(8).upper()}"
+    # 確保訂單編號唯一性
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    random_suffix = secrets.token_hex(4).upper()
+    order_id = f"ARTALE{timestamp}{random_suffix}"
     
-    # 設定訂單參數
+    # 確保 URL 正確
+    base_url = os.environ.get('BASE_URL', 'https://your-app.onrender.com')
+    
     params = {
         'MerchantID': ECPAY_CONFIG['MERCHANT_ID'],
         'MerchantTradeNo': order_id,
         'MerchantTradeDate': datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
         'PaymentType': 'aio',
-        'TotalAmount': plan['price'],
+        'TotalAmount': str(plan['price']),  # 確保是字串
         'TradeDesc': plan['description'],
         'ItemName': plan['name'],
-        'ReturnURL': ECPAY_CONFIG['ORDER_RESULT_URL'],
+        'ReturnURL': f"{base_url}/payment/notify",
         'ChoosePayment': 'ALL',
-        'ClientBackURL': return_url or ECPAY_CONFIG['CLIENT_BACK_URL'],
-        'ItemURL': 'https://your-domain.com',
-        'Remark': f'Artale Script {plan["name"]} - {user_email}',
-        'ChooseSubPayment': '',
-        'OrderResultURL': ECPAY_CONFIG['ORDER_RESULT_URL'],
+        'ClientBackURL': f"{base_url}/payment/return",
+        'ItemURL': base_url,
+        'Remark': f'User: {user_email}',
+        'OrderResultURL': f"{base_url}/payment/notify",
         'NeedExtraPaidInfo': 'N',
-        'DeviceSource': '',
-        'IgnorePayment': '',
-        'PlatformID': '',
         'InvoiceMark': 'N',
-        'CustomField1': plan_id,  # 存儲方案 ID
-        'CustomField2': user_email,  # 存儲用戶郵箱
-        'CustomField3': '',
-        'CustomField4': '',
-        'EncryptType': 1
+        'CustomField1': plan_id,
+        'CustomField2': user_email,
+        'EncryptType': '1'
     }
     
     # 生成檢查碼
