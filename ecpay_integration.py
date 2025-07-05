@@ -278,7 +278,7 @@ def get_base_url():
     
     # 自動偵測（適用於Render）
     if 'RENDER' in os.environ:
-        service_name = os.environ.get('RENDER_SERVICE_NAME', 'artale-auth-service')
+        service_name = os.environ.get('RENDER_SERVICE_NAME', 'scrilab-artale-auth')
         return f"https://{service_name}.onrender.com"
     
     # 本地開發環境
