@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: artale-auth-service
+    name: scrilab-artale-auth
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
