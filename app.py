@@ -253,7 +253,7 @@ def after_request(response):
 def root():
     """根路徑端點"""
     return jsonify({
-        'service': 'Artale Authentication Service',
+        'service': 'Scrilab Artale Authentication Service',
         'version': '2.0.0',
         'status': 'running',
         'features': [
