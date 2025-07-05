@@ -54,80 +54,143 @@ PRODUCT_PLANS = {
 }
 
 def generate_check_mac_value(params, hash_key, hash_iv):
-    """生成綠界檢查碼 - 修正版"""
-    # 1. 移除空值和 CheckMacValue
-    filtered_params = {k: v for k, v in params.items() 
-                      if v is not None and v != '' and k != 'CheckMacValue'}
+    """
+    生成綠界檢查碼 - 完全符合綠界規範的版本
+    """
+    try:
+        # 1. 移除空值和CheckMacValue參數
+        filtered_params = {}
+        for key, value in params.items():
+            if key != 'CheckMacValue' and value is not None and str(value).strip() != '':
+                filtered_params[key] = str(value).strip()
+        
+        # 2. 按Key值英文字母順序排序（區分大小寫）
+        sorted_params = dict(sorted(filtered_params.items()))
+        
+        # 3. 組合成查詢字串格式
+        query_string = '&'.join([f"{k}={v}" for k, v in sorted_params.items()])
+        
+        # 4. 前後加上HashKey和HashIV
+        raw_string = f"HashKey={hash_key}&{query_string}&HashIV={hash_iv}"
+        
+        # 5. URL Encode (注意：綠界要求特定的編碼方式)
+        encoded_string = urllib.parse.quote_plus(raw_string, safe='')
+        
+        # 6. 轉換為小寫
+        encoded_string = encoded_string.lower()
+        
+        # 7. SHA256加密並轉大寫
+        check_mac_value = hashlib.sha256(encoded_string.encode('utf-8')).hexdigest().upper()
+        
+        # 調試輸出
+        logger.info(f"檢查碼計算過程:")
+        logger.info(f"1. 排序後參數: {sorted_params}")
+        logger.info(f"2. 查詢字串: {query_string}")
+        logger.info(f"3. 原始字串: {raw_string}")
+        logger.info(f"4. 編碼字串: {encoded_string}")
+        logger.info(f"5. 檢查碼: {check_mac_value}")
+        
+        return check_mac_value
+        
+    except Exception as e:
+        logger.error(f"檢查碼計算失敗: {str(e)}")
+        raise
+
+def get_base_url():
+    """
+    取得當前網站的基礎URL
+    """
+    # 優先使用環境變數
+    base_url = os.environ.get('BASE_URL')
+    if base_url:
+        return base_url.rstrip('/')
     
-    # 2. 按照 Key 值排序
-    sorted_params = dict(sorted(filtered_params.items()))
+    # 自動偵測（適用於Render）
+    if 'RENDER' in os.environ:
+        service_name = os.environ.get('RENDER_SERVICE_NAME', 'artale-auth-service')
+        return f"https://{service_name}.onrender.com"
     
-    # 3. 組合參數字串
-    param_string = '&'.join([f"{k}={v}" for k, v in sorted_params.items()])
-    
-    # 4. 前後加上 HashKey 和 HashIV
-    raw_string = f"HashKey={hash_key}&{param_string}&HashIV={hash_iv}"
-    
-    # 5. URL encode 特殊字符處理
-    encoded_string = urllib.parse.quote_plus(raw_string, safe='')
-    encoded_string = encoded_string.replace('%2d', '-').replace('%5f', '_').replace('%2e', '.').replace('%21', '!').replace('%2a', '*').replace('%28', '(').replace('%29', ')')
-    encoded_string = encoded_string.lower()
-    
-    # 6. SHA256 加密
-    check_mac_value = hashlib.sha256(encoded_string.encode('utf-8')).hexdigest().upper()
-    
-    return check_mac_value
+    # 本地開發環境
+    return "http://localhost:5000"
 
 def create_ecpay_order(plan_id, user_email, return_url=None):
-    """創建綠界訂單 - 改善版"""
+    """
+    創建綠界訂單 - 完全符合綠界API規範
+    """
     if plan_id not in PRODUCT_PLANS:
         raise ValueError(f"Invalid plan_id: {plan_id}")
     
     plan = PRODUCT_PLANS[plan_id]
     
-    # 確保訂單編號唯一性
+    # 生成符合綠界規範的訂單編號（英數字，長度20字元內）
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    random_suffix = secrets.token_hex(4).upper()
-    order_id = f"ARTALE{timestamp}{random_suffix}"
+    random_suffix = secrets.token_hex(3).upper()  # 6位隨機碼
+    order_id = f"AT{timestamp}{random_suffix}"  # 格式：AT20250705131128ABC123
     
-    # 確保 URL 正確
-    base_url = os.environ.get('BASE_URL', 'https://your-app.onrender.com')
+    # 確保訂單編號不超過20字元
+    if len(order_id) > 20:
+        order_id = order_id[:20]
     
+    # 取得當前部署的網域
+    base_url = get_base_url()
+    
+    # 準備綠界參數（按照綠界API文件）
     params = {
         'MerchantID': ECPAY_CONFIG['MERCHANT_ID'],
         'MerchantTradeNo': order_id,
         'MerchantTradeDate': datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
         'PaymentType': 'aio',
-        'TotalAmount': str(plan['price']),  # 確保是字串
-        'TradeDesc': plan['description'],
-        'ItemName': plan['name'],
+        'TotalAmount': int(plan['price']),  # 必須是整數
+        'TradeDesc': plan['description'],  # 不要URL編碼，讓綠界自己處理
+        'ItemName': plan['name'],  # 不要URL編碼
         'ReturnURL': f"{base_url}/payment/notify",
         'ChoosePayment': 'ALL',
         'ClientBackURL': f"{base_url}/payment/return",
         'ItemURL': base_url,
-        'Remark': f'User: {user_email}',
+        'Remark': f"User: {user_email}",
         'OrderResultURL': f"{base_url}/payment/notify",
         'NeedExtraPaidInfo': 'N',
         'InvoiceMark': 'N',
         'CustomField1': plan_id,
-        'CustomField2': user_email,
-        'EncryptType': '1'
+        'CustomField2': user_email[:50],  # 限制長度
+        'CustomField3': '',
+        'CustomField4': '',
+        'EncryptType': 1  # 數字，不是字串
     }
     
-    # 生成檢查碼
-    check_mac_value = generate_check_mac_value(params, ECPAY_CONFIG['HASH_KEY'], ECPAY_CONFIG['HASH_IV'])
-    params['CheckMacValue'] = check_mac_value
+    # 移除空值
+    clean_params = {k: v for k, v in params.items() if v != ''}
     
-    return order_id, params
+    # 生成檢查碼
+    try:
+        check_mac_value = generate_check_mac_value(clean_params, 
+                                                 ECPAY_CONFIG['HASH_KEY'], 
+                                                 ECPAY_CONFIG['HASH_IV'])
+        clean_params['CheckMacValue'] = check_mac_value
+        
+        logger.info(f"綠界訂單創建成功:")
+        logger.info(f"訂單編號: {order_id}")
+        logger.info(f"金額: {plan['price']}")
+        logger.info(f"商品: {plan['name']}")
+        logger.info(f"檢查碼: {check_mac_value}")
+        
+        return order_id, clean_params
+        
+    except Exception as e:
+        logger.error(f"創建綠界訂單失敗: {str(e)}")
+        raise
 
 def verify_ecpay_callback(params):
     """驗證綠界回調數據"""
     try:
+        # 複製參數以避免修改原始數據
+        verify_params = params.copy()
+        
         # 取出檢查碼
-        received_check_mac = params.pop('CheckMacValue', '')
+        received_check_mac = verify_params.pop('CheckMacValue', '')
         
         # 重新計算檢查碼
-        calculated_check_mac = generate_check_mac_value(params, ECPAY_CONFIG['HASH_KEY'], ECPAY_CONFIG['HASH_IV'])
+        calculated_check_mac = generate_check_mac_value(verify_params, ECPAY_CONFIG['HASH_KEY'], ECPAY_CONFIG['HASH_IV'])
         
         # 比對檢查碼
         return received_check_mac.upper() == calculated_check_mac.upper()
@@ -353,20 +416,27 @@ def payment_page():
 
 @ecpay_bp.route('/create-order', methods=['POST'])
 def create_order():
-    """創建訂單並跳轉到綠界"""
+    """創建訂單並跳轉到綠界 - 修復版本"""
     try:
         plan_id = request.form.get('plan')
         user_email = request.form.get('email', '').strip()
         user_name = request.form.get('name', '').strip()
         
+        # 驗證輸入
         if not plan_id or plan_id not in PRODUCT_PLANS:
+            logger.error(f"無效的方案: {plan_id}")
             return jsonify({'success': False, 'error': '無效的方案'}), 400
         
         if not user_email:
+            logger.error("缺少電子郵件")
             return jsonify({'success': False, 'error': '請提供電子郵件地址'}), 400
         
         # 創建綠界訂單
-        order_id, ecpay_params = create_ecpay_order(plan_id, user_email)
+        try:
+            order_id, ecpay_params = create_ecpay_order(plan_id, user_email)
+        except Exception as e:
+            logger.error(f"創建綠界訂單失敗: {str(e)}")
+            return f"<h1>訂單創建失敗</h1><p>錯誤: {str(e)}</p><a href='/payment'>返回</a>", 500
         
         # 存儲訂單到資料庫
         from app import db
@@ -383,53 +453,142 @@ def create_order():
                     'status': 'pending',
                     'created_at': datetime.now(),
                     'merchant_trade_no': order_id,
-                    'uuid_generated': False
+                    'uuid_generated': False,
+                    'ecpay_params': ecpay_params  # 保存參數供調試
                 }
                 
                 db.collection('orders').document(order_id).set(order_data)
-                logger.info(f"訂單已創建: {order_id} - {user_email} - {plan_id}")
+                logger.info(f"訂單已存入資料庫: {order_id}")
                 
             except Exception as e:
                 logger.error(f"存儲訂單失敗: {str(e)}")
+                # 繼續執行，不中斷付款流程
         
-        # 生成綠界付款表單 HTML
+        # 生成提交表單HTML（調試版本）
         form_html = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <title>跳轉到付款頁面...</title>
+            <title>跳轉到綠界付款...</title>
             <meta charset="utf-8">
             <style>
-                body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; }}
-                .loading {{ margin: 50px 0; }}
-                .spinner {{ 
-                    border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
-                    border-radius: 50%; width: 50px; height: 50px;
-                    animation: spin 1s linear infinite; margin: 0 auto;
+                body {{ 
+                    font-family: Arial, sans-serif; 
+                    text-align: center; 
+                    padding: 50px;
+                    background: #f0f2f5;
                 }}
-                @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+                .container {{
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background: white;
+                    padding: 30px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }}
+                .loading {{ margin: 30px 0; }}
+                .spinner {{ 
+                    border: 4px solid #f3f3f3; 
+                    border-top: 4px solid #3498db;
+                    border-radius: 50%; 
+                    width: 50px; 
+                    height: 50px;
+                    animation: spin 1s linear infinite; 
+                    margin: 0 auto 20px auto;
+                }}
+                @keyframes spin {{ 
+                    0% {{ transform: rotate(0deg); }} 
+                    100% {{ transform: rotate(360deg); }} 
+                }}
+                .debug {{ 
+                    text-align: left; 
+                    background: #f8f9fa; 
+                    padding: 15px; 
+                    border-radius: 4px;
+                    margin: 20px 0;
+                    font-family: monospace;
+                    font-size: 12px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                }}
+                .btn {{
+                    background: #007bff;
+                    color: white;
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin: 10px;
+                }}
             </style>
         </head>
         <body>
-            <div class="loading">
-                <div class="spinner"></div>
-                <h2>正在跳轉到付款頁面...</h2>
-                <p>請稍候，系統正在處理您的訂單</p>
-            </div>
-            
-            <form id="ecpay-form" method="post" action="{ECPAY_CONFIG['ACTION_URL']}">
+            <div class="container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <h2>正在跳轉到綠界付款頁面...</h2>
+                    <p>訂單編號: <strong>{order_id}</strong></p>
+                    <p>金額: <strong>NT$ {PRODUCT_PLANS[plan_id]['price']}</strong></p>
+                    <p>方案: <strong>{PRODUCT_PLANS[plan_id]['name']}</strong></p>
+                </div>
+                
+                <div class="debug">
+                    <strong>調試資訊:</strong><br>
+                    目標網址: {ECPAY_CONFIG['ACTION_URL']}<br>
+                    商店代號: {ecpay_params.get('MerchantID')}<br>
+                    檢查碼: {ecpay_params.get('CheckMacValue', 'ERROR')[:16]}...<br>
+                    參數數量: {len(ecpay_params)}
+                </div>
+                
+                <form id="ecpay-form" method="post" action="{ECPAY_CONFIG['ACTION_URL']}">
         """
         
         # 添加所有參數為隱藏欄位
         for key, value in ecpay_params.items():
-            form_html += f'<input type="hidden" name="{key}" value="{value}">\n'
+            # 確保值是字串且已編碼
+            encoded_value = str(value).replace('"', '&quot;')
+            form_html += f'                    <input type="hidden" name="{key}" value="{encoded_value}">\n'
+        
+        form_html += f"""
+                </form>
+                
+                <button onclick="submitForm()" class="btn">手動提交 (如果沒有自動跳轉)</button>
+                <button onclick="showParams()" class="btn">顯示參數</button>
+                
+                <div id="params" style="display:none;" class="debug">
+                    <strong>完整參數:</strong><br>
+        """
+        
+        # 顯示所有參數供調試
+        for key, value in ecpay_params.items():
+            form_html += f"                    {key}: {value}<br>\n"
         
         form_html += """
-            </form>
+                </div>
+            </div>
             
             <script>
-                // 自動提交表單
-                document.getElementById('ecpay-form').submit();
+                let autoSubmitted = false;
+                
+                function submitForm() {
+                    if (!autoSubmitted) {
+                        document.getElementById('ecpay-form').submit();
+                        autoSubmitted = true;
+                    }
+                }
+                
+                function showParams() {
+                    const params = document.getElementById('params');
+                    params.style.display = params.style.display === 'none' ? 'block' : 'none';
+                }
+                
+                // 3秒後自動提交
+                setTimeout(function() {
+                    if (!autoSubmitted) {
+                        console.log('Auto submitting form...');
+                        submitForm();
+                    }
+                }, 3000);
             </script>
         </body>
         </html>
@@ -439,7 +598,11 @@ def create_order():
         
     except Exception as e:
         logger.error(f"創建訂單失敗: {str(e)}")
-        return jsonify({'success': False, 'error': '訂單創建失敗'}), 500
+        return f"""
+        <h1>系統錯誤</h1>
+        <p>錯誤詳情: {str(e)}</p>
+        <a href="/payment">返回付款頁面</a>
+        """, 500
 
 @ecpay_bp.route('/notify', methods=['POST'])
 def payment_notify():
@@ -890,7 +1053,7 @@ def render_payment_success_page(order_info):
                             if (checkCount > 5) { // 5次失敗後停止
                                 clearInterval(checkStatus);
                                 if (loadingStatus) {
-                                    loadingStatus.innerHTML = '⚠️ 無法檢查生成狀態，請聲明頁面或聯繫客服';
+                                    loadingStatus.innerHTML = '⚠️ 無法檢查生成狀態，請刷新頁面或聯繫客服';
                                     loadingStatus.style.color = '#e53e3e';
                                 }
                             }
@@ -906,7 +1069,6 @@ def render_payment_success_page(order_info):
                                  uuid=order_info.get('generated_uuid', ''),
                                  order_id=order_info.get('order_id', ''),
                                  plan_name=order_info.get('plan_name', ''))
-
 
 def render_payment_failed_page(order_id, error_code):
     """渲染付款失敗頁面"""
