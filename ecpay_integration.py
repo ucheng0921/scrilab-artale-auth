@@ -16,38 +16,38 @@ ecpay_bp = Blueprint('ecpay', __name__, url_prefix='/payment')
 
 # 綠界設定
 ECPAY_CONFIG = {
-    'MERCHANT_ID': os.environ.get('ECPAY_MERCHANT_ID', '2000132'),  # 測試商店代號
-    'HASH_KEY': os.environ.get('ECPAY_HASH_KEY', '5294y06JbISpM5x9'),  # 測試 HashKey
-    'HASH_IV': os.environ.get('ECPAY_HASH_IV', 'v77hoKGq4kWxNNIS'),   # 測試 HashIV
-    'ACTION_URL': os.environ.get('ECPAY_ACTION_URL', 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5'),  # 測試環境
-    'RETURN_URL': os.environ.get('RETURN_URL', 'https://your-domain.com/payment/return'),
-    'CLIENT_BACK_URL': os.environ.get('CLIENT_BACK_URL', 'https://your-domain.com/payment/success'),
-    'ORDER_RESULT_URL': os.environ.get('ORDER_RESULT_URL', 'https://your-domain.com/payment/notify')
+    'MERCHANT_ID': os.environ.get('ECPAY_MERCHANT_ID', '3460217'),  # 正式商店代號
+    'HASH_KEY': os.environ.get('ECPAY_HASH_KEY', '4GeHVYNMJO7vDYq6'),  # 正式 HashKey
+    'HASH_IV': os.environ.get('ECPAY_HASH_IV', 'RuaSfV5FNIwgMYOa'),   # 正式 HashIV
+    'ACTION_URL': os.environ.get('ECPAY_ACTION_URL', 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5'),  # 正式環境
+    'RETURN_URL': os.environ.get('RETURN_URL', 'https://artale-auth-service.onrender.com/payment/return'),
+    'CLIENT_BACK_URL': os.environ.get('CLIENT_BACK_URL', 'https://artale-auth-service.onrender.com/payment/success'),
+    'ORDER_RESULT_URL': os.environ.get('ORDER_RESULT_URL', 'https://artale-auth-service.onrender.com/payment/notify')
 }
 
 # 商品方案設定
 PRODUCT_PLANS = {
     'trial_7': {
         'name': '7天體驗版',
-        'price': 99,
+        'price': 5,
         'days': 7,
         'description': 'Artale Script 7天體驗版'
     },
     'monthly_30': {
         'name': '30天月費版',
-        'price': 299,
+        'price': 5,
         'days': 30,
         'description': 'Artale Script 30天月費版'
     },
     'quarterly_90': {
         'name': '90天季費版',
-        'price': 799,
+        'price': 5,
         'days': 90,
         'description': 'Artale Script 90天季費版'
     },
     'yearly_365': {
         'name': '365天年費版',
-        'price': 2999,
+        'price': 5,
         'days': 365,
         'description': 'Artale Script 365天年費版'
     }
