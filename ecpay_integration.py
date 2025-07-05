@@ -14,6 +14,23 @@ logger = logging.getLogger(__name__)
 # 創建綠界金流藍圖
 ecpay_bp = Blueprint('ecpay', __name__, url_prefix='/payment')
 
+def get_base_url():
+    """
+    取得當前網站的基礎URL
+    """
+    # 優先使用環境變數
+    base_url = os.environ.get('BASE_URL')
+    if base_url:
+        return base_url.rstrip('/')
+    
+    # 自動偵測（適用於Render）
+    if 'RENDER' in os.environ:
+        service_name = os.environ.get('RENDER_SERVICE_NAME', 'scrilab-artale-auth')
+        return f"https://{service_name}.onrender.com"
+    
+    # 本地開發環境
+    return "http://localhost:5000"
+
 # 綠界設定
 ECPAY_CONFIG = {
     'MERCHANT_ID': os.environ.get('ECPAY_MERCHANT_ID'),  # 移除預設值
@@ -266,23 +283,6 @@ def process_payment_notification_safe(params):
     except Exception as e:
         logger.error(f"處理付款通知異常: {str(e)}")
         return "0|ERROR"
-
-def get_base_url():
-    """
-    取得當前網站的基礎URL
-    """
-    # 優先使用環境變數
-    base_url = os.environ.get('BASE_URL')
-    if base_url:
-        return base_url.rstrip('/')
-    
-    # 自動偵測（適用於Render）
-    if 'RENDER' in os.environ:
-        service_name = os.environ.get('RENDER_SERVICE_NAME', 'scrilab-artale-auth')
-        return f"https://{service_name}.onrender.com"
-    
-    # 本地開發環境
-    return "http://localhost:5000"
 
 def create_ecpay_order(plan_id, user_email, return_url=None):
     """
