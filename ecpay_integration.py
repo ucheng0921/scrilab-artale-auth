@@ -16,14 +16,24 @@ ecpay_bp = Blueprint('ecpay', __name__, url_prefix='/payment')
 
 # 綠界設定
 ECPAY_CONFIG = {
-    'MERCHANT_ID': os.environ.get('ECPAY_MERCHANT_ID', '3460217'),  # 正式商店代號
-    'HASH_KEY': os.environ.get('ECPAY_HASH_KEY', '4GeHVYNMJO7vDYq6'),  # 正式 HashKey
-    'HASH_IV': os.environ.get('ECPAY_HASH_IV', 'RuaSfV5FNIwgMYOa'),   # 正式 HashIV
-    'ACTION_URL': os.environ.get('ECPAY_ACTION_URL', 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5'),  # 正式環境
-    'RETURN_URL': os.environ.get('RETURN_URL', 'https://artale-auth-service.onrender.com/payment/return'),
-    'CLIENT_BACK_URL': os.environ.get('CLIENT_BACK_URL', 'https://artale-auth-service.onrender.com/payment/success'),
-    'ORDER_RESULT_URL': os.environ.get('ORDER_RESULT_URL', 'https://artale-auth-service.onrender.com/payment/notify')
+    'MERCHANT_ID': os.environ.get('ECPAY_MERCHANT_ID'),  # 移除預設值
+    'HASH_KEY': os.environ.get('ECPAY_HASH_KEY'),        # 移除預設值
+    'HASH_IV': os.environ.get('ECPAY_HASH_IV'),          # 移除預設值
+    'ACTION_URL': os.environ.get('ECPAY_ACTION_URL'),    # 移除預設值
+    'RETURN_URL': os.environ.get('RETURN_URL', f"{get_base_url()}/payment/return"),
+    'CLIENT_BACK_URL': os.environ.get('CLIENT_BACK_URL', f"{get_base_url()}/payment/return"),
+    'ORDER_RESULT_URL': os.environ.get('ORDER_RESULT_URL', f"{get_base_url()}/payment/notify")
 }
+
+# 添加驗證檢查（可選，但建議加上）
+if not ECPAY_CONFIG['MERCHANT_ID']:
+    logger.error("❌ 請設定 ECPAY_MERCHANT_ID 環境變數")
+if not ECPAY_CONFIG['HASH_KEY']:
+    logger.error("❌ 請設定 ECPAY_HASH_KEY 環境變數")
+if not ECPAY_CONFIG['HASH_IV']:
+    logger.error("❌ 請設定 ECPAY_HASH_IV 環境變數")
+if not ECPAY_CONFIG['ACTION_URL']:
+    logger.error("❌ 請設定 ECPAY_ACTION_URL 環境變數")
 
 # 商品方案設定
 PRODUCT_PLANS = {
