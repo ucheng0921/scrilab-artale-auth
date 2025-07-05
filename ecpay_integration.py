@@ -526,7 +526,7 @@ def payment_notify():
 
 @ecpay_bp.route('/return', methods=['POST', 'GET'])
 def payment_return():
-    """綠界付款完成返回頁面"""
+    """綠界付款完成返回頁面 - 修復版本"""
     try:
         # 獲取參數 (可能是 POST 或 GET)
         if request.method == 'POST':
@@ -536,6 +536,8 @@ def payment_return():
         
         merchant_trade_no = params.get('MerchantTradeNo', '')
         rtn_code = params.get('RtnCode', '0')
+        
+        logger.info(f"Payment return: order={merchant_trade_no}, code={rtn_code}")
         
         # 查詢訂單狀態
         order_status = 'unknown'
@@ -550,12 +552,22 @@ def payment_return():
                 if order_doc.exists:
                     order_info = order_doc.to_dict()
                     order_status = order_info.get('status', 'unknown')
+                    logger.info(f"Order found: {order_status}")
+                else:
+                    logger.warning(f"Order not found: {merchant_trade_no}")
             except Exception as e:
                 logger.error(f"查詢訂單狀態失敗: {str(e)}")
         
         # 返回結果頁面
-        if rtn_code == '1' and order_status == 'paid':
-            return render_payment_success_page(order_info)
+        if rtn_code == '1':  # 綠界回傳成功
+            if order_info:
+                return render_payment_success_page(order_info)
+            else:
+                # 即使找不到訂單，也顯示成功頁面但不顯示序號
+                return render_payment_success_page({
+                    'order_id': merchant_trade_no,
+                    'plan_name': '未知方案'
+                })
         else:
             return render_payment_failed_page(merchant_trade_no, rtn_code)
             
@@ -571,8 +583,11 @@ def payment_success():
 
 @ecpay_bp.route('/check-order/<order_id>')
 def check_order_status(order_id):
-    """檢查訂單狀態 API"""
+    """檢查訂單狀態 API - 修復版本"""
     try:
+        if not order_id or order_id.strip() == '':
+            return jsonify({'success': False, 'error': '缺少訂單ID'}), 400
+            
         from app import db
         if db is None:
             return jsonify({'success': False, 'error': 'Database not available'}), 503
@@ -581,20 +596,31 @@ def check_order_status(order_id):
         order_doc = order_ref.get()
         
         if not order_doc.exists:
+            logger.warning(f"Order not found: {order_id}")
             return jsonify({'success': False, 'error': '訂單不存在'}), 404
         
         order_data = order_doc.to_dict()
         
-        return jsonify({
+        # 格式化創建時間
+        created_at = order_data.get('created_at', '')
+        if hasattr(created_at, 'isoformat'):
+            created_at_str = created_at.isoformat()
+        else:
+            created_at_str = str(created_at)
+        
+        response_data = {
             'success': True,
             'order_id': order_id,
             'status': order_data.get('status', 'unknown'),
             'plan_name': order_data.get('plan_name', ''),
             'amount': order_data.get('amount', 0),
-            'created_at': order_data.get('created_at', '').isoformat() if hasattr(order_data.get('created_at'), 'isoformat') else str(order_data.get('created_at', '')),
+            'created_at': created_at_str,
             'uuid_generated': order_data.get('uuid_generated', False),
             'user_uuid': order_data.get('generated_uuid', '') if order_data.get('uuid_generated') else ''
-        })
+        }
+        
+        logger.info(f"Order status check: {order_id} -> {response_data['status']}")
+        return jsonify(response_data)
         
     except Exception as e:
         logger.error(f"檢查訂單狀態失敗: {str(e)}")
@@ -704,7 +730,7 @@ def send_uuid_notification_email(order_data, uuid):
     pass
 
 def render_payment_success_page(order_info):
-    """渲染付款成功頁面"""
+    """渲染付款成功頁面 - 修復版本"""
     template = """
     <!DOCTYPE html>
     <html>
@@ -749,6 +775,11 @@ def render_payment_success_page(order_info):
                 border-radius: 8px; padding: 15px; margin: 20px 0;
                 text-align: left;
             }
+            .loading-message {
+                color: #4299e1;
+                font-style: italic;
+                margin: 10px 0;
+            }
         </style>
     </head>
     <body>
@@ -762,7 +793,15 @@ def render_payment_success_page(order_info):
                 <div class="uuid-code" id="uuid-display">
                     {{ uuid or '正在生成中...' }}
                 </div>
-                <button class="btn" onclick="copyUUID()">📋 複製序號</button>
+                {% if not uuid %}
+                <div class="loading-message" id="loading-status">
+                    ⏳ 系統正在為您生成專屬序號，請稍候...
+                </div>
+                {% endif %}
+                <button class="btn" onclick="copyUUID()" id="copy-btn" 
+                        {% if not uuid %}style="display:none;"{% endif %}>
+                    📋 複製序號
+                </button>
             </div>
             
             <div class="info-box">
@@ -791,29 +830,72 @@ def render_payment_success_page(order_info):
                 if (uuid && uuid !== '正在生成中...') {
                     navigator.clipboard.writeText(uuid).then(() => {
                         alert('序號已複製到剪貼簿！');
+                    }).catch(err => {
+                        // 如果 clipboard API 不支援，使用舊方法
+                        const textArea = document.createElement('textarea');
+                        textArea.value = uuid;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        alert('序號已複製到剪貼簿！');
                     });
                 } else {
                     alert('序號尚未生成完成，請稍後再試');
                 }
             }
             
-            // 如果序號還在生成中，定期檢查狀態
+            // 檢查序號生成狀態 - 修復版本
+            const orderId = '{{ order_id or "" }}';
             const uuidDisplay = document.getElementById('uuid-display');
-            if (uuidDisplay.textContent.includes('正在生成中')) {
+            const loadingStatus = document.getElementById('loading-status');
+            const copyBtn = document.getElementById('copy-btn');
+            
+            if (orderId && uuidDisplay.textContent.includes('正在生成中')) {
+                let checkCount = 0;
+                const maxChecks = 20; // 最多檢查20次 (1分鐘)
+                
                 const checkStatus = setInterval(() => {
-                    fetch('/payment/check-order/{{ order_id or "" }}')
-                        .then(response => response.json())
+                    checkCount++;
+                    
+                    if (checkCount > maxChecks) {
+                        clearInterval(checkStatus);
+                        if (loadingStatus) {
+                            loadingStatus.innerHTML = '⚠️ 序號生成時間較長，請稍後刷新頁面查看';
+                            loadingStatus.style.color = '#e53e3e';
+                        }
+                        return;
+                    }
+                    
+                    // 修復：確保 URL 包含訂單ID
+                    fetch(`/payment/check-order/${orderId}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}`);
+                            }
+                            return response.json();
+                        })
                         .then(data => {
                             if (data.success && data.uuid_generated && data.user_uuid) {
                                 uuidDisplay.textContent = data.user_uuid;
+                                if (loadingStatus) loadingStatus.style.display = 'none';
+                                if (copyBtn) copyBtn.style.display = 'inline-block';
                                 clearInterval(checkStatus);
+                            } else if (loadingStatus) {
+                                loadingStatus.innerHTML = `⏳ 正在生成序號... (${checkCount}/${maxChecks})`;
                             }
                         })
-                        .catch(console.error);
-                }, 3000);
-                
-                // 10分鐘後停止檢查
-                setTimeout(() => clearInterval(checkStatus), 600000);
+                        .catch(error => {
+                            console.error('檢查狀態失敗:', error);
+                            if (checkCount > 5) { // 5次失敗後停止
+                                clearInterval(checkStatus);
+                                if (loadingStatus) {
+                                    loadingStatus.innerHTML = '⚠️ 無法檢查生成狀態，請聲明頁面或聯繫客服';
+                                    loadingStatus.style.color = '#e53e3e';
+                                }
+                            }
+                        });
+                }, 3000); // 每3秒檢查一次
             }
         </script>
     </body>
@@ -824,6 +906,7 @@ def render_payment_success_page(order_info):
                                  uuid=order_info.get('generated_uuid', ''),
                                  order_id=order_info.get('order_id', ''),
                                  plan_name=order_info.get('plan_name', ''))
+
 
 def render_payment_failed_page(order_id, error_code):
     """渲染付款失敗頁面"""
