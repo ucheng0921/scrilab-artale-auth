@@ -1263,38 +1263,65 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             padding: 4rem 2rem 2rem;
         }
 
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
+        .footer-simple {
+            text-align: center;
             margin-bottom: 3rem;
         }
 
-        .footer-section h3 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: var(--text-primary);
+        .contact-methods {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
-        .footer-section ul {
-            list-style: none;
-        }
-
-        .footer-section ul li {
-            margin-bottom: 0.8rem;
-        }
-
-        .footer-section ul li a {
+        .discord-link, .email-link {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
             color: var(--text-secondary);
             text-decoration: none;
+            font-size: 1.1rem;
             transition: var(--transition);
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
         }
 
-        .footer-section ul li a:hover {
+        .discord-link:hover {
+            color: #5865F2;
+            border-color: #5865F2;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(88, 101, 242, 0.3);
+        }
+
+        .email-link:hover {
             color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .discord-link i, .email-link i {
+            font-size: 1.5rem;
+        }
+
+        .discord-link:hover i {
+            animation: bounce 0.5s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .footer-note {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 1.5rem;
         }
 
         .footer-bottom {
@@ -1456,13 +1483,19 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .footer-content {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
             .section-title {
                 font-size: 2.2rem;
+            }
+
+            .contact-methods {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .discord-link, .email-link {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
             }
         }
 
@@ -1765,46 +1798,22 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <!-- Footer -->
     <footer id="contact" class="footer">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>關於 Scrilab</h3>
-                    <ul>
-                        <li><a href="#about">服務介紹</a></li>
-                        <li><a href="#team">技術團隊</a></li>
-                        <li><a href="#safety">安全保障</a></li>
-                        <li><a href="#news">服務更新</a></li>
-                    </ul>
+            <div class="footer-simple">
+                <h3 style="font-size: 1.5rem; margin-bottom: 2rem; color: var(--text-primary);">聯絡我們</h3>
+                <div class="contact-methods">
+                    <a href="https://discord.gg/HPzNrQmN" target="_blank" class="discord-link" title="加入我們的 Discord">
+                        <i class="fab fa-discord"></i>
+                        <span>Discord 技術支援</span>
+                    </a>
+                    <a href="mailto:pink870921aa@gmail.com" class="email-link">
+                        <i class="fas fa-envelope"></i>
+                        <span>pink870921aa@gmail.com</span>
+                    </a>
                 </div>
-                <div class="footer-section">
-                    <h3>服務項目</h3>
-                    <ul>
-                        <li><a href="#automation">自動化服務</a></li>
-                        <li><a href="#efficiency">效率優化</a></li>
-                        <li><a href="#customization">個人化定制</a></li>
-                        <li><a href="#analysis">數據分析</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>客戶支援</h3>
-                    <ul>
-                        <li><a href="mailto:support@scrilab.com">客服信箱</a></li>
-                        <li><a href="#tutorial">使用教學</a></li>
-                        <li><a href="/admin">會員專區</a></li>
-                        <li><a href="#faq">常見問題</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>聯絡資訊</h3>
-                    <ul>
-                        <li><a href="mailto:info@scrilab.com">商務合作：info@scrilab.com</a></li>
-                        <li><a href="mailto:support@scrilab.com">技術支援：support@scrilab.com</a></li>
-                        <li><a href="#business-hours">服務時間：24小時線上服務</a></li>
-                        <li><a href="#response-time">回應時間：1-24小時內回覆</a></li>
-                    </ul>
-                </div>
+                <p class="footer-note">所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Scrilab 技術服務有限公司. 版權所有 | 專業遊戲效率優化技術服務提供商</p>
+                <p>&copy; 2024 Scrilab. All rights reserved.</p>
             </div>
         </div>
     </footer>
