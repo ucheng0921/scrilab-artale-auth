@@ -1,15 +1,16 @@
-# session_manager.py - Firestore 版本
+# session_manager.py - 修復時間格式問題版本
 import logging
 import time
 import secrets
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Tuple, Optional
+import os
 
 logger = logging.getLogger(__name__)
 
 class FirestoreSessionManager:
-    """基於 Firestore 的 Session 管理器"""
+    """基於 Firestore 的 Session 管理器 - 修復時間格式問題"""
     
     def __init__(self, db=None):
         self.db = db
@@ -21,6 +22,46 @@ class FirestoreSessionManager:
         self.db = db
         logger.info("✅ Firestore 數據庫實例已設置")
     
+    def _now_utc(self):
+        """獲取 UTC 時間（有時區信息）"""
+        return datetime.now(timezone.utc)
+    
+    def _parse_datetime(self, dt):
+        """解析時間對象，確保有時區信息"""
+        if dt is None:
+            return None
+            
+        if isinstance(dt, str):
+            try:
+                # 嘗試解析 ISO 格式
+                if dt.endswith('Z'):
+                    return datetime.fromisoformat(dt[:-1] + '+00:00')
+                elif '+' in dt or dt.endswith('UTC'):
+                    return datetime.fromisoformat(dt.replace('UTC', '+00:00'))
+                else:
+                    # 假設是 UTC 時間
+                    parsed = datetime.fromisoformat(dt)
+                    if parsed.tzinfo is None:
+                        parsed = parsed.replace(tzinfo=timezone.utc)
+                    return parsed
+            except Exception as e:
+                logger.warning(f"無法解析時間字符串 '{dt}': {e}")
+                return None
+        
+        # 如果是 datetime 對象
+        if isinstance(dt, datetime):
+            if dt.tzinfo is None:
+                # 假設是 UTC 時間
+                return dt.replace(tzinfo=timezone.utc)
+            return dt
+        
+        # Firestore Timestamp 對象
+        if hasattr(dt, 'timestamp'):
+            return datetime.fromtimestamp(dt.timestamp(), tz=timezone.utc)
+        
+        logger.warning(f"未知的時間格式: {type(dt)} - {dt}")
+        return None
+    
     def generate_session_token(self, uuid: str, client_ip: str, session_timeout: int = 3600) -> str:
         """生成會話令牌並存儲到 Firestore"""
         try:
@@ -29,7 +70,7 @@ class FirestoreSessionManager:
                 raise Exception("Database not initialized")
             
             token = secrets.token_urlsafe(32)
-            now = datetime.now()
+            now = self._now_utc()
             expires_at = now + timedelta(seconds=session_timeout)
             
             session_data = {
@@ -54,7 +95,7 @@ class FirestoreSessionManager:
             raise
     
     def verify_session_token(self, token: str) -> Tuple[bool, Optional[Dict]]:
-        """驗證會話令牌"""
+        """驗證會話令牌 - 修復時間比較問題"""
         try:
             if not self.db:
                 logger.error("❌ Firestore 數據庫未初始化")
@@ -74,16 +115,18 @@ class FirestoreSessionManager:
                 logger.debug(f"❌ Session 已被停用: {token[:16]}...")
                 return False, None
             
-            # 檢查是否過期
-            expires_at = session_data.get('expires_at')
-            if isinstance(expires_at, str):
-                expires_at = datetime.fromisoformat(expires_at)
+            # 安全解析時間
+            expires_at = self._parse_datetime(session_data.get('expires_at'))
+            now = self._now_utc()
             
-            now = datetime.now()
+            # 檢查是否過期
             if expires_at and now > expires_at:
-                logger.debug(f"❌ Session 已過期: {token[:16]}...")
+                logger.debug(f"❌ Session 已過期: {token[:16]}... (expired: {expires_at}, now: {now})")
                 # 刪除過期的 session
-                session_ref.delete()
+                try:
+                    session_ref.delete()
+                except Exception as e:
+                    logger.warning(f"刪除過期 session 失敗: {e}")
                 return False, None
             
             # 更新最後活動時間
@@ -101,10 +144,12 @@ class FirestoreSessionManager:
                     logger.debug(f"🔄 Session 自動延長: {token[:16]}...")
             
             # 批量更新
-            session_ref.update(update_data)
-            
-            # 更新本地數據
-            session_data.update(update_data)
+            try:
+                session_ref.update(update_data)
+                # 更新本地數據
+                session_data.update(update_data)
+            except Exception as e:
+                logger.warning(f"更新 session 活動時間失敗: {e}")
             
             logger.debug(f"✅ Session 驗證成功: {token[:16]}...")
             return True, session_data
@@ -148,8 +193,11 @@ class FirestoreSessionManager:
             
             deleted_count = 0
             for session_doc in user_sessions:
-                session_doc.reference.delete()
-                deleted_count += 1
+                try:
+                    session_doc.reference.delete()
+                    deleted_count += 1
+                except Exception as e:
+                    logger.warning(f"刪除 session 失敗: {e}")
             
             logger.info(f"✅ 已終止用戶 {uuid[:8]}... 的 {deleted_count} 個會話")
             
@@ -163,7 +211,7 @@ class FirestoreSessionManager:
                 logger.error("❌ Firestore 數據庫未初始化")
                 return False
             
-            now = datetime.now()
+            now = self._now_utc()
             
             # 查詢活躍且未過期的 session
             sessions_ref = self.db.collection(self.collection_name)
@@ -192,7 +240,7 @@ class FirestoreSessionManager:
                 logger.error("❌ Firestore 數據庫未初始化")
                 return 0
             
-            now = datetime.now()
+            now = self._now_utc()
             
             # 查詢過期的 session
             sessions_ref = self.db.collection(self.collection_name)
@@ -200,8 +248,11 @@ class FirestoreSessionManager:
             
             deleted_count = 0
             for session_doc in expired_sessions:
-                session_doc.reference.delete()
-                deleted_count += 1
+                try:
+                    session_doc.reference.delete()
+                    deleted_count += 1
+                except Exception as e:
+                    logger.warning(f"刪除過期 session 失敗: {e}")
             
             if deleted_count > 0:
                 logger.info(f"🧹 已清理 {deleted_count} 個過期會話")
@@ -222,7 +273,7 @@ class FirestoreSessionManager:
                     'error': 'Database not initialized'
                 }
             
-            now = datetime.now()
+            now = self._now_utc()
             sessions_ref = self.db.collection(self.collection_name)
             
             # 計算總會話數
@@ -236,10 +287,7 @@ class FirestoreSessionManager:
                 total_sessions += 1
                 session_data = session_doc.to_dict()
                 
-                expires_at = session_data.get('expires_at')
-                if isinstance(expires_at, str):
-                    expires_at = datetime.fromisoformat(expires_at)
-                
+                expires_at = self._parse_datetime(session_data.get('expires_at'))
                 is_active = session_data.get('active', True)
                 is_expired = expires_at and now > expires_at
                 
@@ -254,7 +302,7 @@ class FirestoreSessionManager:
                 'total_sessions': total_sessions,
                 'active_sessions': active_sessions,
                 'expired_sessions': expired_sessions,
-                'last_cleanup': None  # 可以添加最後清理時間
+                'current_time': now.isoformat()
             }
             
         except Exception as e:
@@ -277,11 +325,16 @@ class FirestoreSessionManager:
             sessions = []
             for session_doc in user_sessions:
                 session_data = session_doc.to_dict()
+                
+                created_at = self._parse_datetime(session_data.get('created_at'))
+                last_activity = self._parse_datetime(session_data.get('last_activity'))
+                expires_at = self._parse_datetime(session_data.get('expires_at'))
+                
                 sessions.append({
                     'token': session_data.get('token', 'Unknown')[:16] + '...',
-                    'created_at': session_data.get('created_at'),
-                    'last_activity': session_data.get('last_activity'),
-                    'expires_at': session_data.get('expires_at'),
+                    'created_at': created_at.isoformat() if created_at else 'Unknown',
+                    'last_activity': last_activity.isoformat() if last_activity else 'Unknown',
+                    'expires_at': expires_at.isoformat() if expires_at else 'Unknown',
                     'client_ip': session_data.get('client_ip'),
                     'active': session_data.get('active', True)
                 })
