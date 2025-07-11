@@ -656,22 +656,23 @@ if __name__ == '__main__':
     
     app.run(host='0.0.0.0', port=port, debug=debug)
 
-# 在 app.py 中添加商品頁面路由
+# 在 app.py 中更新商品頁面路由和模板
 
 @app.route('/products', methods=['GET'])
 def products_page():
-    """商品展示頁面"""
-    return render_template_string(PRODUCTS_TEMPLATE)
+    """軟體服務展示頁面"""
+    return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
 
-# 商品頁面 HTML 模板
-PRODUCTS_TEMPLATE = """
+# 專業軟體服務頁面 HTML 模板 - 暗色系設計
+PROFESSIONAL_PRODUCTS_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Artale Script - 專業遊戲腳本解決方案</title>
+    <title>Scrilab - 專業軟體開發與技術服務</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -680,103 +681,69 @@ PRODUCTS_TEMPLATE = """
         }
 
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #4a6741 100%);
-            --text-primary: #2c3e50;
-            --text-secondary: #64748b;
-            --bg-light: #f8fafc;
-            --shadow-light: 0 10px 30px rgba(0, 0, 0, 0.1);
-            --shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.15);
-            --border-radius: 20px;
+            /* 暗色主題配色 */
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --bg-card: #1e1e1e;
+            --bg-hover: #333333;
+            
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --text-muted: #808080;
+            
+            --accent-blue: #00d4ff;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            
+            --border-color: #333333;
+            --border-hover: #555555;
+            
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-accent: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --shadow-md: 0 8px 25px rgba(0, 0, 0, 0.25);
+            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
+            --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.3);
+            
+            --border-radius: 16px;
             --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
+            background: var(--bg-primary);
             color: var(--text-primary);
+            line-height: 1.6;
             overflow-x: hidden;
         }
 
-        /* Navigation */
-        .navbar {
+        /* 背景動效 */
+        .bg-animation {
             position: fixed;
             top: 0;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            z-index: 1000;
-            transition: var(--transition);
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-        }
-
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 800;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-primary);
-            font-weight: 500;
-            transition: var(--transition);
-            position: relative;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
             left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary-gradient);
-            transition: width 0.3s ease;
-        }
-
-        .nav-links a:hover::after {
             width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.05;
         }
 
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            background: var(--primary-gradient);
-            display: flex;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
+        .bg-animation::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, var(--accent-blue) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, var(--accent-purple) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, var(--accent-green) 0%, transparent 50%);
             animation: float 20s ease-in-out infinite;
         }
 
@@ -786,54 +753,210 @@ PRODUCTS_TEMPLATE = """
             66% { transform: translate(-20px, 20px) rotate(-1deg); }
         }
 
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-blue);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-accent);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            background: var(--gradient-accent);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            background: var(--bg-primary);
+            overflow: hidden;
+        }
+
         .hero-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 2rem;
-            color: white;
             z-index: 2;
             position: relative;
         }
 
-        .hero h1 {
-            font-size: clamp(2.5rem, 6vw, 4rem);
-            font-weight: 800;
-            margin-bottom: 1.5rem;
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: var(--accent-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 2rem;
             animation: slideInUp 1s ease-out;
         }
 
-        .hero p {
-            font-size: 1.25rem;
-            margin-bottom: 2.5rem;
-            opacity: 0.9;
-            max-width: 600px;
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
             animation: slideInUp 1s ease-out 0.2s both;
         }
 
-        .cta-button {
-            display: inline-block;
-            padding: 1rem 2.5rem;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(10px);
-            transition: var(--transition);
+        .hero .highlight {
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            max-width: 700px;
+            line-height: 1.7;
             animation: slideInUp 1s ease-out 0.4s both;
         }
 
-        .cta-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        .hero-buttons {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            animation: slideInUp 1s ease-out 0.6s both;
+        }
+
+        .btn-primary {
+            background: var(--gradient-accent);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            padding: 1rem 2rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            transform: translateY(-3px);
         }
 
         @keyframes slideInUp {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(40px);
             }
             to {
                 opacity: 1;
@@ -843,49 +966,60 @@ PRODUCTS_TEMPLATE = """
 
         /* Features Section */
         .features {
-            padding: 6rem 2rem;
-            background: var(--bg-light);
+            padding: 8rem 2rem;
+            background: var(--bg-secondary);
+            position: relative;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 5rem;
+        }
+
+        .section-badge {
+            display: inline-block;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            color: var(--accent-purple);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
         }
 
         .section-title {
-            text-align: center;
-            margin-bottom: 4rem;
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
         }
 
-        .section-title h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .section-title p {
-            font-size: 1.1rem;
+        .section-description {
+            font-size: 1.2rem;
             color: var(--text-secondary);
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
+            line-height: 1.7;
         }
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 2rem;
             margin-top: 4rem;
         }
 
         .feature-card {
-            background: white;
-            padding: 2.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
-            box-shadow: var(--shadow-light);
+            padding: 2.5rem;
             transition: var(--transition);
             position: relative;
             overflow: hidden;
@@ -897,19 +1031,26 @@ PRODUCTS_TEMPLATE = """
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
-            background: var(--accent-gradient);
+            height: 3px;
+            background: var(--gradient-accent);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
         }
 
         .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: var(--shadow-heavy);
+            transform: translateY(-8px);
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-lg);
         }
 
         .feature-icon {
             width: 60px;
             height: 60px;
-            background: var(--accent-gradient);
+            background: var(--gradient-accent);
             border-radius: 15px;
             display: flex;
             align-items: center;
@@ -920,128 +1061,141 @@ PRODUCTS_TEMPLATE = """
         }
 
         .feature-card h3 {
-            font-size: 1.3rem;
-            font-weight: 600;
+            font-size: 1.4rem;
+            font-weight: 700;
             margin-bottom: 1rem;
+            color: var(--text-primary);
         }
 
         .feature-card p {
             color: var(--text-secondary);
             line-height: 1.7;
+            font-size: 1rem;
         }
 
-        /* Products Section */
-        .products {
-            padding: 6rem 2rem;
-            background: white;
+        /* Services Section */
+        .services {
+            padding: 8rem 2rem;
+            background: var(--bg-primary);
         }
 
-        .products-grid {
+        .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2.5rem;
-            margin-top: 4rem;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 3rem;
+            margin-top: 5rem;
         }
 
-        .product-card {
-            background: white;
+        .service-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
             overflow: hidden;
-            box-shadow: var(--shadow-light);
             transition: var(--transition);
             position: relative;
         }
 
-        .product-card:hover {
+        .service-card:hover {
             transform: translateY(-5px);
-            box-shadow: var(--shadow-heavy);
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-lg);
         }
 
-        .product-header {
-            padding: 2rem;
-            background: var(--primary-gradient);
-            color: white;
-            text-align: center;
+        .service-header {
+            padding: 2.5rem 2rem 1.5rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
             position: relative;
         }
 
-        .product-header.premium {
-            background: var(--secondary-gradient);
+        .service-header.premium {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border-bottom-color: rgba(139, 92, 246, 0.2);
         }
 
-        .product-header.enterprise {
-            background: var(--dark-gradient);
+        .service-header.enterprise {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border-bottom-color: rgba(16, 185, 129, 0.2);
         }
 
         .popular-badge {
             position: absolute;
-            top: -10px;
-            right: 20px;
-            background: #ff6b6b;
+            top: -12px;
+            right: 2rem;
+            background: var(--gradient-accent);
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
+            box-shadow: var(--shadow-md);
         }
 
-        .product-title {
-            font-size: 1.4rem;
+        .service-title {
+            font-size: 1.6rem;
             font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .service-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .service-price {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
         }
 
-        .product-subtitle {
-            opacity: 0.9;
-            font-size: 0.95rem;
-        }
-
-        .product-price {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin: 1rem 0;
-        }
-
-        .product-price .currency {
-            font-size: 1rem;
+        .service-price .currency {
+            font-size: 1.2rem;
             vertical-align: top;
         }
 
-        .product-price .period {
-            font-size: 0.9rem;
-            opacity: 0.8;
+        .service-price .period {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
         }
 
-        .product-body {
+        .service-body {
             padding: 2rem;
         }
 
-        .product-features {
+        .service-features {
             list-style: none;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
 
-        .product-features li {
-            padding: 0.75rem 0;
+        .service-features li {
+            padding: 0.8rem 0;
             display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            border-bottom: 1px solid #f1f5f9;
+            align-items: flex-start;
+            gap: 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.95rem;
+            line-height: 1.6;
         }
 
-        .product-features li:last-child {
+        .service-features li:last-child {
             border-bottom: none;
         }
 
         .feature-check {
-            color: #10b981;
+            color: var(--accent-green);
             font-size: 1.1rem;
+            margin-top: 0.1rem;
+            flex-shrink: 0;
         }
 
-        .product-button {
+        .service-button {
             width: 100%;
             padding: 1rem;
-            background: var(--primary-gradient);
+            background: var(--gradient-accent);
             color: white;
             border: none;
             border-radius: 12px;
@@ -1049,75 +1203,104 @@ PRODUCTS_TEMPLATE = """
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
-        .product-button:hover {
+        .service-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: var(--shadow-glow);
         }
 
-        .product-button.premium {
-            background: var(--secondary-gradient);
+        .service-button.premium {
+            background: var(--gradient-success);
         }
 
-        .product-button.enterprise {
-            background: var(--dark-gradient);
+        .service-button.enterprise {
+            background: var(--gradient-warning);
         }
 
         /* Stats Section */
         .stats {
-            padding: 4rem 2rem;
-            background: var(--primary-gradient);
-            color: white;
+            padding: 6rem 2rem;
+            background: var(--bg-secondary);
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
             text-align: center;
         }
 
+        .stat-item {
+            position: relative;
+        }
+
         .stat-item h3 {
-            font-size: 2.5rem;
+            font-size: 3.5rem;
             font-weight: 800;
             margin-bottom: 0.5rem;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .stat-item p {
-            opacity: 0.9;
+            color: var(--text-secondary);
             font-size: 1.1rem;
+            font-weight: 500;
         }
 
         /* Footer */
         .footer {
-            padding: 3rem 2rem 2rem;
-            background: #1a202c;
-            color: white;
-            text-align: center;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+            padding: 4rem 2rem 2rem;
         }
 
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
         }
 
-        .footer-links a {
-            color: #cbd5e0;
+        .footer-section h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-section ul li a {
+            color: var(--text-secondary);
             text-decoration: none;
             transition: var(--transition);
         }
 
-        .footer-links a:hover {
-            color: white;
+        .footer-section ul li a:hover {
+            color: var(--accent-blue);
         }
 
-        .footer p {
-            color: #718096;
-            margin-top: 1rem;
+        .footer-bottom {
+            border-top: 1px solid var(--border-color);
+            padding-top: 2rem;
+            text-align: center;
+            color: var(--text-muted);
         }
 
         /* Purchase Modal */
@@ -1128,21 +1311,23 @@ PRODUCTS_TEMPLATE = """
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0, 0, 0, 0.9);
             z-index: 2000;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(10px);
         }
 
         .modal-content {
-            background: white;
-            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
             max-width: 500px;
             width: 90%;
+            padding: 2.5rem;
             text-align: center;
             position: relative;
-            animation: modalSlideIn 0.3s ease-out;
+            animation: modalSlideIn 0.4s ease-out;
         }
 
         @keyframes modalSlideIn {
@@ -1162,64 +1347,74 @@ PRODUCTS_TEMPLATE = """
             right: 1rem;
             background: none;
             border: none;
+            color: var(--text-secondary);
             font-size: 1.5rem;
             cursor: pointer;
-            color: #6b7280;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
         }
 
         .plan-info {
-            background: var(--bg-light);
-            padding: 1.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            margin: 1rem 0;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
         }
 
         .form-group {
-            margin: 1rem 0;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
         }
 
         .form-input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
+            color: var(--text-primary);
             font-size: 1rem;
-            transition: border-color 0.3s ease;
+            transition: var(--transition);
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
         }
 
         .modal-buttons {
             display: flex;
             gap: 1rem;
             justify-content: center;
-            margin-top: 1.5rem;
+            margin-top: 2rem;
         }
 
-        .btn {
+        .btn-cancel {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
             padding: 12px 24px;
-            border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             transition: var(--transition);
         }
 
-        .btn-cancel {
-            background: #6b7280;
-            color: white;
-        }
-
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
+        .btn-cancel:hover {
+            color: var(--text-primary);
+            border-color: var(--border-hover);
         }
 
         .loading {
@@ -1246,12 +1441,13 @@ PRODUCTS_TEMPLATE = """
                 font-size: 2.5rem;
             }
 
-            .hero p {
-                font-size: 1.1rem;
+            .hero-buttons {
+                flex-direction: column;
+                align-items: flex-start;
             }
 
             .features-grid,
-            .products-grid {
+            .services-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -1259,8 +1455,13 @@ PRODUCTS_TEMPLATE = """
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .modal-content {
-                margin: 1rem;
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .section-title {
+                font-size: 2.2rem;
             }
         }
 
@@ -1278,18 +1479,23 @@ PRODUCTS_TEMPLATE = """
     </style>
 </head>
 <body>
+    <div class="bg-animation"></div>
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">
-                <i class="fas fa-robot"></i> Artale Script
-            </div>
+            <a href="#home" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-code"></i>
+                </div>
+                <span>Scrilab</span>
+            </a>
             <ul class="nav-links">
                 <li><a href="#home">首頁</a></li>
-                <li><a href="#features">功能</a></li>
-                <li><a href="#products">方案</a></li>
-                <li><a href="#contact">聯絡</a></li>
-                <li><a href="/admin" style="color: #667eea;">管理後台</a></li>
+                <li><a href="#features">服務特色</a></li>
+                <li><a href="#services">解決方案</a></li>
+                <li><a href="#contact">聯絡我們</a></li>
+                <li><a href="/admin" class="nav-cta">管理後台</a></li>
             </ul>
         </div>
     </nav>
@@ -1297,20 +1503,32 @@ PRODUCTS_TEMPLATE = """
     <!-- Hero Section -->
     <section id="home" class="hero">
         <div class="hero-content">
-            <h1>🚀 專業遊戲腳本解決方案</h1>
-            <p>Artale Script 提供最先進的自動化遊戲腳本，讓您輕鬆提升遊戲效率。安全、穩定、高效能的專業級解決方案。</p>
-            <a href="#products" class="cta-button">
-                <i class="fas fa-rocket"></i> 立即體驗
-            </a>
+            <div class="hero-badge">
+                <i class="fas fa-star"></i>
+                <span>領先的遊戲技術服務提供商</span>
+            </div>
+            <h1>專業<span class="highlight">自動化服務</span><br>與效率優化解決方案</h1>
+            <p>Scrilab 為遊戲愛好者提供專業的自動化技術服務，透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。我們專注於為客戶提供安全、穩定、高效的遊戲體驗優化服務。</p>
+            <div class="hero-buttons">
+                <a href="#services" class="btn-primary">
+                    <i class="fas fa-rocket"></i>
+                    <span>探索解決方案</span>
+                </a>
+                <a href="#contact" class="btn-secondary">
+                    <i class="fas fa-phone"></i>
+                    <span>預約諮詢</span>
+                </a>
+            </div>
         </div>
     </section>
 
     <!-- Features Section -->
     <section id="features" class="features">
         <div class="container">
-            <div class="section-title scroll-animate">
-                <h2>🎯 核心優勢</h2>
-                <p>我們致力於提供最優質的遊戲腳本服務，讓您的遊戲體驗更上一層樓</p>
+            <div class="section-header scroll-animate">
+                <div class="section-badge">專業服務</div>
+                <h2 class="section-title">為什麼選擇 Scrilab 服務</h2>
+                <p class="section-description">我們擁有豐富的遊戲技術經驗和專業的服務團隊，致力於為遊戲玩家提供最優質的個人化服務</p>
             </div>
             
             <div class="features-grid">
@@ -1318,117 +1536,119 @@ PRODUCTS_TEMPLATE = """
                     <div class="feature-icon">
                         <i class="fas fa-shield-alt"></i>
                     </div>
-                    <h3>🛡️ 安全防護</h3>
-                    <p>採用業界領先的加密技術，確保您的帳號安全。內建反檢測機制，讓您安心使用。</p>
+                    <h3>安全保障</h3>
+                    <p>採用業界最高安全標準，多層次加密保護，確保您的帳號和個人資料安全無虞。通過多項安全驗證，為玩家提供可信賴的技術服務。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
                     <div class="feature-icon">
                         <i class="fas fa-cogs"></i>
                     </div>
-                    <h3>⚙️ 智能配置</h3>
-                    <p>簡單易用的配置介面，支援多種遊戲模式。智能學習系統，自動優化腳本性能。</p>
+                    <h3>個人化定制</h3>
+                    <p>根據玩家需求量身打造個人化服務方案，從遊戲分析到效率優化，提供完整的技術服務週期，確保服務符合您的遊戲需求。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
                     <div class="feature-icon">
                         <i class="fas fa-rocket"></i>
                     </div>
-                    <h3>🚀 高效執行</h3>
-                    <p>優化的演算法確保腳本高效運行，減少資源消耗。支援24/7不間斷運行。</p>
+                    <h3>高效執行</h3>
+                    <p>採用先進的技術架構，優化執行效能，支援多種遊戲環境，確保服務在各種情況下都能穩定運行，大幅提升遊戲效率。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
                     <div class="feature-icon">
                         <i class="fas fa-headset"></i>
                     </div>
-                    <h3>💬 專業支援</h3>
-                    <p>提供完整的技術支援和使用教學。專業客服團隊隨時為您解決問題。</p>
+                    <h3>專業客服支援</h3>
+                    <p>提供24/7客服支援服務，專業技術人員隨時為您解決使用問題，確保服務穩定運行，讓您專注於享受遊戲樂趣。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
                     <div class="feature-icon">
                         <i class="fas fa-sync-alt"></i>
                     </div>
-                    <h3>🔄 即時更新</h3>
-                    <p>腳本自動更新，確保與遊戲版本同步。新功能持續開發，讓您始終領先。</p>
+                    <h3>即時更新</h3>
+                    <p>提供服務版本更新、安全補強、功能擴展等維護服務，確保您的服務始終保持最新狀態，適應遊戲版本變化。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
                     <div class="feature-icon">
                         <i class="fas fa-chart-line"></i>
                     </div>
-                    <h3>📊 數據分析</h3>
-                    <p>詳細的執行報告和數據分析，幫助您了解腳本效能和遊戲進度。</p>
+                    <h3>效率分析</h3>
+                    <p>提供詳細的使用報告和效率分析，幫助玩家了解遊戲進度和效果，提供數據支持讓您做出更好的遊戲決策。</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Products Section -->
-    <section id="products" class="products">
+    <!-- Services Section -->
+    <section id="services" class="services">
         <div class="container">
-            <div class="section-title scroll-animate">
-                <h2>💎 選擇您的方案</h2>
-                <p>我們提供多種方案選擇，滿足不同用戶的需求。所有方案都包含核心功能和技術支援。</p>
+            <div class="section-header scroll-animate">
+                <div class="section-badge">服務方案</div>
+                <h2 class="section-title">選擇適合的服務方案</h2>
+                <p class="section-description">我們提供多種專業技術服務方案，滿足不同玩家的遊戲需求</p>
             </div>
             
-            <div class="products-grid">
-                <!-- 體驗版 -->
-                <div class="product-card scroll-animate">
-                    <div class="product-header">
-                        <div class="product-title">🌟 體驗版</div>
-                        <div class="product-subtitle">新手入門首選</div>
-                        <div class="product-price">
-                            <span class="currency">NT$</span>99
+            <div class="services-grid">
+                <!-- 體驗方案 -->
+                <div class="service-card scroll-animate">
+                    <div class="service-header">
+                        <div class="service-title">體驗服務</div>
+                        <div class="service-subtitle">適合新手玩家體驗</div>
+                        <div class="service-price">
+                            <span class="currency">NT$</span>299
                             <span class="period">/7天</span>
                         </div>
                     </div>
-                    <div class="product-body">
-                        <ul class="product-features">
+                    <div class="service-body">
+                        <ul class="service-features">
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>基礎腳本功能</span>
+                                <span>基礎技術服務</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>標準安全防護</span>
+                                <span>標準安全保護</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>社群技術支援</span>
+                                <span>基礎使用教學</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>基礎數據報告</span>
+                                <span>社群客服支援</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>教學文件</span>
+                                <span>基礎效率報告</span>
                             </li>
                         </ul>
-                        <button class="product-button" onclick="selectPlan('trial_7')">
-                            <i class="fas fa-star"></i> 開始體驗
+                        <button class="service-button" onclick="selectPlan('trial_7')">
+                            <i class="fas fa-star"></i>
+                            <span>開始體驗</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- 標準版 -->
-                <div class="product-card scroll-animate">
-                    <div class="product-header premium">
+                <!-- 標準方案 -->
+                <div class="service-card scroll-animate">
+                    <div class="service-header premium">
                         <div class="popular-badge">最受歡迎</div>
-                        <div class="product-title">🔥 標準版</div>
-                        <div class="product-subtitle">最佳性價比選擇</div>
-                        <div class="product-price">
-                            <span class="currency">NT$</span>299
+                        <div class="service-title">標準服務</div>
+                        <div class="service-subtitle">最佳性價比選擇</div>
+                        <div class="service-price">
+                            <span class="currency">NT$</span>549
                             <span class="period">/30天</span>
                         </div>
                     </div>
-                    <div class="product-body">
-                        <ul class="product-features">
+                    <div class="service-body">
+                        <ul class="service-features">
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>完整腳本功能</span>
+                                <span>完整技術服務</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
@@ -1436,58 +1656,63 @@ PRODUCTS_TEMPLATE = """
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>優先技術支援</span>
+                                <span>優先客服支援</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>詳細數據分析</span>
+                                <span>詳細效率分析</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>自定義配置</span>
+                                <span>個人化設定</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>多設備支援</span>
+                                <span>多設備授權</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>即時更新服務</span>
                             </li>
                         </ul>
-                        <button class="product-button premium" onclick="selectPlan('monthly_30')">
-                            <i class="fas fa-crown"></i> 立即購買
+                        <button class="service-button premium" onclick="selectPlan('monthly_30')">
+                            <i class="fas fa-crown"></i>
+                            <span>立即選購</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- 專業版 -->
-                <div class="product-card scroll-animate">
-                    <div class="product-header enterprise">
-                        <div class="product-title">💼 專業版</div>
-                        <div class="product-subtitle">進階用戶專屬</div>
-                        <div class="product-price">
-                            <span class="currency">NT$</span>799
+                <!-- 季度方案 -->
+                <div class="service-card scroll-animate">
+                    <div class="service-header enterprise">
+                        <div class="service-title">季度服務</div>
+                        <div class="service-subtitle">長期使用最划算</div>
+                        <div class="service-price">
+                            <span class="currency">NT$</span>1,499
                             <span class="period">/90天</span>
                         </div>
                     </div>
-                    <div class="product-body">
-                        <ul class="product-features">
+                    <div class="service-body">
+                        <ul class="service-features">
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>所有高級功能</span>
+                                <span>全功能技術服務</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>企業級安全</span>
+                                <span>頂級安全保障</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>1對1專屬支援</span>
+                                <span>專屬客服支援</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>實時監控面板</span>
+                                <span>高級效率分析</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>API 整合支援</span>
+                                <span>專屬個人化設定</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
@@ -1495,11 +1720,16 @@ PRODUCTS_TEMPLATE = """
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>優先新功能體驗</span>
+                                <span>優先功能體驗</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>專屬技術諮詢</span>
                             </li>
                         </ul>
-                        <button class="product-button enterprise" onclick="selectPlan('quarterly_90')">
-                            <i class="fas fa-diamond"></i> 升級專業版
+                        <button class="service-button enterprise" onclick="selectPlan('quarterly_90')">
+                            <i class="fas fa-gem"></i>
+                            <span>超值選購</span>
                         </button>
                     </div>
                 </div>
@@ -1512,7 +1742,11 @@ PRODUCTS_TEMPLATE = """
         <div class="container">
             <div class="stats-grid scroll-animate">
                 <div class="stat-item">
-                    <h3 id="users-count">10,000+</h3>
+                    <h3 id="projects-count">5,000+</h3>
+                    <p>服務使用者</p>
+                </div>
+                <div class="stat-item">
+                    <h3 id="clients-count">3,000+</h3>
                     <p>活躍用戶</p>
                 </div>
                 <div class="stat-item">
@@ -1520,12 +1754,8 @@ PRODUCTS_TEMPLATE = """
                     <p>系統穩定性</p>
                 </div>
                 <div class="stat-item">
-                    <h3 id="support">24/7</h3>
-                    <p>技術支援</p>
-                </div>
-                <div class="stat-item">
                     <h3 id="satisfaction">4.9★</h3>
-                    <p>用戶滿意度</p>
+                    <p>客戶滿意度</p>
                 </div>
             </div>
         </div>
@@ -1534,16 +1764,47 @@ PRODUCTS_TEMPLATE = """
     <!-- Footer -->
     <footer id="contact" class="footer">
         <div class="container">
-            <div class="footer-links">
-                <a href="#home">首頁</a>
-                <a href="#features">功能介紹</a>
-                <a href="#products">方案價格</a>
-                <a href="mailto:support@artale-script.com">技術支援</a>
-                <a href="/admin">管理後台</a>
-                <a href="#">使用條款</a>
-                <a href="#">隱私政策</a>
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>關於 Scrilab</h3>
+                    <ul>
+                        <li><a href="#about">服務介紹</a></li>
+                        <li><a href="#team">技術團隊</a></li>
+                        <li><a href="#safety">安全保障</a></li>
+                        <li><a href="#news">服務更新</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>服務項目</h3>
+                    <ul>
+                        <li><a href="#automation">自動化服務</a></li>
+                        <li><a href="#efficiency">效率優化</a></li>
+                        <li><a href="#customization">個人化定制</a></li>
+                        <li><a href="#analysis">數據分析</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>客戶支援</h3>
+                    <ul>
+                        <li><a href="mailto:support@scrilab.com">客服信箱</a></li>
+                        <li><a href="#tutorial">使用教學</a></li>
+                        <li><a href="/admin">會員專區</a></li>
+                        <li><a href="#faq">常見問題</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>聯絡資訊</h3>
+                    <ul>
+                        <li><a href="mailto:info@scrilab.com">商務合作：info@scrilab.com</a></li>
+                        <li><a href="mailto:support@scrilab.com">技術支援：support@scrilab.com</a></li>
+                        <li><a href="#business-hours">服務時間：24小時線上服務</a></li>
+                        <li><a href="#response-time">回應時間：1-24小時內回覆</a></li>
+                    </ul>
+                </div>
             </div>
-            <p>&copy; 2024 Artale Script. 版權所有 | 專業遊戲腳本解決方案</p>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Scrilab 技術服務有限公司. 版權所有 | 專業遊戲效率優化技術服務提供商</p>
+            </div>
         </div>
     </footer>
 
@@ -1551,21 +1812,27 @@ PRODUCTS_TEMPLATE = """
     <div id="purchase-modal" class="modal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
-            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">購買確認</h3>
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">服務購買</h3>
             <div id="selected-plan-info" class="plan-info">
                 <!-- Plan info will be inserted here -->
             </div>
             <div class="form-group">
-                <input type="email" id="user-email" placeholder="請輸入您的電子郵件" class="form-input" required>
+                <label for="user-name">姓名</label>
+                <input type="text" id="user-name" placeholder="請輸入您的姓名" class="form-input" required>
             </div>
             <div class="form-group">
-                <input type="text" id="user-name" placeholder="姓名（可選）" class="form-input">
+                <label for="contact-email">聯絡信箱</label>
+                <input type="email" id="contact-email" placeholder="請輸入聯絡信箱" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label for="contact-phone">聯絡電話（選填）</label>
+                <input type="tel" id="contact-phone" placeholder="請輸入聯絡電話" class="form-input">
             </div>
             <div class="modal-buttons">
-                <button class="btn btn-cancel" onclick="closeModal()">取消</button>
-                <button class="btn btn-primary" onclick="proceedToPurchase()" id="purchase-btn">
-                    <span id="purchase-btn-text">確認購買</span>
-                    <div class="loading" id="purchase-loading" style="display: none;"></div>
+                <button class="btn-cancel" onclick="closeModal()">取消</button>
+                <button class="btn-primary" onclick="submitInquiry()" id="inquiry-btn">
+                    <span id="inquiry-btn-text">立即購買</span>
+                    <div class="loading" id="inquiry-loading" style="display: none;"></div>
                 </button>
             </div>
         </div>
@@ -1606,33 +1873,33 @@ PRODUCTS_TEMPLATE = """
         window.addEventListener('scroll', function() {
             const navbar = document.querySelector('.navbar');
             if (window.scrollY > 100) {
-                navbar.style.background = 'rgba(255, 255, 255, 0.98)';
-                navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
+                navbar.style.background = 'rgba(26, 26, 26, 0.98)';
+                navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
             } else {
-                navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+                navbar.style.background = 'rgba(26, 26, 26, 0.95)';
                 navbar.style.boxShadow = 'none';
             }
         });
 
-        // Plan selection and purchase flow
-        const plans = {
+        // Service plans data
+        const servicePlans = {
             'trial_7': {
-                name: '🌟 體驗版',
-                price: 99,
+                name: '體驗服務',
+                price: 299,
                 period: '7天',
-                description: '適合新手體驗的入門方案'
+                description: '適合新手玩家體驗的基礎技術服務'
             },
             'monthly_30': {
-                name: '🔥 標準版',
-                price: 299,
+                name: '標準服務',
+                price: 549,
                 period: '30天',
-                description: '最受歡迎的性價比選擇'
+                description: '最受歡迎的完整技術服務方案'
             },
             'quarterly_90': {
-                name: '💼 專業版',
-                price: 799,
+                name: '季度服務',
+                price: 1499,
                 period: '90天',
-                description: '進階用戶的專業方案'
+                description: '長期使用最划算的全功能技術服務'
             }
         };
 
@@ -1640,13 +1907,13 @@ PRODUCTS_TEMPLATE = """
 
         function selectPlan(planId) {
             selectedPlan = planId;
-            const plan = plans[planId];
+            const plan = servicePlans[planId];
             
             document.getElementById('selected-plan-info').innerHTML = `
                 <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">${plan.name}</h4>
                 <p style="margin: 0 0 1rem 0; color: var(--text-secondary);">${plan.description}</p>
-                <div style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary);">
-                    NT$ ${plan.price} <span style="font-size: 1rem; font-weight: normal;">/ ${plan.period}</span>
+                <div style="font-size: 1.5rem; font-weight: bold; color: var(--accent-blue);">
+                    NT$ ${plan.price.toLocaleString()} <span style="font-size: 1rem; font-weight: normal;">/ ${plan.period}</span>
                 </div>
             `;
             
@@ -1655,34 +1922,55 @@ PRODUCTS_TEMPLATE = """
 
         function closeModal() {
             document.getElementById('purchase-modal').style.display = 'none';
-            document.getElementById('user-email').value = '';
+            // Clear form
             document.getElementById('user-name').value = '';
+            document.getElementById('contact-email').value = '';
+            document.getElementById('contact-phone').value = '';
         }
 
-        function proceedToPurchase() {
-            const email = document.getElementById('user-email').value.trim();
-            const name = document.getElementById('user-name').value.trim();
+        function submitInquiry() {
+            const userName = document.getElementById('user-name').value.trim();
+            const contactEmail = document.getElementById('contact-email').value.trim();
+            const contactPhone = document.getElementById('contact-phone').value.trim();
             
-            if (!email) {
-                alert('請輸入電子郵件地址');
+            if (!userName || !contactEmail) {
+                alert('請填寫必要資訊（姓名、聯絡信箱）');
                 return;
             }
             
-            if (!validateEmail(email)) {
+            if (!validateEmail(contactEmail)) {
                 alert('請輸入有效的電子郵件地址');
                 return;
             }
             
             // Show loading
-            document.getElementById('purchase-btn-text').style.display = 'none';
-            document.getElementById('purchase-loading').style.display = 'inline-block';
+            document.getElementById('inquiry-btn-text').style.display = 'none';
+            document.getElementById('inquiry-loading').style.display = 'inline-block';
             
-            // 準備與歐付寶整合
+            // Simulate purchase process
             setTimeout(() => {
-                alert(`感謝您選擇 ${plans[selectedPlan].name}！\\n\\n我們即將推出線上付款功能，\\n目前請聯繫客服完成購買。\\n\\n電子郵件：${email}\\n方案：${plans[selectedPlan].name}\\n金額：NT$ ${plans[selectedPlan].price}`);
+                const plan = servicePlans[selectedPlan];
+                alert(`感謝您選擇 Scrilab 技術服務！\\n\\n服務方案：${plan.name}\\n` +
+                      `服務期限：${plan.period}\\n` +
+                      `服務費用：NT$ ${plan.price.toLocaleString()}\\n\\n` +
+                      `我們將在24小時內透過電子郵件發送服務啟用資訊。\\n` +
+                      `如有任何問題，歡迎聯繫客服。`);
                 
-                document.getElementById('purchase-btn-text').style.display = 'inline';
-                document.getElementById('purchase-loading').style.display = 'none';
+                document.getElementById('inquiry-btn-text').style.display = 'inline';
+                document.getElementById('inquiry-loading').style.display = 'none';
+                
+                closeModal();
+            }, 2000);
+        }對 Scrilab 的關注！\\n\\n我們已收到您的服務諮詢：\\n\\n` +
+                      `公司：${companyName}\\n` +
+                      `聯絡人：${contactPerson}\\n` +
+                      `信箱：${contactEmail}\\n` +
+                      `電話：${contactPhone}\\n` +
+                      `方案：${plan.name}\\n\\n` +
+                      `我們的業務專員將在24小時內與您聯繫，\\n為您提供詳細的技術諮詢與報價。`);
+                
+                document.getElementById('inquiry-btn-text').style.display = 'inline';
+                document.getElementById('inquiry-loading').style.display = 'none';
                 
                 closeModal();
             }, 2000);
@@ -1694,7 +1982,7 @@ PRODUCTS_TEMPLATE = """
         }
 
         // Counter animation for stats
-        function animateCounter(id, target, duration = 2000) {
+        function animateCounter(id, target, suffix = '', duration = 2000) {
             const element = document.getElementById(id);
             const start = 0;
             const increment = target / (duration / 16);
@@ -1703,10 +1991,22 @@ PRODUCTS_TEMPLATE = """
             const timer = setInterval(() => {
                 current += increment;
                 if (current >= target) {
-                    element.textContent = target.toLocaleString() + (id === 'satisfaction' ? '★' : id === 'uptime' ? '%' : id === 'support' ? '' : '+');
+                    if (id === 'uptime') {
+                        element.textContent = target + '%';
+                    } else if (id === 'satisfaction') {
+                        element.textContent = target + '★';
+                    } else {
+                        element.textContent = target + suffix;
+                    }
                     clearInterval(timer);
                 } else {
-                    element.textContent = Math.floor(current).toLocaleString() + (id === 'satisfaction' ? '★' : id === 'uptime' ? '%' : id === 'support' ? '' : '+');
+                    if (id === 'uptime') {
+                        element.textContent = current.toFixed(1) + '%';
+                    } else if (id === 'satisfaction') {
+                        element.textContent = current.toFixed(1) + '★';
+                    } else {
+                        element.textContent = Math.floor(current) + suffix;
+                    }
                 }
             }, 16);
         }
@@ -1715,8 +2015,9 @@ PRODUCTS_TEMPLATE = """
         const statsObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    setTimeout(() => animateCounter('users-count', 10000), 200);
-                    setTimeout(() => animateCounter('uptime', 99.9), 400);
+                    setTimeout(() => animateCounter('projects-count', 5000, '+'), 200);
+                    setTimeout(() => animateCounter('clients-count', 3000, '+'), 400);
+                    setTimeout(() => animateCounter('uptime', 99.9), 600);
                     setTimeout(() => animateCounter('satisfaction', 4.9), 800);
                     statsObserver.unobserve(entry.target);
                 }
@@ -1741,6 +2042,64 @@ PRODUCTS_TEMPLATE = """
                 closeModal();
             }
         });
+
+        // Add floating particles effect
+        function createFloatingParticles() {
+            const particlesContainer = document.createElement('div');
+            particlesContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: -1;
+            `;
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 2px;
+                    height: 2px;
+                    background: var(--accent-blue);
+                    border-radius: 50%;
+                    opacity: 0.3;
+                    animation: float-particle ${10 + Math.random() * 10}s linear infinite;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                    animation-delay: ${Math.random() * 10}s;
+                `;
+                particlesContainer.appendChild(particle);
+            }
+            
+            document.body.appendChild(particlesContainer);
+        }
+
+        // Add CSS for particle animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float-particle {
+                0% {
+                    transform: translateY(0) translateX(0);
+                    opacity: 0;
+                }
+                10% {
+                    opacity: 0.3;
+                }
+                90% {
+                    opacity: 0.3;
+                }
+                100% {
+                    transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize particles
+        createFloatingParticles();
     </script>
 </body>
 </html>
