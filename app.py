@@ -656,7 +656,7 @@ if __name__ == '__main__':
     
     app.run(host='0.0.0.0', port=port, debug=debug)
 
-# 在 app.py 中更新商品頁面路由和模板
+# 在 app.py 底部，替換原有的 @app.route('/products') 和 PROFESSIONAL_PRODUCTS_TEMPLATE
 
 @app.route('/products', methods=['GET'])
 def products_page():
@@ -664,7 +664,8 @@ def products_page():
     return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
 
 # 專業軟體服務頁面 HTML 模板 - 暗色系設計
-PROFESSIONAL_PRODUCTS_TEMPLATE = """
+# 使用原始字串 (r"...") 避免反斜線問題
+PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -1950,24 +1951,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
             // Simulate purchase process
             setTimeout(() => {
                 const plan = servicePlans[selectedPlan];
-                alert(`感謝您選擇 Scrilab 技術服務！\\n\\n服務方案：${plan.name}\\n` +
-                      `服務期限：${plan.period}\\n` +
-                      `服務費用：NT$ ${plan.price.toLocaleString()}\\n\\n` +
-                      `我們將在24小時內透過電子郵件發送服務啟用資訊。\\n` +
-                      `如有任何問題，歡迎聯繫客服。`);
-                
-                document.getElementById('inquiry-btn-text').style.display = 'inline';
-                document.getElementById('inquiry-loading').style.display = 'none';
-                
-                closeModal();
-            }, 2000);
-        }對 Scrilab 的關注！\\n\\n我們已收到您的服務諮詢：\\n\\n` +
-                      `公司：${companyName}\\n` +
-                      `聯絡人：${contactPerson}\\n` +
-                      `信箱：${contactEmail}\\n` +
-                      `電話：${contactPhone}\\n` +
-                      `方案：${plan.name}\\n\\n` +
-                      `我們的業務專員將在24小時內與您聯繫，\\n為您提供詳細的技術諮詢與報價。`);
+                alert('感謝您選擇 Scrilab 技術服務！\\n\\n服務方案：' + plan.name + '\\n' +
+                      '服務期限：' + plan.period + '\\n' +
+                      '服務費用：NT$ ' + plan.price.toLocaleString() + '\\n\\n' +
+                      '我們將在24小時內透過電子郵件發送服務啟用資訊。\\n' +
+                      '如有任何問題，歡迎聯繫客服。');
                 
                 document.getElementById('inquiry-btn-text').style.display = 'inline';
                 document.getElementById('inquiry-loading').style.display = 'none';
@@ -1977,7 +1965,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
         }
 
         function validateEmail(email) {
-            const re = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return re.test(email);
         }
 
@@ -2046,30 +2034,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
         // Add floating particles effect
         function createFloatingParticles() {
             const particlesContainer = document.createElement('div');
-            particlesContainer.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                pointer-events: none;
-                z-index: -1;
-            `;
+            particlesContainer.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1;';
             
             for (let i = 0; i < 50; i++) {
                 const particle = document.createElement('div');
-                particle.style.cssText = `
-                    position: absolute;
-                    width: 2px;
-                    height: 2px;
-                    background: var(--accent-blue);
-                    border-radius: 50%;
-                    opacity: 0.3;
-                    animation: float-particle ${10 + Math.random() * 10}s linear infinite;
-                    left: ${Math.random() * 100}%;
-                    top: ${Math.random() * 100}%;
-                    animation-delay: ${Math.random() * 10}s;
-                `;
+                particle.style.cssText = 'position: absolute; width: 2px; height: 2px; background: var(--accent-blue); border-radius: 50%; opacity: 0.3; animation: float-particle ' + (10 + Math.random() * 10) + 's linear infinite; left: ' + (Math.random() * 100) + '%; top: ' + (Math.random() * 100) + '%; animation-delay: ' + (Math.random() * 10) + 's;';
                 particlesContainer.appendChild(particle);
             }
             
@@ -2078,24 +2047,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
 
         // Add CSS for particle animation
         const style = document.createElement('style');
-        style.textContent = `
-            @keyframes float-particle {
-                0% {
-                    transform: translateY(0) translateX(0);
-                    opacity: 0;
-                }
-                10% {
-                    opacity: 0.3;
-                }
-                90% {
-                    opacity: 0.3;
-                }
-                100% {
-                    transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px);
-                    opacity: 0;
-                }
-            }
-        `;
+        style.textContent = '@keyframes float-particle { 0% { transform: translateY(0) translateX(0); opacity: 0; } 10% { opacity: 0.3; } 90% { opacity: 0.3; } 100% { transform: translateY(-100vh) translateX(' + (Math.random() * 200 - 100) + 'px); opacity: 0; } }';
         document.head.appendChild(style);
 
         // Initialize particles
