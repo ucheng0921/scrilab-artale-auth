@@ -1074,6 +1074,154 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             font-size: 1rem;
         }
 
+        /* Games Section */
+        .games {
+            padding: 8rem 2rem;
+            background: var(--bg-secondary);
+            position: relative;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .game-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .game-card.active:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .game-card.coming-soon {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .game-image {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            background: var(--bg-tertiary);
+        }
+
+        .game-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .game-card.active:hover .game-image img {
+            transform: scale(1.05);
+        }
+
+        .game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .game-card.active:hover .game-overlay {
+            opacity: 1;
+        }
+
+        .game-overlay i {
+            font-size: 2.5rem;
+            color: var(--accent-blue);
+        }
+
+        .game-info {
+            padding: 2rem;
+        }
+
+        .game-info h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .game-subtitle {
+            color: var(--accent-blue);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .game-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .game-status {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge.coming {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-orange);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .back-button {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+
+        .back-button:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            transform: translateX(-5px);
+        }
+
         /* Services Section */
         .services {
             padding: 8rem 2rem;
@@ -1266,6 +1414,13 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         .footer-simple {
             text-align: center;
             margin-bottom: 3rem;
+        }
+
+        .footer-simple h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
         }
 
         .contact-methods {
@@ -1475,7 +1630,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             }
 
             .features-grid,
-            .services-grid {
+            .services-grid,
+            .games-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -1527,9 +1683,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             <ul class="nav-links">
                 <li><a href="#home">首頁</a></li>
                 <li><a href="#features">服務特色</a></li>
-                <li><a href="#services">解決方案</a></li>
+                <li><a href="#games">遊戲服務</a></li>
                 <li><a href="#contact">聯絡我們</a></li>
-                <li><a href="/admin" class="nav-cta">管理後台</a></li>
             </ul>
         </div>
     </nav>
@@ -1544,9 +1699,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             <h1>專業<span class="highlight">自動化服務</span><br>與效率優化解決方案</h1>
             <p>Scrilab 為遊戲愛好者提供專業的自動化技術服務，透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。我們專注於為客戶提供安全、穩定、高效的遊戲體驗優化服務。</p>
             <div class="hero-buttons">
-                <a href="#services" class="btn-primary">
-                    <i class="fas fa-rocket"></i>
-                    <span>探索解決方案</span>
+                <a href="#games" class="btn-primary">
+                    <i class="fas fa-gamepad"></i>
+                    <span>瀏覽遊戲服務</span>
                 </a>
                 <a href="#contact" class="btn-secondary">
                     <i class="fas fa-phone"></i>
@@ -1617,13 +1772,66 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         </div>
     </section>
 
-    <!-- Services Section -->
-    <section id="services" class="services">
+    <!-- Games Section -->
+    <section id="games" class="games">
         <div class="container">
             <div class="section-header scroll-animate">
+                <div class="section-badge">遊戲服務</div>
+                <h2 class="section-title">選擇您的遊戲</h2>
+                <p class="section-description">我們為不同遊戲提供專業的自動化技術服務，點擊遊戲查看專屬方案</p>
+            </div>
+            
+            <div class="games-grid">
+                <!-- MapleStory Worlds - Artale -->
+                <div class="game-card scroll-animate active" onclick="showGamePlans('artale')">
+                    <div class="game-image">
+                        <img src="https://via.placeholder.com/400x250/2a2a2a/00d4ff?text=MapleStory+Worlds" alt="MapleStory Worlds - Artale">
+                        <div class="game-overlay">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        <h3>MapleStory Worlds - Artale</h3>
+                        <p class="game-subtitle">繁體中文版</p>
+                        <p class="game-description">專為 Artale 玩家打造的自動化服務，提供練等、農怪、任務等多項功能</p>
+                        <div class="game-status">
+                            <span class="status-badge active">服務中</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coming Soon Games -->
+                <div class="game-card scroll-animate coming-soon">
+                    <div class="game-image">
+                        <img src="https://via.placeholder.com/400x250/2a2a2a/666666?text=Coming+Soon" alt="Coming Soon">
+                        <div class="game-overlay">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        <h3>更多遊戲</h3>
+                        <p class="game-subtitle">即將推出</p>
+                        <p class="game-description">我們正在開發更多遊戲的自動化服務，敬請期待</p>
+                        <div class="game-status">
+                            <span class="status-badge coming">開發中</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section (Now for specific game) -->
+    <section id="services" class="services" style="display: none;">
+        <div class="container">
+            <div class="section-header scroll-animate">
+                <button class="back-button" onclick="backToGames()">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>返回遊戲列表</span>
+                </button>
                 <div class="section-badge">服務方案</div>
-                <h2 class="section-title">選擇適合的服務方案</h2>
-                <p class="section-description">我們提供多種專業技術服務方案，滿足不同玩家的遊戲需求</p>
+                <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale 專屬方案</h2>
+                <p class="section-description">選擇適合您的服務方案，享受最佳遊戲體驗</p>
             </div>
             
             <div class="services-grid">
@@ -1799,7 +2007,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <footer id="contact" class="footer">
         <div class="container">
             <div class="footer-simple">
-                <h3 style="font-size: 1.5rem; margin-bottom: 2rem; color: var(--text-primary);">聯絡我們</h3>
+                <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; color: var(--text-primary); font-weight: 600;">聯絡我們</h3>
                 <div class="contact-methods">
                     <a href="https://discord.gg/HPzNrQmN" target="_blank" class="discord-link" title="加入我們的 Discord">
                         <i class="fab fa-discord"></i>
@@ -1849,6 +2057,24 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     </div>
 
     <script>
+        // Game Selection
+        function showGamePlans(gameId) {
+            if (gameId === 'artale') {
+                document.getElementById('games').style.display = 'none';
+                document.getElementById('services').style.display = 'block';
+                document.getElementById('game-plans-title').textContent = 'MapleStory Worlds - Artale 專屬方案';
+                
+                // Smooth scroll to services section
+                document.getElementById('services').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function backToGames() {
+            document.getElementById('services').style.display = 'none';
+            document.getElementById('games').style.display = 'block';
+            document.getElementById('games').scrollIntoView({ behavior: 'smooth' });
+        }
+
         // Scroll Animation
         function animateOnScroll() {
             const elements = document.querySelectorAll('.scroll-animate');
