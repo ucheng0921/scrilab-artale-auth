@@ -15,10 +15,13 @@ import uuid as uuid_lib
 from collections import defaultdict
 import threading
 import re
+import schedule
+import time as time_module
 
 # 導入管理員模組和綠界模組
 from admin_panel import admin_bp
 from ecpay_integration import ecpay_bp
+from session_manager import session_manager, init_session_manager
 
 # 設置日誌
 logging.basicConfig(level=logging.INFO)
@@ -40,7 +43,7 @@ app.register_blueprint(ecpay_bp)
 # 全局變數
 db = None
 firebase_initialized = False
-session_store = {}  # 在生產環境中應使用 Redis
+# 移除原有的 session_store = {}
 
 # ===== IP 封鎖機制 =====
 blocked_ips = {}  # {ip: block_until_timestamp}
@@ -167,6 +170,14 @@ def init_firebase():
         if test_doc.exists:
             logger.info("Firestore 讀取測試成功")
             firebase_initialized = True
+            
+            # 初始化 Session Manager
+            init_session_manager(db)
+            logger.info("✅ Session Manager 已初始化")
+            
+            # 啟動後台清理任務
+            start_background_tasks()
+            
             logger.info("✅ Firebase 完全初始化成功")
             return True
         else:
@@ -229,6 +240,82 @@ def rate_limit(max_requests=3, time_window=300, block_on_exceed=True):
         return decorated_function
     return decorator
 
+# ===== Session 管理函數 =====
+def generate_session_token(uuid, client_ip):
+    """生成會話令牌 - 使用 Firestore"""
+    session_timeout = int(os.environ.get('SESSION_TIMEOUT', 3600))
+    return session_manager.generate_session_token(uuid, client_ip, session_timeout)
+
+def verify_session_token(token):
+    """驗證會話令牌 - 使用 Firestore"""
+    is_valid, session_data = session_manager.verify_session_token(token)
+    
+    if not is_valid:
+        return False, None
+    
+    # 獲取用戶數據
+    try:
+        if db is None:
+            logger.error("verify_session_token: db 對象為 None")
+            return False, None
+            
+        uuid = session_data.get('uuid')
+        uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
+        user_ref = db.collection('authorized_users').document(uuid_hash)
+        user_doc = user_ref.get()
+        
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            # 檢查用戶是否仍然活躍
+            if not user_data.get('active', False):
+                session_manager.revoke_session_token(token)
+                return False, None
+            return True, user_data
+        else:
+            session_manager.revoke_session_token(token)
+            return False, None
+    except Exception as e:
+        logger.error(f"User data retrieval error: {str(e)}")
+        return False, None
+
+def revoke_session_token(token):
+    """撤銷會話令牌 - 使用 Firestore"""
+    return session_manager.revoke_session_token(token)
+
+def terminate_existing_sessions(uuid_hash):
+    """終止用戶的所有現有會話 - 這個函數現在在 authenticate_user 中直接調用"""
+    pass
+
+def check_existing_session(uuid_hash):
+    """檢查用戶是否有活躍會話 - 這個函數現在在 authenticate_user 中直接調用"""
+    pass
+
+# ===== 後台任務 =====
+def cleanup_expired_sessions():
+    """定期清理過期會話"""
+    try:
+        deleted_count = session_manager.cleanup_expired_sessions()
+        if deleted_count > 0:
+            logger.info(f"🧹 定期清理：刪除了 {deleted_count} 個過期會話")
+    except Exception as e:
+        logger.error(f"❌ 定期清理失敗: {str(e)}")
+
+def run_background_tasks():
+    """運行後台任務"""
+    # 每30分鐘清理一次過期會話
+    schedule.every(30).minutes.do(cleanup_expired_sessions)
+    
+    while True:
+        schedule.run_pending()
+        time_module.sleep(60)  # 每分鐘檢查一次
+
+def start_background_tasks():
+    """啟動後台任務線程"""
+    if os.environ.get('FLASK_ENV') != 'development':  # 只在生產環境運行
+        background_thread = threading.Thread(target=run_background_tasks, daemon=True)
+        background_thread.start()
+        logger.info("🚀 後台清理任務已啟動")
+
 @app.before_request
 def force_https():
     """強制 HTTPS（生產環境）"""
@@ -254,7 +341,7 @@ def root():
     """根路徑端點"""
     return jsonify({
         'service': 'Scrilab Artale Authentication Service',
-        'version': '2.0.0',
+        'version': '2.1.0',
         'status': 'running',
         'features': [
             '🔐 用戶認證系統',
@@ -262,21 +349,23 @@ def root():
             '🎲 UUID 生成器',
             '💳 綠界金流整合 (開發中)',
             '🛡️ IP 封鎖保護',
-            '🚀 速率限制'
+            '🚀 速率限制',
+            '🔥 Firestore 會話存儲'
         ],
         'endpoints': {
             'health': '/health',
             'login': '/auth/login',
             'logout': '/auth/logout',
             'validate': '/auth/validate',
-            'admin': '/admin'
+            'admin': '/admin',
+            'session_stats': '/session-stats'
         },
         'firebase_connected': firebase_initialized
     })
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """健康檢查端點 - 改進版本"""
+    """健康檢查端點 - 包含 session 統計"""
     
     # 檢查 Firebase 狀態
     firebase_status = firebase_initialized and db is not None
@@ -286,6 +375,12 @@ def health_check():
         logger.warning("健康檢查發現 Firebase 未初始化，嘗試重新初始化...")
         firebase_status = init_firebase()
     
+    # 獲取 session 統計
+    try:
+        session_stats_data = session_manager.get_session_stats()
+    except Exception as e:
+        session_stats_data = {'error': str(e)}
+    
     return jsonify({
         'status': 'healthy' if firebase_status else 'degraded',
         'timestamp': datetime.now().isoformat(),
@@ -293,9 +388,10 @@ def health_check():
         'firebase_initialized': firebase_initialized,
         'db_object_exists': db is not None,
         'service': 'artale-auth-service',
-        'version': '2.0.0',
+        'version': '2.1.0',
         'environment': os.environ.get('FLASK_ENV', 'unknown'),
-        'admin_panel': 'available at /admin'
+        'admin_panel': 'available at /admin',
+        'session_storage': session_stats_data
     })
 
 @app.route('/auth/login', methods=['POST'])
@@ -429,10 +525,42 @@ def validate_session():
             'error': 'Validation failed'
         }), 500
 
-def authenticate_user(uuid, force_login=True, client_ip='unknown'):
-    """認證用戶 - 優化 Firebase 讀取版本"""
+@app.route('/session-stats', methods=['GET'])
+def session_stats():
+    """Session 統計信息"""
     try:
-        # 再次檢查 db 對象
+        stats = session_manager.get_session_stats()
+        return jsonify({
+            'success': True,
+            'timestamp': datetime.now().isoformat(),
+            **stats
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/cleanup-sessions', methods=['POST'])
+@rate_limit(max_requests=5, time_window=300)
+def manual_cleanup_sessions():
+    """手動清理過期會話"""
+    try:
+        deleted_count = session_manager.cleanup_expired_sessions()
+        return jsonify({
+            'success': True,
+            'message': f'已清理 {deleted_count} 個過期會話',
+            'deleted_count': deleted_count
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+def authenticate_user(uuid, force_login=True, client_ip='unknown'):
+    """認證用戶 - 使用 Firestore Session Manager"""
+    try:
         if db is None:
             logger.error("authenticate_user: db 對象為 None")
             return False, "認證服務不可用", None
@@ -465,11 +593,11 @@ def authenticate_user(uuid, force_login=True, client_ip='unknown'):
             if datetime.now() > expires_at:
                 return False, "帳號已過期", None
         
-        # 處理現有會話
+        # 處理現有會話 - 使用原始 UUID（不是 hash）
         if force_login:
-            terminate_existing_sessions(uuid_hash)
+            session_manager.terminate_user_sessions(uuid)
         else:
-            has_active = check_existing_session(uuid_hash)
+            has_active = session_manager.check_existing_session(uuid)
             if has_active:
                 return False, "該帳號已在其他地方登入", None
         
@@ -494,100 +622,6 @@ def authenticate_user(uuid, force_login=True, client_ip='unknown'):
     except Exception as e:
         logger.error(f"Authentication error: {str(e)}")
         return False, f"認證過程發生錯誤: {str(e)}", None
-
-def generate_session_token(uuid, client_ip):
-    """生成會話令牌"""
-    token = secrets.token_urlsafe(32)
-    now = time.time()
-    expires_at = now + int(os.environ.get('SESSION_TIMEOUT', 3600))
-    
-    # 存儲會話信息
-    session_store[token] = {
-        'uuid': uuid,
-        'created_at': now,
-        'expires_at': expires_at,
-        'last_activity': now,
-        'client_ip': client_ip
-    }
-    
-    return token
-
-def verify_session_token(token):
-    """驗證會話令牌"""
-    if token not in session_store:
-        return False, None
-    
-    session = session_store[token]
-    now = time.time()
-    
-    # 檢查是否過期
-    if now > session.get('expires_at', 0):
-        del session_store[token]
-        return False, None
-    
-    # 更新最後活動時間
-    session['last_activity'] = now
-    
-    # 延長會話（如果快過期了）
-    time_left = session['expires_at'] - now
-    if time_left < 300:  # 少於5分鐘時自動延長
-        session['expires_at'] = now + int(os.environ.get('SESSION_TIMEOUT', 3600))
-    
-    # 獲取用戶數據
-    try:
-        if db is None:
-            logger.error("verify_session_token: db 對象為 None")
-            return False, None
-            
-        uuid_hash = hashlib.sha256(session['uuid'].encode()).hexdigest()
-        user_ref = db.collection('authorized_users').document(uuid_hash)
-        user_doc = user_ref.get()
-        
-        if user_doc.exists:
-            user_data = user_doc.to_dict()
-            # 檢查用戶是否仍然活躍
-            if not user_data.get('active', False):
-                del session_store[token]
-                return False, None
-            return True, user_data
-        else:
-            del session_store[token]
-            return False, None
-    except Exception as e:
-        logger.error(f"User data retrieval error: {str(e)}")
-        return False, None
-
-def revoke_session_token(token):
-    """撤銷會話令牌"""
-    if token in session_store:
-        del session_store[token]
-        return True
-    return False
-
-def terminate_existing_sessions(uuid_hash):
-    """終止用戶的所有現有會話"""
-    tokens_to_remove = []
-    for token, session_data in session_store.items():
-        if isinstance(session_data, dict) and session_data.get('uuid'):
-            session_uuid_hash = hashlib.sha256(session_data['uuid'].encode()).hexdigest()
-            if session_uuid_hash == uuid_hash:
-                tokens_to_remove.append(token)
-    
-    for token in tokens_to_remove:
-        del session_store[token]
-    
-    logger.info(f"Terminated {len(tokens_to_remove)} existing sessions for user")
-
-def check_existing_session(uuid_hash):
-    """檢查用戶是否有活躍會話"""
-    now = time.time()
-    for session_data in session_store.values():
-        if isinstance(session_data, dict) and session_data.get('uuid'):
-            session_uuid_hash = hashlib.sha256(session_data['uuid'].encode()).hexdigest()
-            if (session_uuid_hash == uuid_hash and 
-                now < session_data.get('expires_at', 0)):
-                return True
-    return False
 
 def log_unauthorized_attempt(uuid_hash, client_ip):
     """記錄未授權登入嘗試"""
@@ -627,5 +661,6 @@ if __name__ == '__main__':
     logger.info(f"   Firebase initialized: {firebase_initialized}")
     logger.info(f"   Database object exists: {db is not None}")
     logger.info(f"   Admin panel: http://localhost:{port}/admin")
+    logger.info(f"   Session storage: Firestore")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
