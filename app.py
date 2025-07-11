@@ -2237,10 +2237,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         const statsObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    setTimeout(() => animateCounter('projects-count', 5000, '+'), 200);
-                    setTimeout(() => animateCounter('clients-count', 3000, '+'), 400);
+                    setTimeout(() => animateCounter('projects-count', 100, '+'), 200);
+                    setTimeout(() => animateCounter('clients-count', 50, '+'), 400);
                     setTimeout(() => animateCounter('uptime', 99.9), 600);
-                    setTimeout(() => animateCounter('satisfaction', 4.9), 800);
+                    setTimeout(() => animateCounter('satisfaction', 5), 800);
                     statsObserver.unobserve(entry.target);
                 }
             });
