@@ -18,8 +18,9 @@ import re
 import schedule
 import time as time_module
 
-# 導入管理員模組和會話管理器
+# 導入管理員模組和綠界模組
 from admin_panel import admin_bp
+from ecpay_integration import ecpay_bp
 from session_manager import session_manager, init_session_manager
 
 # 設置日誌
@@ -37,10 +38,12 @@ CORS(app, origins=allowed_origins, supports_credentials=True)
 
 # 註冊藍圖
 app.register_blueprint(admin_bp)
+app.register_blueprint(ecpay_bp)
 
 # 全局變數
 db = None
 firebase_initialized = False
+# 移除原有的 session_store = {}
 
 # ===== IP 封鎖機制 =====
 blocked_ips = {}  # {ip: block_until_timestamp}
@@ -279,6 +282,14 @@ def revoke_session_token(token):
     """撤銷會話令牌 - 使用 Firestore"""
     return session_manager.revoke_session_token(token)
 
+def terminate_existing_sessions(uuid_hash):
+    """終止用戶的所有現有會話 - 這個函數現在在 authenticate_user 中直接調用"""
+    pass
+
+def check_existing_session(uuid_hash):
+    """檢查用戶是否有活躍會話 - 這個函數現在在 authenticate_user 中直接調用"""
+    pass
+
 # ===== 後台任務 =====
 def cleanup_expired_sessions():
     """定期清理過期會話"""
@@ -330,16 +341,16 @@ def root():
     """根路徑端點"""
     return jsonify({
         'service': 'Scrilab Artale Authentication Service',
-        'version': '2.2.0',
+        'version': '2.1.0',
         'status': 'running',
         'features': [
             '🔐 用戶認證系統',
             '👥 管理員面板',
             '🎲 UUID 生成器',
+            '💳 綠界金流整合 (開發中)',
             '🛡️ IP 封鎖保護',
             '🚀 速率限制',
-            '🔥 Firestore 會話存儲',
-            '🛍️ 商品展示頁面'
+            '🔥 Firestore 會話存儲'
         ],
         'endpoints': {
             'health': '/health',
@@ -347,8 +358,7 @@ def root():
             'logout': '/auth/logout',
             'validate': '/auth/validate',
             'admin': '/admin',
-            'session_stats': '/session-stats',
-            'products': '/products'
+            'session_stats': '/session-stats'
         },
         'firebase_connected': firebase_initialized
     })
@@ -378,7 +388,7 @@ def health_check():
         'firebase_initialized': firebase_initialized,
         'db_object_exists': db is not None,
         'service': 'artale-auth-service',
-        'version': '2.2.0',
+        'version': '2.1.0',
         'environment': os.environ.get('FLASK_ENV', 'unknown'),
         'admin_panel': 'available at /admin',
         'session_storage': session_stats_data
@@ -651,7 +661,6 @@ if __name__ == '__main__':
     logger.info(f"   Firebase initialized: {firebase_initialized}")
     logger.info(f"   Database object exists: {db is not None}")
     logger.info(f"   Admin panel: http://localhost:{port}/admin")
-    logger.info(f"   Products page: http://localhost:{port}/products")
     logger.info(f"   Session storage: Firestore")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
