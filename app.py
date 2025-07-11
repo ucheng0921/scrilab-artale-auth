@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, abort, redirect
+from flask import Flask, request, jsonify, abort, redirect, render_template_string
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -18,9 +18,8 @@ import re
 import schedule
 import time as time_module
 
-# 導入管理員模組和綠界模組
+# 導入管理員模組和會話管理器
 from admin_panel import admin_bp
-from ecpay_integration import ecpay_bp
 from session_manager import session_manager, init_session_manager
 
 # 設置日誌
@@ -38,12 +37,10 @@ CORS(app, origins=allowed_origins, supports_credentials=True)
 
 # 註冊藍圖
 app.register_blueprint(admin_bp)
-app.register_blueprint(ecpay_bp)
 
 # 全局變數
 db = None
 firebase_initialized = False
-# 移除原有的 session_store = {}
 
 # ===== IP 封鎖機制 =====
 blocked_ips = {}  # {ip: block_until_timestamp}
@@ -282,14 +279,6 @@ def revoke_session_token(token):
     """撤銷會話令牌 - 使用 Firestore"""
     return session_manager.revoke_session_token(token)
 
-def terminate_existing_sessions(uuid_hash):
-    """終止用戶的所有現有會話 - 這個函數現在在 authenticate_user 中直接調用"""
-    pass
-
-def check_existing_session(uuid_hash):
-    """檢查用戶是否有活躍會話 - 這個函數現在在 authenticate_user 中直接調用"""
-    pass
-
 # ===== 後台任務 =====
 def cleanup_expired_sessions():
     """定期清理過期會話"""
@@ -341,16 +330,16 @@ def root():
     """根路徑端點"""
     return jsonify({
         'service': 'Scrilab Artale Authentication Service',
-        'version': '2.1.0',
+        'version': '2.2.0',
         'status': 'running',
         'features': [
             '🔐 用戶認證系統',
             '👥 管理員面板',
             '🎲 UUID 生成器',
-            '💳 綠界金流整合 (開發中)',
             '🛡️ IP 封鎖保護',
             '🚀 速率限制',
-            '🔥 Firestore 會話存儲'
+            '🔥 Firestore 會話存儲',
+            '🛍️ 商品展示頁面'
         ],
         'endpoints': {
             'health': '/health',
@@ -358,7 +347,8 @@ def root():
             'logout': '/auth/logout',
             'validate': '/auth/validate',
             'admin': '/admin',
-            'session_stats': '/session-stats'
+            'session_stats': '/session-stats',
+            'products': '/products'
         },
         'firebase_connected': firebase_initialized
     })
@@ -388,7 +378,7 @@ def health_check():
         'firebase_initialized': firebase_initialized,
         'db_object_exists': db is not None,
         'service': 'artale-auth-service',
-        'version': '2.1.0',
+        'version': '2.2.0',
         'environment': os.environ.get('FLASK_ENV', 'unknown'),
         'admin_panel': 'available at /admin',
         'session_storage': session_stats_data
@@ -661,6 +651,1097 @@ if __name__ == '__main__':
     logger.info(f"   Firebase initialized: {firebase_initialized}")
     logger.info(f"   Database object exists: {db is not None}")
     logger.info(f"   Admin panel: http://localhost:{port}/admin")
+    logger.info(f"   Products page: http://localhost:{port}/products")
     logger.info(f"   Session storage: Firestore")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
+
+# 在 app.py 中添加商品頁面路由
+
+@app.route('/products', methods=['GET'])
+def products_page():
+    """商品展示頁面"""
+    return render_template_string(PRODUCTS_TEMPLATE)
+
+# 商品頁面 HTML 模板
+PRODUCTS_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artale Script - 專業遊戲腳本解決方案</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #4a6741 100%);
+            --text-primary: #2c3e50;
+            --text-secondary: #64748b;
+            --bg-light: #f8fafc;
+            --shadow-light: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.15);
+            --border-radius: 20px;
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-gradient);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(1deg); }
+            66% { transform: translate(-20px, 20px) rotate(-1deg); }
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            color: white;
+            z-index: 2;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            animation: slideInUp 1s ease-out;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.9;
+            max-width: 600px;
+            animation: slideInUp 1s ease-out 0.2s both;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+            animation: slideInUp 1s ease-out 0.4s both;
+        }
+
+        .cta-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 2rem;
+            background: var(--bg-light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-title p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-gradient);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--accent-gradient);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Products Section */
+        .products {
+            padding: 6rem 2rem;
+            background: white;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+            margin-top: 4rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .product-header {
+            padding: 2rem;
+            background: var(--primary-gradient);
+            color: white;
+            text-align: center;
+            position: relative;
+        }
+
+        .product-header.premium {
+            background: var(--secondary-gradient);
+        }
+
+        .product-header.enterprise {
+            background: var(--dark-gradient);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: #ff6b6b;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .product-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-subtitle {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .product-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 1rem 0;
+        }
+
+        .product-price .currency {
+            font-size: 1rem;
+            vertical-align: top;
+        }
+
+        .product-price .period {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .product-body {
+            padding: 2rem;
+        }
+
+        .product-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .product-features li {
+            padding: 0.75rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .product-features li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-check {
+            color: #10b981;
+            font-size: 1.1rem;
+        }
+
+        .product-button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .product-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .product-button.premium {
+            background: var(--secondary-gradient);
+        }
+
+        .product-button.enterprise {
+            background: var(--dark-gradient);
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 4rem 2rem;
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-item p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 3rem 2rem 2rem;
+            background: #1a202c;
+            color: white;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #cbd5e0;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer p {
+            color: #718096;
+            margin-top: 1rem;
+        }
+
+        /* Purchase Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .plan-info {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+
+        .form-group {
+            margin: 1rem 0;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-cancel {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .features-grid,
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modal-content {
+                margin: 1rem;
+            }
+        }
+
+        /* Scroll Animations */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease-out;
+        }
+
+        .scroll-animate.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-robot"></i> Artale Script
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home">首頁</a></li>
+                <li><a href="#features">功能</a></li>
+                <li><a href="#products">方案</a></li>
+                <li><a href="#contact">聯絡</a></li>
+                <li><a href="/admin" style="color: #667eea;">管理後台</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>🚀 專業遊戲腳本解決方案</h1>
+            <p>Artale Script 提供最先進的自動化遊戲腳本，讓您輕鬆提升遊戲效率。安全、穩定、高效能的專業級解決方案。</p>
+            <a href="#products" class="cta-button">
+                <i class="fas fa-rocket"></i> 立即體驗
+            </a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-title scroll-animate">
+                <h2>🎯 核心優勢</h2>
+                <p>我們致力於提供最優質的遊戲腳本服務，讓您的遊戲體驗更上一層樓</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card scroll-animate">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>🛡️ 安全防護</h3>
+                    <p>採用業界領先的加密技術，確保您的帳號安全。內建反檢測機制，讓您安心使用。</p>
+                </div>
+                
+                <div class="feature-card scroll-animate">
+                    <div class="feature-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h3>⚙️ 智能配置</h3>
+                    <p>簡單易用的配置介面，支援多種遊戲模式。智能學習系統，自動優化腳本性能。</p>
+                </div>
+                
+                <div class="feature-card scroll-animate">
+                    <div class="feature-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3>🚀 高效執行</h3>
+                    <p>優化的演算法確保腳本高效運行，減少資源消耗。支援24/7不間斷運行。</p>
+                </div>
+                
+                <div class="feature-card scroll-animate">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3>💬 專業支援</h3>
+                    <p>提供完整的技術支援和使用教學。專業客服團隊隨時為您解決問題。</p>
+                </div>
+                
+                <div class="feature-card scroll-animate">
+                    <div class="feature-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <h3>🔄 即時更新</h3>
+                    <p>腳本自動更新，確保與遊戲版本同步。新功能持續開發，讓您始終領先。</p>
+                </div>
+                
+                <div class="feature-card scroll-animate">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>📊 數據分析</h3>
+                    <p>詳細的執行報告和數據分析，幫助您了解腳本效能和遊戲進度。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="products" class="products">
+        <div class="container">
+            <div class="section-title scroll-animate">
+                <h2>💎 選擇您的方案</h2>
+                <p>我們提供多種方案選擇，滿足不同用戶的需求。所有方案都包含核心功能和技術支援。</p>
+            </div>
+            
+            <div class="products-grid">
+                <!-- 體驗版 -->
+                <div class="product-card scroll-animate">
+                    <div class="product-header">
+                        <div class="product-title">🌟 體驗版</div>
+                        <div class="product-subtitle">新手入門首選</div>
+                        <div class="product-price">
+                            <span class="currency">NT$</span>99
+                            <span class="period">/7天</span>
+                        </div>
+                    </div>
+                    <div class="product-body">
+                        <ul class="product-features">
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>基礎腳本功能</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>標準安全防護</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>社群技術支援</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>基礎數據報告</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>教學文件</span>
+                            </li>
+                        </ul>
+                        <button class="product-button" onclick="selectPlan('trial_7')">
+                            <i class="fas fa-star"></i> 開始體驗
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 標準版 -->
+                <div class="product-card scroll-animate">
+                    <div class="product-header premium">
+                        <div class="popular-badge">最受歡迎</div>
+                        <div class="product-title">🔥 標準版</div>
+                        <div class="product-subtitle">最佳性價比選擇</div>
+                        <div class="product-price">
+                            <span class="currency">NT$</span>299
+                            <span class="period">/30天</span>
+                        </div>
+                    </div>
+                    <div class="product-body">
+                        <ul class="product-features">
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>完整腳本功能</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>高級安全防護</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>優先技術支援</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>詳細數據分析</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>自定義配置</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>多設備支援</span>
+                            </li>
+                        </ul>
+                        <button class="product-button premium" onclick="selectPlan('monthly_30')">
+                            <i class="fas fa-crown"></i> 立即購買
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 專業版 -->
+                <div class="product-card scroll-animate">
+                    <div class="product-header enterprise">
+                        <div class="product-title">💼 專業版</div>
+                        <div class="product-subtitle">進階用戶專屬</div>
+                        <div class="product-price">
+                            <span class="currency">NT$</span>799
+                            <span class="period">/90天</span>
+                        </div>
+                    </div>
+                    <div class="product-body">
+                        <ul class="product-features">
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>所有高級功能</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>企業級安全</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>1對1專屬支援</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>實時監控面板</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>API 整合支援</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>無限設備授權</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>優先新功能體驗</span>
+                            </li>
+                        </ul>
+                        <button class="product-button enterprise" onclick="selectPlan('quarterly_90')">
+                            <i class="fas fa-diamond"></i> 升級專業版
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid scroll-animate">
+                <div class="stat-item">
+                    <h3 id="users-count">10,000+</h3>
+                    <p>活躍用戶</p>
+                </div>
+                <div class="stat-item">
+                    <h3 id="uptime">99.9%</h3>
+                    <p>系統穩定性</p>
+                </div>
+                <div class="stat-item">
+                    <h3 id="support">24/7</h3>
+                    <p>技術支援</p>
+                </div>
+                <div class="stat-item">
+                    <h3 id="satisfaction">4.9★</h3>
+                    <p>用戶滿意度</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="#home">首頁</a>
+                <a href="#features">功能介紹</a>
+                <a href="#products">方案價格</a>
+                <a href="mailto:support@artale-script.com">技術支援</a>
+                <a href="/admin">管理後台</a>
+                <a href="#">使用條款</a>
+                <a href="#">隱私政策</a>
+            </div>
+            <p>&copy; 2024 Artale Script. 版權所有 | 專業遊戲腳本解決方案</p>
+        </div>
+    </footer>
+
+    <!-- Purchase Modal -->
+    <div id="purchase-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">購買確認</h3>
+            <div id="selected-plan-info" class="plan-info">
+                <!-- Plan info will be inserted here -->
+            </div>
+            <div class="form-group">
+                <input type="email" id="user-email" placeholder="請輸入您的電子郵件" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="user-name" placeholder="姓名（可選）" class="form-input">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="proceedToPurchase()" id="purchase-btn">
+                    <span id="purchase-btn-text">確認購買</span>
+                    <div class="loading" id="purchase-loading" style="display: none;"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Scroll Animation
+        function animateOnScroll() {
+            const elements = document.querySelectorAll('.scroll-animate');
+            elements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 150;
+                
+                if (elementTop < window.innerHeight - elementVisible) {
+                    element.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', animateOnScroll);
+        animateOnScroll();
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 100) {
+                navbar.style.background = 'rgba(255, 255, 255, 0.98)';
+                navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
+            } else {
+                navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+                navbar.style.boxShadow = 'none';
+            }
+        });
+
+        // Plan selection and purchase flow
+        const plans = {
+            'trial_7': {
+                name: '🌟 體驗版',
+                price: 99,
+                period: '7天',
+                description: '適合新手體驗的入門方案'
+            },
+            'monthly_30': {
+                name: '🔥 標準版',
+                price: 299,
+                period: '30天',
+                description: '最受歡迎的性價比選擇'
+            },
+            'quarterly_90': {
+                name: '💼 專業版',
+                price: 799,
+                period: '90天',
+                description: '進階用戶的專業方案'
+            }
+        };
+
+        let selectedPlan = null;
+
+        function selectPlan(planId) {
+            selectedPlan = planId;
+            const plan = plans[planId];
+            
+            document.getElementById('selected-plan-info').innerHTML = `
+                <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">${plan.name}</h4>
+                <p style="margin: 0 0 1rem 0; color: var(--text-secondary);">${plan.description}</p>
+                <div style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary);">
+                    NT$ ${plan.price} <span style="font-size: 1rem; font-weight: normal;">/ ${plan.period}</span>
+                </div>
+            `;
+            
+            document.getElementById('purchase-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('purchase-modal').style.display = 'none';
+            document.getElementById('user-email').value = '';
+            document.getElementById('user-name').value = '';
+        }
+
+        function proceedToPurchase() {
+            const email = document.getElementById('user-email').value.trim();
+            const name = document.getElementById('user-name').value.trim();
+            
+            if (!email) {
+                alert('請輸入電子郵件地址');
+                return;
+            }
+            
+            if (!validateEmail(email)) {
+                alert('請輸入有效的電子郵件地址');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('purchase-btn-text').style.display = 'none';
+            document.getElementById('purchase-loading').style.display = 'inline-block';
+            
+            // 準備與歐付寶整合
+            setTimeout(() => {
+                alert(`感謝您選擇 ${plans[selectedPlan].name}！\\n\\n我們即將推出線上付款功能，\\n目前請聯繫客服完成購買。\\n\\n電子郵件：${email}\\n方案：${plans[selectedPlan].name}\\n金額：NT$ ${plans[selectedPlan].price}`);
+                
+                document.getElementById('purchase-btn-text').style.display = 'inline';
+                document.getElementById('purchase-loading').style.display = 'none';
+                
+                closeModal();
+            }, 2000);
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+            return re.test(email);
+        }
+
+        // Counter animation for stats
+        function animateCounter(id, target, duration = 2000) {
+            const element = document.getElementById(id);
+            const start = 0;
+            const increment = target / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target.toLocaleString() + (id === 'satisfaction' ? '★' : id === 'uptime' ? '%' : id === 'support' ? '' : '+');
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString() + (id === 'satisfaction' ? '★' : id === 'uptime' ? '%' : id === 'support' ? '' : '+');
+                }
+            }, 16);
+        }
+
+        // Stats animation observer
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => animateCounter('users-count', 10000), 200);
+                    setTimeout(() => animateCounter('uptime', 99.9), 400);
+                    setTimeout(() => animateCounter('satisfaction', 4.9), 800);
+                    statsObserver.unobserve(entry.target);
+                }
+            });
+        });
+
+        const statsSection = document.querySelector('.stats');
+        if (statsSection) {
+            statsObserver.observe(statsSection);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('purchase-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Escape key to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
+"""
