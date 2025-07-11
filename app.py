@@ -1791,7 +1791,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <div class="game-info">
                         <h3>MapleStory Worlds - Artale</h3>
                         <p class="game-subtitle">繁體中文版</p>
-                        <p class="game-description">專為 Artale 玩家打造的自動化服務，提供練等、農怪、任務等多項功能</p>
+                        <p class="game-description">專為 Artale 玩家打造的優化解決方案</p>
                         <div class="game-status">
                             <span class="status-badge active">服務中</span>
                         </div>
@@ -1810,7 +1810,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <div class="game-info">
                         <h3>更多遊戲</h3>
                         <p class="game-subtitle">即將推出</p>
-                        <p class="game-description">我們正在開發更多遊戲的自動化服務，敬請期待</p>
+                        <p class="game-description">我們正在開發更多遊戲的優化解決方案，敬請期待</p>
                         <div class="game-status">
                             <span class="status-badge coming">開發中</span>
                         </div>
