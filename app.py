@@ -656,8 +656,6 @@ if __name__ == '__main__':
     
     app.run(host='0.0.0.0', port=port, debug=debug)
 
-# 在 app.py 底部，替換原有的 @app.route('/products') 和 PROFESSIONAL_PRODUCTS_TEMPLATE
-
 @app.route('/products', methods=['GET'])
 def products_page():
     """軟體服務展示頁面"""
@@ -1785,7 +1783,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- MapleStory Worlds - Artale -->
                 <div class="game-card scroll-animate active" onclick="showGamePlans('artale')">
                     <div class="game-image">
-                        <img src="https://via.placeholder.com/400x250/2a2a2a/00d4ff?text=MapleStory+Worlds" alt="MapleStory Worlds - Artale">
+                        <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale">
                         <div class="game-overlay">
                             <i class="fas fa-arrow-right"></i>
                         </div>
@@ -1803,7 +1801,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- Coming Soon Games -->
                 <div class="game-card scroll-animate coming-soon">
                     <div class="game-image">
-                        <img src="https://via.placeholder.com/400x250/2a2a2a/666666?text=Coming+Soon" alt="Coming Soon">
+                        <img src="/static/images/coming-soon.jpg" alt="Coming Soon">
+                        #<img src="https://via.placeholder.com/400x250/2a2a2a/666666?text=Coming+Soon" alt="Coming Soon">
                         <div class="game-overlay">
                             <i class="fas fa-clock"></i>
                         </div>
