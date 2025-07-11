@@ -656,8 +656,6 @@ if __name__ == '__main__':
     
     app.run(host='0.0.0.0', port=port, debug=debug)
 
-# 在 app.py 中添加商品頁面路由
-
 # 在 app.py 中更新商品頁面路由和模板
 
 @app.route('/products', methods=['GET'])
@@ -1496,7 +1494,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
                 <li><a href="#home">首頁</a></li>
                 <li><a href="#features">服務特色</a></li>
                 <li><a href="#services">解決方案</a></li>
-                <li><a href="#stats">數據統計</a></li>
                 <li><a href="#contact">聯絡我們</a></li>
                 <li><a href="/admin" class="nav-cta">管理後台</a></li>
             </ul>
@@ -1741,7 +1738,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
     </section>
 
     <!-- Stats Section -->
-    <section id="stats" class="stats">
+    <section class="stats">
         <div class="container">
             <div class="stats-grid scroll-animate">
                 <div class="stat-item">
@@ -1771,28 +1768,28 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
                 <div class="footer-section">
                     <h3>關於 Scrilab</h3>
                     <ul>
-                        <li><a href="#features">服務介紹</a></li>
-                        <li><a href="#services">技術團隊</a></li>
-                        <li><a href="#stats">安全保障</a></li>
-                        <li><a href="#contact">服務更新</a></li>
+                        <li><a href="#about">服務介紹</a></li>
+                        <li><a href="#team">技術團隊</a></li>
+                        <li><a href="#safety">安全保障</a></li>
+                        <li><a href="#news">服務更新</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h3>服務項目</h3>
                     <ul>
-                        <li><a href="#services">自動化服務</a></li>
-                        <li><a href="#services">效率優化</a></li>
-                        <li><a href="#services">個人化定制</a></li>
-                        <li><a href="#stats">數據分析</a></li>
+                        <li><a href="#automation">自動化服務</a></li>
+                        <li><a href="#efficiency">效率優化</a></li>
+                        <li><a href="#customization">個人化定制</a></li>
+                        <li><a href="#analysis">數據分析</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h3>客戶支援</h3>
                     <ul>
                         <li><a href="mailto:support@scrilab.com">客服信箱</a></li>
-                        <li><a href="#services">使用教學</a></li>
+                        <li><a href="#tutorial">使用教學</a></li>
                         <li><a href="/admin">會員專區</a></li>
-                        <li><a href="#contact">常見問題</a></li>
+                        <li><a href="#faq">常見問題</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
@@ -1800,8 +1797,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
                     <ul>
                         <li><a href="mailto:info@scrilab.com">商務合作：info@scrilab.com</a></li>
                         <li><a href="mailto:support@scrilab.com">技術支援：support@scrilab.com</a></li>
-                        <li><a href="#contact">服務時間：24小時線上服務</a></li>
-                        <li><a href="#contact">回應時間：1-24小時內回覆</a></li>
+                        <li><a href="#business-hours">服務時間：24小時線上服務</a></li>
+                        <li><a href="#response-time">回應時間：1-24小時內回覆</a></li>
                     </ul>
                 </div>
             </div>
