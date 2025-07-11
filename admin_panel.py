@@ -53,8 +53,6 @@ ADMIN_TEMPLATE = """
         .tab-content.active { display: block; }
         .uuid-generator { background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
         .uuid-preview { background: #333; color: #0f0; padding: 10px; border-radius: 4px; font-family: monospace; margin: 10px 0; }
-        .payment-section { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-        .payment-info { background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 15px; margin-bottom: 15px; }
         .login-prompt { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
         .login-form { max-width: 400px; margin: 0 auto; }
         .login-form input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
@@ -64,7 +62,7 @@ ADMIN_TEMPLATE = """
     <div class="container">
         <div class="header">
             <h1>🎮 Artale Script 用戶管理系統</h1>
-            <p>管理所有授權用戶、權限和有效期 | 🔗 綠界金流整合</p>
+            <p>管理所有授權用戶、權限和有效期</p>
             <div style="margin-top: 10px;">
                 <button onclick="showDebugInfo()" class="btn btn-info" style="font-size: 12px;">🔍 調試信息</button>
                 <button onclick="clearToken()" class="btn btn-warning" style="font-size: 12px;">🔄 重置密碼</button>
@@ -98,15 +96,14 @@ ADMIN_TEMPLATE = """
                     <p>已過期</p>
                 </div>
                 <div class="stat-card">
-                    <h3 id="total-revenue">-</h3>
-                    <p>總收益 (NT$)</p>
+                    <h3 id="permanent-users">-</h3>
+                    <p>永久用戶</p>
                 </div>
             </div>
             
             <!-- 分頁標籤 -->
             <div class="tabs">
                 <div class="tab active" onclick="switchTab('user-management')">👥 用戶管理</div>
-                <div class="tab" onclick="switchTab('payment-management')">💳 付款管理</div>
                 <div class="tab" onclick="switchTab('uuid-generator')">🔧 UUID 生成器</div>
             </div>
             
@@ -161,7 +158,7 @@ ADMIN_TEMPLATE = """
                                 <th>到期時間</th>
                                 <th>登入次數</th>
                                 <th>創建時間</th>
-                                <th>付款狀態</th>
+                                <th>備註</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -215,23 +212,6 @@ ADMIN_TEMPLATE = """
                             <button onclick="useGeneratedUUID()" class="btn">➡️ 使用此 UUID 創建用戶</button>
                             <button onclick="checkUUIDExists()" class="btn btn-warning">🔍 檢查是否已存在</button>
                         </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 付款管理分頁 -->
-            <div id="payment-management" class="tab-content">
-                <div class="payment-section">
-                    <h2>💳 綠界金流整合</h2>
-                    <div class="payment-info">
-                        <h4>🚀 即將推出功能:</h4>
-                        <ul>
-                            <li>✅ 自動付款處理</li>
-                            <li>✅ 付款成功自動發放序號</li>
-                            <li>✅ 訂單狀態追蹤</li>
-                            <li>✅ 退款處理</li>
-                            <li>✅ 收益統計</li>
-                        </ul>
                     </div>
                 </div>
             </div>
@@ -533,7 +513,7 @@ ADMIN_TEMPLATE = """
                     <td>${user.expires_at || '永久'}</td>
                     <td>${user.login_count || 0}</td>
                     <td>${user.created_at || 'Unknown'}</td>
-                    <td>${user.payment_status || '手動創建'}</td>
+                    <td>${user.notes || '-'}</td>
                     <td>
                         <button onclick="editUser('${user.document_id}', '${user.display_name}')" class="btn">編輯</button>
                         <button onclick="toggleUser('${user.document_id}', ${!isActive})" class="btn btn-warning">
@@ -561,11 +541,12 @@ ADMIN_TEMPLATE = """
             const total = users.length;
             const active = users.filter(u => u.active).length;
             const expired = users.filter(u => u.expires_at && new Date(u.expires_at) < new Date()).length;
+            const permanent = users.filter(u => !u.expires_at).length;
             
             document.getElementById('total-users').textContent = total;
             document.getElementById('active-users').textContent = active;
             document.getElementById('expired-users').textContent = expired;
-            document.getElementById('total-revenue').textContent = '0';
+            document.getElementById('permanent-users').textContent = permanent;
         }
 
         // 匯出 CSV
@@ -576,7 +557,7 @@ ADMIN_TEMPLATE = """
             }
             
             const csvContent = [
-                ['顯示名稱', 'UUID', '狀態', '到期時間', '登入次數', '創建時間', '付款狀態'].join(','),
+                ['顯示名稱', 'UUID', '狀態', '到期時間', '登入次數', '創建時間', '備註'].join(','),
                 ...allUsers.map(user => [
                     user.display_name,
                     user.original_uuid,
@@ -584,7 +565,7 @@ ADMIN_TEMPLATE = """
                     user.expires_at || '永久',
                     user.login_count,
                     user.created_at,
-                    user.payment_status || '手動創建'
+                    user.notes || ''
                 ].join(','))
             ].join('\\n');
             
@@ -717,10 +698,7 @@ ADMIN_TEMPLATE = """
                     alert('用戶已刪除');
                     loadUsers();
                 } else {
-                    alert('刪除失敗: ' + data.error);
-                }
-            } catch (error) {
-                alert('刪除錯誤: ' + error.message);
+                    alert('刪除錯誤: ' + error.message);
             }
         }
 
@@ -845,8 +823,7 @@ def get_all_users():
                 'login_count': user_data.get('login_count', 0),
                 'created_at': created_at_str,
                 'permissions': user_data.get('permissions', {}),
-                'notes': user_data.get('notes', ''),
-                'payment_status': user_data.get('payment_status', '手動創建')
+                'notes': user_data.get('notes', '')
             })
         
         # 按創建時間排序
@@ -904,8 +881,7 @@ def create_user_admin():
             "created_at": datetime.now(),
             "created_by": "admin_dashboard",
             "login_count": 0,
-            "notes": f"管理員創建 - {datetime.now().strftime('%Y-%m-%d')}",
-            "payment_status": "手動創建"
+            "notes": f"管理員創建 - {datetime.now().strftime('%Y-%m-%d')}"
         }
         
         if expires_at:
@@ -1074,38 +1050,4 @@ def check_uuid_exists():
         
     except Exception as e:
         logger.error(f"Check UUID error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@admin_bp.route('/generate-uuid', methods=['POST'])
-def generate_uuid_api():
-    """API 生成 UUID"""
-    if not check_admin_token(request):
-        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-    
-    try:
-        data = request.get_json() or {}
-        prefix = data.get('prefix', 'artale')
-        custom_id = data.get('custom_id', '')
-        date_format = data.get('date_format', 'YYYYMMDD')
-        
-        # 生成 UUID
-        new_uuid = generate_secure_uuid(prefix, custom_id, date_format)
-        
-        # 檢查是否已存在
-        from app import db
-        if db is not None:
-            uuid_hash = hashlib.sha256(new_uuid.encode()).hexdigest()
-            user_ref = db.collection('authorized_users').document(uuid_hash)
-            exists = user_ref.get().exists
-        else:
-            exists = False
-        
-        return jsonify({
-            'success': True,
-            'uuid': new_uuid,
-            'exists': exists
-        })
-        
-    except Exception as e:
-        logger.error(f"Generate UUID API error: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
