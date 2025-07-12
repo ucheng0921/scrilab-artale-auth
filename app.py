@@ -1820,21 +1820,25 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         </div>
     </section>
 
-        <!-- Services Section -->
-    <section id="services" class="services">
+    <!-- Services Section (Now for specific game) -->
+    <section id="services" class="services" style="display: none;">
         <div class="container">
             <div class="section-header scroll-animate">
+                <button class="back-button" onclick="backToGames()">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>返回遊戲列表</span>
+                </button>
                 <div class="section-badge">服務方案</div>
-                <h2 class="section-title">選擇適合的服務期限</h2>
-                <p class="section-description">我們提供多種服務期限選擇，一次購買越久享受更優惠的價格，所有方案均提供完整的技術服務</p>
+                <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale 專屬方案</h2>
+                <p class="section-description">選擇適合您的服務方案，享受最佳遊戲體驗</p>
             </div>
             
             <div class="services-grid">
                 <!-- 體驗方案 -->
                 <div class="service-card scroll-animate">
                     <div class="service-header">
-                        <div class="service-title">7天體驗</div>
-                        <div class="service-subtitle">短期體驗我們的技術服務</div>
+                        <div class="service-title">體驗服務</div>
+                        <div class="service-subtitle">適合新手玩家體驗</div>
                         <div class="service-price">
                             <span class="currency">NT$</span>299
                             <span class="period">/7天</span>
@@ -1882,7 +1886,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <div class="service-card scroll-animate">
                     <div class="service-header premium">
                         <div class="popular-badge">最受歡迎</div>
-                        <div class="service-title">30天標準</div>
+                        <div class="service-title">標準服務</div>
                         <div class="service-subtitle">最佳性價比選擇</div>
                         <div class="service-price">
                             <span class="currency">NT$</span>549
@@ -1913,11 +1917,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>24/7優先技術支援</span>
+                                <span>24/7技術支援</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>企業級安全保護</span>
+                                <span>安全加密保護</span>
                             </li>
                         </ul>
                         <button class="service-button premium" onclick="selectPlan('monthly_30')">
@@ -1930,7 +1934,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- 季度方案 -->
                 <div class="service-card scroll-animate">
                     <div class="service-header enterprise">
-                        <div class="service-title">90天超值</div>
+                        <div class="service-title">季度服務</div>
                         <div class="service-subtitle">長期使用最划算</div>
                         <div class="service-price">
                             <span class="currency">NT$</span>1,499
@@ -1961,16 +1965,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>專屬VIP技術支援</span>
+                                <span>24/7技術支援</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>頂級安全保障</span>
-                            </li>
-                            <li>
-                                <i class="fas fa-check feature-check"></i>
-                                <span>最高CP值選擇</span>
-                            </li>
+                                <span>安全加密保護</span>
                         </ul>
                         <button class="service-button enterprise" onclick="selectPlan('quarterly_90')">
                             <i class="fas fa-gem"></i>
