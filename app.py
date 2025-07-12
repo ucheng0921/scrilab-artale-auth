@@ -784,15 +784,21 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             100% { transform: translateX(10%) translateY(5%); }
         }
 
-        @keyframes fade-slide {
-            0%, 100% { 
-                opacity: 0; 
-                transform: translateY(20px); 
-            }
-            50% { 
-                opacity: 0.15; 
-                transform: translateY(-20px); 
-            }
+        @keyframes typewriter {
+            0% { width: 0; }
+            90% { width: 100%; }
+            100% { width: 100%; }
+        }
+
+        @keyframes blink-cursor {
+            0%, 50% { border-right: 2px solid #00d4ff; }
+            51%, 100% { border-right: 2px solid transparent; }
+        }
+
+        @keyframes fade-out {
+            0% { opacity: 0.15; }
+            70% { opacity: 0.15; }
+            100% { opacity: 0; }
         }
 
         /* Navigation */
@@ -2323,41 +2329,98 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             }
         });
 
-        // 創建代碼風格的背景裝飾
+        // 創建打字機效果的代碼背景
         function createCodeBackground() {
             const codeContainer = document.createElement('div');
+            codeContainer.id = 'code-background';
             codeContainer.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                pointer-events: none; z-index: 1; opacity: 0.15; 
+                position: fixed; top: 10%; left: 5%; width: 90%; height: 80%; 
+                pointer-events: none; z-index: 1; opacity: 1; 
                 font-family: 'Courier New', monospace; color: #00d4ff;
-                overflow: hidden; font-size: 16px; font-weight: 500;
+                overflow: hidden; font-size: 14px; font-weight: 400;
+                line-height: 1.6;
             `;
             
+            document.body.appendChild(codeContainer);
+            console.log('Code background container created');
+            
+            // 開始第一個打字循環
+            startTypingCycle();
+        }
+
+        function startTypingCycle() {
+            const container = document.getElementById('code-background');
+            if (!container) return;
+            
             const codeSnippets = [
-                'def optimize_game():', 'import threading', 'class GameBot:', 
-                'async def process():', 'while running:', 'cv2.imread()', 
-                'random.choice()', 'time.sleep()', 'import numpy as np',
-                'for i in range(10):', 'if game_active:', 'threading.Thread()',
-                'await asyncio.sleep()', 'import cv2', 'def main():'
+                'import cv2',
+                'import numpy as np', 
+                'import threading',
+                'import time',
+                'import random',
+                '',
+                'def optimize_game():',
+                '    while True:',
+                '        screenshot = cv2.imread("game.png")',
+                '        if detect_target(screenshot):',
+                '            execute_action()',
+                '        time.sleep(random.uniform(0.1, 0.3))',
+                '',
+                'class GameBot:',
+                '    def __init__(self):',
+                '        self.running = True',
+                '        self.thread_pool = []',
+                '',
+                '    async def process_frame(self):',
+                '        frame = await self.capture_screen()',
+                '        return self.analyze_frame(frame)',
+                '',
+                'if __name__ == "__main__":',
+                '    bot = GameBot()',
+                '    bot.start()'
             ];
             
-            for (let i = 0; i < 12; i++) {
-                const line = document.createElement('div');
-                line.textContent = codeSnippets[i % codeSnippets.length];
-                line.style.cssText = `
-                    position: absolute; 
-                    left: ${Math.random() * 90 + 5}%; 
-                    top: ${Math.random() * 90 + 5}%;
-                    animation: fade-slide ${8 + Math.random() * 6}s ease-in-out infinite;
-                    animation-delay: ${Math.random() * 5}s;
-                    transform: rotate(${Math.random() * 15 - 7.5}deg);
-                    white-space: nowrap;
+            let currentLine = 0;
+            let lineHeight = 22; // 行高
+            
+            function typeLine() {
+                if (currentLine >= codeSnippets.length) {
+                    // 清空容器，重新開始
+                    setTimeout(() => {
+                        container.innerHTML = '';
+                        currentLine = 0;
+                        typeLine();
+                    }, 3000);
+                    return;
+                }
+                
+                const line = codeSnippets[currentLine];
+                const lineElement = document.createElement('div');
+                
+                lineElement.style.cssText = `
+                    position: absolute;
+                    left: 0;
+                    top: ${currentLine * lineHeight}px;
+                    white-space: pre;
+                    overflow: hidden;
+                    opacity: 0.12;
+                    width: 0;
+                    animation: 
+                        typewriter ${1.5 + (line.length * 0.05)}s steps(${Math.max(line.length, 1)}) 1 forwards,
+                        blink-cursor 1s step-end infinite,
+                        fade-out ${6 + Math.random() * 2}s ease-in-out ${2 + Math.random()}s forwards;
                 `;
-                codeContainer.appendChild(line);
+                
+                lineElement.textContent = line;
+                container.appendChild(lineElement);
+                
+                currentLine++;
+                
+                // 下一行的延遲
+                setTimeout(typeLine, 400 + Math.random() * 600);
             }
             
-            document.body.appendChild(codeContainer);
-            console.log('Code background created with', codeContainer.children.length, 'elements');
+            typeLine();
         }
 
         // Add floating particles effect
