@@ -715,13 +715,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
+            background: 
+                var(--bg-primary),
+                radial-gradient(ellipse at top left, rgba(0, 212, 255, 0.02) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(139, 92, 246, 0.02) 0%, transparent 50%);
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: hidden;
         }
 
-        /* 背景動效 */
+        /* 增強版背景動效 */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -729,7 +732,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             width: 100%;
             height: 100%;
             z-index: -1;
-            opacity: 0.05;
+            opacity: 1;
         }
 
         .bg-animation::before {
@@ -740,16 +743,50 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             width: 100%;
             height: 100%;
             background: 
-                radial-gradient(circle at 20% 80%, var(--accent-blue) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, var(--accent-purple) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, var(--accent-green) 0%, transparent 50%);
+                radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 30%, rgba(0, 212, 255, 0.02) 50%, transparent 70%);
             animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                conic-gradient(from 0deg at 70% 30%, transparent, rgba(139, 92, 246, 0.03), transparent),
+                conic-gradient(from 180deg at 30% 70%, transparent, rgba(0, 212, 255, 0.02), transparent);
+            animation: rotate 30s linear infinite;
         }
 
         @keyframes float {
             0%, 100% { transform: translate(0, 0) rotate(0deg); }
             33% { transform: translate(30px, -30px) rotate(1deg); }
             66% { transform: translate(-20px, 20px) rotate(-1deg); }
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.02; }
+            50% { opacity: 0.08; }
+        }
+
+        @keyframes slide {
+            0% { transform: translateX(-10%) translateY(-5%); }
+            100% { transform: translateX(10%) translateY(5%); }
+        }
+
+        @keyframes fade-slide {
+            0%, 100% { opacity: 0; transform: translateY(20px); }
+            50% { opacity: 0.03; transform: translateY(-20px); }
         }
 
         /* Navigation */
@@ -854,6 +891,18 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             position: relative;
             background: var(--bg-primary);
             overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(135deg, transparent 0%, rgba(0, 212, 255, 0.03) 25%, transparent 50%, rgba(139, 92, 246, 0.02) 75%, transparent 100%);
+            animation: slide 25s ease-in-out infinite alternate;
         }
 
         .hero-content {
@@ -1783,7 +1832,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- MapleStory Worlds - Artale -->
                 <div class="game-card scroll-animate active" onclick="showGamePlans('artale')">
                     <div class="game-image">
-                        <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale">
+                        <img src="https://via.placeholder.com/400x200/2a2a2a/00d4ff?text=MapleStory+Artale" alt="MapleStory Worlds - Artale">
                         <div class="game-overlay">
                             <i class="fas fa-arrow-right"></i>
                         </div>
@@ -1801,8 +1850,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- Coming Soon Games -->
                 <div class="game-card scroll-animate coming-soon">
                     <div class="game-image">
-                        <img src="/static/images/coming-soon.jpg" alt="Coming Soon">
-                        #<img src="https://via.placeholder.com/400x250/2a2a2a/666666?text=Coming+Soon" alt="Coming Soon">
+                        <img src="https://via.placeholder.com/400x250/2a2a2a/666666?text=Coming+Soon" alt="Coming Soon">
                         <div class="game-overlay">
                             <i class="fas fa-clock"></i>
                         </div>
@@ -1970,6 +2018,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             <li>
                                 <i class="fas fa-check feature-check"></i>
                                 <span>安全加密保護</span>
+                            </li>
                         </ul>
                         <button class="service-button enterprise" onclick="selectPlan('quarterly_90')">
                             <i class="fas fa-gem"></i>
@@ -2268,6 +2317,38 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             }
         });
 
+        // 創建代碼風格的背景裝飾
+        function createCodeBackground() {
+            const codeContainer = document.createElement('div');
+            codeContainer.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                pointer-events: none; z-index: -1; opacity: 0.03; 
+                font-family: 'Courier New', monospace; color: var(--accent-blue);
+                overflow: hidden;
+            `;
+            
+            const codeSnippets = [
+                'def optimize_game():', 'import threading', 'class GameBot:', 
+                'async def process():', 'while running:', 'cv2.imread()', 
+                'random.choice()', 'time.sleep()'
+            ];
+            
+            for (let i = 0; i < 8; i++) {
+                const line = document.createElement('div');
+                line.textContent = codeSnippets[i % codeSnippets.length];
+                line.style.cssText = `
+                    position: absolute; 
+                    left: ${Math.random() * 100}%; 
+                    top: ${Math.random() * 100}%;
+                    animation: fade-slide ${15 + Math.random() * 10}s ease-in-out infinite;
+                    animation-delay: ${Math.random() * 10}s;
+                `;
+                codeContainer.appendChild(line);
+            }
+            
+            document.body.appendChild(codeContainer);
+        }
+
         // Add floating particles effect
         function createFloatingParticles() {
             const particlesContainer = document.createElement('div');
@@ -2284,10 +2365,18 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         // Add CSS for particle animation
         const style = document.createElement('style');
-        style.textContent = '@keyframes float-particle { 0% { transform: translateY(0) translateX(0); opacity: 0; } 10% { opacity: 0.3; } 90% { opacity: 0.3; } 100% { transform: translateY(-100vh) translateX(' + (Math.random() * 200 - 100) + 'px); opacity: 0; } }';
+        style.textContent = `
+            @keyframes float-particle { 
+                0% { transform: translateY(0) translateX(0); opacity: 0; } 
+                10% { opacity: 0.3; } 
+                90% { opacity: 0.3; } 
+                100% { transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px); opacity: 0; } 
+            }
+        `;
         document.head.appendChild(style);
 
-        // Initialize particles
+        // Initialize enhanced background effects
+        createCodeBackground();
         createFloatingParticles();
     </script>
 </body>
