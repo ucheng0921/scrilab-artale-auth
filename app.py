@@ -669,7 +669,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scrilab - 專業軟體開發與技術服務</title>
+    <title>Scrilab</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -1694,8 +1694,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <i class="fas fa-star"></i>
                 <span>領先的遊戲技術服務提供商</span>
             </div>
-            <h1>專業<span class="highlight">自動化服務</span><br>與效率優化解決方案</h1>
-            <p>Scrilab 為遊戲愛好者提供專業的自動化技術服務，透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。我們專注於為客戶提供安全、穩定、高效的遊戲體驗優化服務。</p>
+            <h1>專業<span class="highlight">遊戲技術服務</span><br>與個人化解決方案</h1>
+            <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務，透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。我們專注於為客戶提供安全、穩定的遊戲體驗優化服務。</p>
             <div class="hero-buttons">
                 <a href="#games" class="btn-primary">
                     <i class="fas fa-gamepad"></i>
@@ -1731,16 +1731,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <div class="feature-icon">
                         <i class="fas fa-cogs"></i>
                     </div>
-                    <h3>個人化定制</h3>
-                    <p>根據玩家需求量身打造個人化服務方案，從遊戲分析到效率優化，提供完整的技術服務週期，確保服務符合您的遊戲需求。</p>
+                    <h3>高度自定義</h3>
+                    <p>根據玩家個人需求提供完全客製化的技術方案，支援多種參數調整與個人化設定，確保服務完美符合您的遊戲風格與需求。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
                     <div class="feature-icon">
                         <i class="fas fa-rocket"></i>
                     </div>
-                    <h3>高效執行</h3>
-                    <p>採用先進的技術架構，優化執行效能，支援多種遊戲環境，確保服務在各種情況下都能穩定運行，大幅提升遊戲效率。</p>
+                    <h3>多線程處理</h3>
+                    <p>採用先進的多線程處理技術，支援並行運算處理，確保服務在各種複雜環境下都能穩定運行，提供流暢的使用體驗。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
@@ -1755,16 +1755,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <div class="feature-icon">
                         <i class="fas fa-sync-alt"></i>
                     </div>
-                    <h3>即時更新</h3>
-                    <p>提供服務版本更新、安全補強、功能擴展等維護服務，確保您的服務始終保持最新狀態，適應遊戲版本變化。</p>
+                    <h3>完全隨機性</h3>
+                    <p>內建先進的隨機演算法系統，模擬真實玩家行為模式，確保每次執行都具有獨特性，提供最自然的遊戲體驗。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
                     <div class="feature-icon">
                         <i class="fas fa-chart-line"></i>
                     </div>
-                    <h3>效率分析</h3>
-                    <p>提供詳細的使用報告和效率分析，幫助玩家了解遊戲進度和效果，提供數據支持讓您做出更好的遊戲決策。</p>
+                    <h3>視覺識別技術</h3>
+                    <p>採用先進的圖像識別與截圖分析技術，能夠精確識別遊戲畫面元素，提供智能化的環境感知與適應能力。</p>
                 </div>
             </div>
         </div>
@@ -1776,7 +1776,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             <div class="section-header scroll-animate">
                 <div class="section-badge">遊戲服務</div>
                 <h2 class="section-title">選擇您的遊戲</h2>
-                <p class="section-description">我們為不同遊戲提供專業的自動化技術服務，點擊遊戲查看專屬方案</p>
+                <p class="section-description">一次購買越久享受更優惠的價格，所有方案均提供完整的技術服務</p>
             </div>
             
             <div class="games-grid">
@@ -1820,25 +1820,21 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         </div>
     </section>
 
-    <!-- Services Section (Now for specific game) -->
-    <section id="services" class="services" style="display: none;">
+        <!-- Services Section -->
+    <section id="services" class="services">
         <div class="container">
             <div class="section-header scroll-animate">
-                <button class="back-button" onclick="backToGames()">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>返回遊戲列表</span>
-                </button>
                 <div class="section-badge">服務方案</div>
-                <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale 專屬方案</h2>
-                <p class="section-description">選擇適合您的服務方案，享受最佳遊戲體驗</p>
+                <h2 class="section-title">選擇適合的服務期限</h2>
+                <p class="section-description">我們提供多種服務期限選擇，一次購買越久享受更優惠的價格，所有方案均提供完整的技術服務</p>
             </div>
             
             <div class="services-grid">
                 <!-- 體驗方案 -->
                 <div class="service-card scroll-animate">
                     <div class="service-header">
-                        <div class="service-title">體驗服務</div>
-                        <div class="service-subtitle">適合新手玩家體驗</div>
+                        <div class="service-title">7天體驗</div>
+                        <div class="service-subtitle">短期體驗我們的技術服務</div>
                         <div class="service-price">
                             <span class="currency">NT$</span>299
                             <span class="period">/7天</span>
@@ -1848,23 +1844,31 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <ul class="service-features">
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>基礎技術服務</span>
+                                <span>完整技術服務功能</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>標準安全保護</span>
+                                <span>多線程處理技術</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>基礎使用教學</span>
+                                <span>視覺識別與截圖分析</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>社群客服支援</span>
+                                <span>完全隨機性演算法</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>基礎效率報告</span>
+                                <span>高度自定義設定</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>24/7技術支援</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>安全加密保護</span>
                             </li>
                         </ul>
                         <button class="service-button" onclick="selectPlan('trial_7')">
@@ -1878,7 +1882,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <div class="service-card scroll-animate">
                     <div class="service-header premium">
                         <div class="popular-badge">最受歡迎</div>
-                        <div class="service-title">標準服務</div>
+                        <div class="service-title">30天標準</div>
                         <div class="service-subtitle">最佳性價比選擇</div>
                         <div class="service-price">
                             <span class="currency">NT$</span>549
@@ -1889,31 +1893,31 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <ul class="service-features">
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>完整技術服務</span>
+                                <span>完整技術服務功能</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>高級安全防護</span>
+                                <span>多線程處理技術</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>優先客服支援</span>
+                                <span>視覺識別與截圖分析</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>詳細效率分析</span>
+                                <span>完全隨機性演算法</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>個人化設定</span>
+                                <span>高度自定義設定</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>多設備授權</span>
+                                <span>24/7優先技術支援</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>即時更新服務</span>
+                                <span>企業級安全保護</span>
                             </li>
                         </ul>
                         <button class="service-button premium" onclick="selectPlan('monthly_30')">
@@ -1926,7 +1930,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- 季度方案 -->
                 <div class="service-card scroll-animate">
                     <div class="service-header enterprise">
-                        <div class="service-title">季度服務</div>
+                        <div class="service-title">90天超值</div>
                         <div class="service-subtitle">長期使用最划算</div>
                         <div class="service-price">
                             <span class="currency">NT$</span>1,499
@@ -1937,7 +1941,27 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <ul class="service-features">
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>全功能技術服務</span>
+                                <span>完整技術服務功能</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>多線程處理技術</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>視覺識別與截圖分析</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>完全隨機性演算法</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>高度自定義設定</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check feature-check"></i>
+                                <span>專屬VIP技術支援</span>
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
@@ -1945,27 +1969,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>專屬客服支援</span>
-                            </li>
-                            <li>
-                                <i class="fas fa-check feature-check"></i>
-                                <span>高級效率分析</span>
-                            </li>
-                            <li>
-                                <i class="fas fa-check feature-check"></i>
-                                <span>專屬個人化設定</span>
-                            </li>
-                            <li>
-                                <i class="fas fa-check feature-check"></i>
-                                <span>無限設備授權</span>
-                            </li>
-                            <li>
-                                <i class="fas fa-check feature-check"></i>
-                                <span>優先功能體驗</span>
-                            </li>
-                            <li>
-                                <i class="fas fa-check feature-check"></i>
-                                <span>專屬技術諮詢</span>
+                                <span>最高CP值選擇</span>
                             </li>
                         </ul>
                         <button class="service-button enterprise" onclick="selectPlan('quarterly_90')">
