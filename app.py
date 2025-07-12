@@ -669,7 +669,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scrilab</title>
+    <title>Scrilab - python</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -1756,7 +1756,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <i class="fas fa-sync-alt"></i>
                     </div>
                     <h3>完全隨機性</h3>
-                    <p>內建先進的隨機演算法系統，模擬真實玩家行為模式，確保每次執行都具有獨特性，提供最自然的遊戲體驗。</p>
+                    <p>內建先進的隨機演算法系統，確保每次執行都具有獨特性，提供最自然的遊戲體驗。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
@@ -2023,7 +2023,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <p class="footer-note">所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Scrilab. All rights reserved.</p>
+                <p>&copy; 2025 Scrilab. All rights reserved.</p>
             </div>
         </div>
     </footer>
