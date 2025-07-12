@@ -785,8 +785,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         @keyframes fade-slide {
-            0%, 100% { opacity: 0; transform: translateY(20px); }
-            50% { opacity: 0.03; transform: translateY(-20px); }
+            0%, 100% { opacity: 0; transform: translateY(20px) rotate(var(--rotation)); }
+            50% { opacity: 0.08; transform: translateY(-20px) rotate(var(--rotation)); }
         }
 
         /* Navigation */
@@ -1832,7 +1832,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- MapleStory Worlds - Artale -->
                 <div class="game-card scroll-animate active" onclick="showGamePlans('artale')">
                     <div class="game-image">
-                        <img src="https://via.placeholder.com/400x200/2a2a2a/00d4ff?text=MapleStory+Artale" alt="MapleStory Worlds - Artale">
+                        <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale">
                         <div class="game-overlay">
                             <i class="fas fa-arrow-right"></i>
                         </div>
@@ -1850,7 +1850,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- Coming Soon Games -->
                 <div class="game-card scroll-animate coming-soon">
                     <div class="game-image">
-                        <img src="https://via.placeholder.com/400x250/2a2a2a/666666?text=Coming+Soon" alt="Coming Soon">
+                        <img src="/static/images/coming-soon.jpg" alt="Coming Soon">
                         <div class="game-overlay">
                             <i class="fas fa-clock"></i>
                         </div>
@@ -2322,18 +2322,20 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             const codeContainer = document.createElement('div');
             codeContainer.style.cssText = `
                 position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                pointer-events: none; z-index: -1; opacity: 0.03; 
+                pointer-events: none; z-index: -1; opacity: 0.08; 
                 font-family: 'Courier New', monospace; color: var(--accent-blue);
-                overflow: hidden;
+                overflow: hidden; font-size: 14px;
             `;
             
             const codeSnippets = [
                 'def optimize_game():', 'import threading', 'class GameBot:', 
                 'async def process():', 'while running:', 'cv2.imread()', 
-                'random.choice()', 'time.sleep()'
+                'random.choice()', 'time.sleep()', 'import numpy as np',
+                'for i in range(10):', 'if game_active:', 'threading.Thread()',
+                'await asyncio.sleep()', 'import cv2', 'def main():'
             ];
             
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < 15; i++) {
                 const line = document.createElement('div');
                 line.textContent = codeSnippets[i % codeSnippets.length];
                 line.style.cssText = `
@@ -2342,6 +2344,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     top: ${Math.random() * 100}%;
                     animation: fade-slide ${15 + Math.random() * 10}s ease-in-out infinite;
                     animation-delay: ${Math.random() * 10}s;
+                    transform: rotate(${Math.random() * 20 - 10}deg);
                 `;
                 codeContainer.appendChild(line);
             }
