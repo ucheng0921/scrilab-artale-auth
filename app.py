@@ -656,15 +656,14 @@ if __name__ == '__main__':
     
     app.run(host='0.0.0.0', port=port, debug=debug)
 
-# 在 app.py 中更新商品頁面路由和模板
-
 @app.route('/products', methods=['GET'])
 def products_page():
     """軟體服務展示頁面"""
     return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
 
 # 專業軟體服務頁面 HTML 模板 - 暗色系設計
-PROFESSIONAL_PRODUCTS_TEMPLATE = """
+# 使用原始字串 (r"...") 避免反斜線問題
+PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -1073,6 +1072,154 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
             font-size: 1rem;
         }
 
+        /* Games Section */
+        .games {
+            padding: 8rem 2rem;
+            background: var(--bg-secondary);
+            position: relative;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .game-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .game-card.active:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .game-card.coming-soon {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .game-image {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            background: var(--bg-tertiary);
+        }
+
+        .game-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .game-card.active:hover .game-image img {
+            transform: scale(1.05);
+        }
+
+        .game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .game-card.active:hover .game-overlay {
+            opacity: 1;
+        }
+
+        .game-overlay i {
+            font-size: 2.5rem;
+            color: var(--accent-blue);
+        }
+
+        .game-info {
+            padding: 2rem;
+        }
+
+        .game-info h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .game-subtitle {
+            color: var(--accent-blue);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .game-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .game-status {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge.coming {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-orange);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .back-button {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+
+        .back-button:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            transform: translateX(-5px);
+        }
+
         /* Services Section */
         .services {
             padding: 8rem 2rem;
@@ -1262,38 +1409,72 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
             padding: 4rem 2rem 2rem;
         }
 
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
+        .footer-simple {
+            text-align: center;
             margin-bottom: 3rem;
         }
 
-        .footer-section h3 {
+        .footer-simple h3 {
             font-size: 1.2rem;
-            font-weight: 700;
             margin-bottom: 1.5rem;
             color: var(--text-primary);
+            font-weight: 600;
         }
 
-        .footer-section ul {
-            list-style: none;
+        .contact-methods {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
-        .footer-section ul li {
-            margin-bottom: 0.8rem;
-        }
-
-        .footer-section ul li a {
+        .discord-link, .email-link {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
             color: var(--text-secondary);
             text-decoration: none;
+            font-size: 1.1rem;
             transition: var(--transition);
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
         }
 
-        .footer-section ul li a:hover {
+        .discord-link:hover {
+            color: #5865F2;
+            border-color: #5865F2;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(88, 101, 242, 0.3);
+        }
+
+        .email-link:hover {
             color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .discord-link i, .email-link i {
+            font-size: 1.5rem;
+        }
+
+        .discord-link:hover i {
+            animation: bounce 0.5s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .footer-note {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 1.5rem;
         }
 
         .footer-bottom {
@@ -1447,7 +1628,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
             }
 
             .features-grid,
-            .services-grid {
+            .services-grid,
+            .games-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -1455,13 +1637,19 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .footer-content {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
             .section-title {
                 font-size: 2.2rem;
+            }
+
+            .contact-methods {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .discord-link, .email-link {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
             }
         }
 
@@ -1493,10 +1681,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
             <ul class="nav-links">
                 <li><a href="#home">首頁</a></li>
                 <li><a href="#features">服務特色</a></li>
-                <li><a href="#services">解決方案</a></li>
-                <li><a href="#stats">數據統計</a></li>
+                <li><a href="#games">遊戲服務</a></li>
                 <li><a href="#contact">聯絡我們</a></li>
-                <li><a href="/admin" class="nav-cta">管理後台</a></li>
             </ul>
         </div>
     </nav>
@@ -1508,12 +1694,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
                 <i class="fas fa-star"></i>
                 <span>領先的遊戲技術服務提供商</span>
             </div>
-            <h1>專業<span class="highlight">遊戲技術服務</span><br>與個人化解決方案</h1>
-            <p>Scrilab 為 MapleStory Worlds 玩家提供專業的遊戲技術服務，透過我們的先進技術團隊為您量身打造個人化的遊戲體驗方案。我們專注於為客戶提供安全、穩定、高效的遊戲環境優化服務。</p>
+            <h1>專業<span class="highlight">自動化服務</span><br>與效率優化解決方案</h1>
+            <p>Scrilab 為遊戲愛好者提供專業的自動化技術服務，透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。我們專注於為客戶提供安全、穩定、高效的遊戲體驗優化服務。</p>
             <div class="hero-buttons">
-                <a href="#services" class="btn-primary">
-                    <i class="fas fa-rocket"></i>
-                    <span>探索解決方案</span>
+                <a href="#games" class="btn-primary">
+                    <i class="fas fa-gamepad"></i>
+                    <span>瀏覽遊戲服務</span>
                 </a>
                 <a href="#contact" class="btn-secondary">
                     <i class="fas fa-phone"></i>
@@ -1528,8 +1714,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
         <div class="container">
             <div class="section-header scroll-animate">
                 <div class="section-badge">專業服務</div>
-                <h2 class="section-title">為什麼選擇 Scrilab 技術服務</h2>
-                <p class="section-description">我們擁有豐富的遊戲技術經驗和專業的開發團隊，致力於為 MapleStory Worlds 玩家提供最優質的技術支援服務</p>
+                <h2 class="section-title">為什麼選擇 Scrilab 服務</h2>
+                <p class="section-description">我們擁有豐富的遊戲技術經驗和專業的服務團隊，致力於為遊戲玩家提供最優質的個人化服務</p>
             </div>
             
             <div class="features-grid">
@@ -1545,16 +1731,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
                     <div class="feature-icon">
                         <i class="fas fa-cogs"></i>
                     </div>
-                    <h3>高度自定義</h3>
-                    <p>根據玩家個人需求提供完全客製化的技術方案，支援多種參數調整與個人化設定，確保服務完美符合您的遊戲風格與需求。</p>
+                    <h3>個人化定制</h3>
+                    <p>根據玩家需求量身打造個人化服務方案，從遊戲分析到效率優化，提供完整的技術服務週期，確保服務符合您的遊戲需求。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
                     <div class="feature-icon">
-                        <i class="fas fa-microchip"></i>
+                        <i class="fas fa-rocket"></i>
                     </div>
-                    <h3>多線程處理</h3>
-                    <p>採用先進的多線程處理技術，支援並行運算處理，確保服務在各種複雜環境下都能穩定運行，提供流暢的使用體驗。</p>
+                    <h3>高效執行</h3>
+                    <p>採用先進的技術架構，優化執行效能，支援多種遊戲環境，確保服務在各種情況下都能穩定運行，大幅提升遊戲效率。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
@@ -1567,30 +1753,84 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
                 
                 <div class="feature-card scroll-animate">
                     <div class="feature-icon">
-                        <i class="fas fa-random"></i>
+                        <i class="fas fa-sync-alt"></i>
                     </div>
-                    <h3>完全隨機性</h3>
-                    <p>內建先進的隨機演算法系統，模擬真實玩家行為模式，確保每次執行都具有獨特性，提供最自然的遊戲體驗。</p>
+                    <h3>即時更新</h3>
+                    <p>提供服務版本更新、安全補強、功能擴展等維護服務，確保您的服務始終保持最新狀態，適應遊戲版本變化。</p>
                 </div>
                 
                 <div class="feature-card scroll-animate">
                     <div class="feature-icon">
-                        <i class="fas fa-camera"></i>
+                        <i class="fas fa-chart-line"></i>
                     </div>
-                    <h3>視覺識別技術</h3>
-                    <p>採用先進的圖像識別與截圖分析技術，能夠精確識別遊戲畫面元素，提供智能化的環境感知與適應能力。</p>
+                    <h3>效率分析</h3>
+                    <p>提供詳細的使用報告和效率分析，幫助玩家了解遊戲進度和效果，提供數據支持讓您做出更好的遊戲決策。</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Services Section -->
-    <section id="services" class="services">
+    <!-- Games Section -->
+    <section id="games" class="games">
         <div class="container">
             <div class="section-header scroll-animate">
+                <div class="section-badge">遊戲服務</div>
+                <h2 class="section-title">選擇您的遊戲</h2>
+                <p class="section-description">我們為不同遊戲提供專業的自動化技術服務，點擊遊戲查看專屬方案</p>
+            </div>
+            
+            <div class="games-grid">
+                <!-- MapleStory Worlds - Artale -->
+                <div class="game-card scroll-animate active" onclick="showGamePlans('artale')">
+                    <div class="game-image">
+                        <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale">
+                        <div class="game-overlay">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        <h3>MapleStory Worlds - Artale</h3>
+                        <p class="game-subtitle">繁體中文版</p>
+                        <p class="game-description">專為 Artale 玩家打造的優化解決方案</p>
+                        <div class="game-status">
+                            <span class="status-badge active">服務中</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coming Soon Games -->
+                <div class="game-card scroll-animate coming-soon">
+                    <div class="game-image">
+                        <img src="/static/images/coming-soon.jpg" alt="Coming Soon">
+                        #<img src="https://via.placeholder.com/400x250/2a2a2a/666666?text=Coming+Soon" alt="Coming Soon">
+                        <div class="game-overlay">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        <h3>更多遊戲</h3>
+                        <p class="game-subtitle">即將推出</p>
+                        <p class="game-description">我們正在開發更多遊戲的優化解決方案，敬請期待</p>
+                        <div class="game-status">
+                            <span class="status-badge coming">開發中</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section (Now for specific game) -->
+    <section id="services" class="services" style="display: none;">
+        <div class="container">
+            <div class="section-header scroll-animate">
+                <button class="back-button" onclick="backToGames()">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>返回遊戲列表</span>
+                </button>
                 <div class="section-badge">服務方案</div>
-                <h2 class="section-title">選擇適合的服務方案</h2>
-                <p class="section-description">我們提供多種專業技術服務方案，滿足不同玩家的遊戲需求</p>
+                <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale 專屬方案</h2>
+                <p class="section-description">選擇適合您的服務方案，享受最佳遊戲體驗</p>
             </div>
             
             <div class="services-grid">
@@ -1739,7 +1979,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
     </section>
 
     <!-- Stats Section -->
-    <section id="stats" class="stats">
+    <section class="stats">
         <div class="container">
             <div class="stats-grid scroll-animate">
                 <div class="stat-item">
@@ -1765,46 +2005,22 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
     <!-- Footer -->
     <footer id="contact" class="footer">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>關於 Scrilab</h3>
-                    <ul>
-                        <li><a href="#features">服務介紹</a></li>
-                        <li><a href="#services">技術團隊</a></li>
-                        <li><a href="#stats">安全保障</a></li>
-                        <li><a href="#contact">服務更新</a></li>
-                    </ul>
+            <div class="footer-simple">
+                <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; color: var(--text-primary); font-weight: 600;">聯絡我們</h3>
+                <div class="contact-methods">
+                    <a href="https://discord.gg/HPzNrQmN" target="_blank" class="discord-link" title="加入我們的 Discord">
+                        <i class="fab fa-discord"></i>
+                        <span>Discord 技術支援</span>
+                    </a>
+                    <a href="mailto:pink870921aa@gmail.com" class="email-link">
+                        <i class="fas fa-envelope"></i>
+                        <span>pink870921aa@gmail.com</span>
+                    </a>
                 </div>
-                <div class="footer-section">
-                    <h3>服務項目</h3>
-                    <ul>
-                        <li><a href="#services">自動化服務</a></li>
-                        <li><a href="#services">效率優化</a></li>
-                        <li><a href="#services">個人化定制</a></li>
-                        <li><a href="#stats">數據分析</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>客戶支援</h3>
-                    <ul>
-                        <li><a href="mailto:support@scrilab.com">客服信箱</a></li>
-                        <li><a href="#services">使用教學</a></li>
-                        <li><a href="/admin">會員專區</a></li>
-                        <li><a href="#contact">常見問題</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>聯絡資訊</h3>
-                    <ul>
-                        <li><a href="mailto:info@scrilab.com">商務合作：info@scrilab.com</a></li>
-                        <li><a href="mailto:support@scrilab.com">技術支援：support@scrilab.com</a></li>
-                        <li><a href="#contact">服務時間：24小時線上服務</a></li>
-                        <li><a href="#contact">回應時間：1-24小時內回覆</a></li>
-                    </ul>
-                </div>
+                <p class="footer-note">所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Scrilab 技術服務有限公司. 版權所有 | 專業遊戲效率優化技術服務提供商</p>
+                <p>&copy; 2024 Scrilab. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -1840,6 +2056,24 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
     </div>
 
     <script>
+        // Game Selection
+        function showGamePlans(gameId) {
+            if (gameId === 'artale') {
+                document.getElementById('games').style.display = 'none';
+                document.getElementById('services').style.display = 'block';
+                document.getElementById('game-plans-title').textContent = 'MapleStory Worlds - Artale 專屬方案';
+                
+                // Smooth scroll to services section
+                document.getElementById('services').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function backToGames() {
+            document.getElementById('services').style.display = 'none';
+            document.getElementById('games').style.display = 'block';
+            document.getElementById('games').scrollIntoView({ behavior: 'smooth' });
+        }
+
         // Scroll Animation
         function animateOnScroll() {
             const elements = document.querySelectorAll('.scroll-animate');
@@ -1951,24 +2185,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
             // Simulate purchase process
             setTimeout(() => {
                 const plan = servicePlans[selectedPlan];
-                alert(`感謝您選擇 Scrilab 技術服務！\\n\\n服務方案：${plan.name}\\n` +
-                      `服務期限：${plan.period}\\n` +
-                      `服務費用：NT$ ${plan.price.toLocaleString()}\\n\\n` +
-                      `我們將在24小時內透過電子郵件發送服務啟用資訊。\\n` +
-                      `如有任何問題，歡迎聯繫客服。`);
-                
-                document.getElementById('inquiry-btn-text').style.display = 'inline';
-                document.getElementById('inquiry-loading').style.display = 'none';
-                
-                closeModal();
-            }, 2000);
-        }對 Scrilab 的關注！\\n\\n我們已收到您的服務諮詢：\\n\\n` +
-                      `公司：${companyName}\\n` +
-                      `聯絡人：${contactPerson}\\n` +
-                      `信箱：${contactEmail}\\n` +
-                      `電話：${contactPhone}\\n` +
-                      `方案：${plan.name}\\n\\n` +
-                      `我們的業務專員將在24小時內與您聯繫，\\n為您提供詳細的技術諮詢與報價。`);
+                alert('感謝您選擇 Scrilab 技術服務！\\n\\n服務方案：' + plan.name + '\\n' +
+                      '服務期限：' + plan.period + '\\n' +
+                      '服務費用：NT$ ' + plan.price.toLocaleString() + '\\n\\n' +
+                      '我們將在24小時內透過電子郵件發送服務啟用資訊。\\n' +
+                      '如有任何問題，歡迎聯繫客服。');
                 
                 document.getElementById('inquiry-btn-text').style.display = 'inline';
                 document.getElementById('inquiry-loading').style.display = 'none';
@@ -1978,7 +2199,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
         }
 
         function validateEmail(email) {
-            const re = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return re.test(email);
         }
 
@@ -2016,10 +2237,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
         const statsObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    setTimeout(() => animateCounter('projects-count', 5000, '+'), 200);
-                    setTimeout(() => animateCounter('clients-count', 3000, '+'), 400);
+                    setTimeout(() => animateCounter('projects-count', 100, '+'), 200);
+                    setTimeout(() => animateCounter('clients-count', 50, '+'), 400);
                     setTimeout(() => animateCounter('uptime', 99.9), 600);
-                    setTimeout(() => animateCounter('satisfaction', 4.9), 800);
+                    setTimeout(() => animateCounter('satisfaction', 5), 800);
                     statsObserver.unobserve(entry.target);
                 }
             });
@@ -2047,30 +2268,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
         // Add floating particles effect
         function createFloatingParticles() {
             const particlesContainer = document.createElement('div');
-            particlesContainer.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                pointer-events: none;
-                z-index: -1;
-            `;
+            particlesContainer.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1;';
             
             for (let i = 0; i < 50; i++) {
                 const particle = document.createElement('div');
-                particle.style.cssText = `
-                    position: absolute;
-                    width: 2px;
-                    height: 2px;
-                    background: var(--accent-blue);
-                    border-radius: 50%;
-                    opacity: 0.3;
-                    animation: float-particle ${10 + Math.random() * 10}s linear infinite;
-                    left: ${Math.random() * 100}%;
-                    top: ${Math.random() * 100}%;
-                    animation-delay: ${Math.random() * 10}s;
-                `;
+                particle.style.cssText = 'position: absolute; width: 2px; height: 2px; background: var(--accent-blue); border-radius: 50%; opacity: 0.3; animation: float-particle ' + (10 + Math.random() * 10) + 's linear infinite; left: ' + (Math.random() * 100) + '%; top: ' + (Math.random() * 100) + '%; animation-delay: ' + (Math.random() * 10) + 's;';
                 particlesContainer.appendChild(particle);
             }
             
@@ -2079,24 +2281,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = """
 
         // Add CSS for particle animation
         const style = document.createElement('style');
-        style.textContent = `
-            @keyframes float-particle {
-                0% {
-                    transform: translateY(0) translateX(0);
-                    opacity: 0;
-                }
-                10% {
-                    opacity: 0.3;
-                }
-                90% {
-                    opacity: 0.3;
-                }
-                100% {
-                    transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px);
-                    opacity: 0;
-                }
-            }
-        `;
+        style.textContent = '@keyframes float-particle { 0% { transform: translateY(0) translateX(0); opacity: 0; } 10% { opacity: 0.3; } 90% { opacity: 0.3; } 100% { transform: translateY(-100vh) translateX(' + (Math.random() * 200 - 100) + 'px); opacity: 0; } }';
         document.head.appendChild(style);
 
         // Initialize particles
