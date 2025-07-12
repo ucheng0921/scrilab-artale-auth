@@ -785,8 +785,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         @keyframes fade-slide {
-            0%, 100% { opacity: 0; transform: translateY(20px) rotate(var(--rotation)); }
-            50% { opacity: 0.08; transform: translateY(-20px) rotate(var(--rotation)); }
+            0%, 100% { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            50% { 
+                opacity: 0.15; 
+                transform: translateY(-20px); 
+            }
         }
 
         /* Navigation */
@@ -2322,9 +2328,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             const codeContainer = document.createElement('div');
             codeContainer.style.cssText = `
                 position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                pointer-events: none; z-index: -1; opacity: 0.08; 
-                font-family: 'Courier New', monospace; color: var(--accent-blue);
-                overflow: hidden; font-size: 14px;
+                pointer-events: none; z-index: 1; opacity: 0.15; 
+                font-family: 'Courier New', monospace; color: #00d4ff;
+                overflow: hidden; font-size: 16px; font-weight: 500;
             `;
             
             const codeSnippets = [
@@ -2335,21 +2341,23 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 'await asyncio.sleep()', 'import cv2', 'def main():'
             ];
             
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 12; i++) {
                 const line = document.createElement('div');
                 line.textContent = codeSnippets[i % codeSnippets.length];
                 line.style.cssText = `
                     position: absolute; 
-                    left: ${Math.random() * 100}%; 
-                    top: ${Math.random() * 100}%;
-                    animation: fade-slide ${15 + Math.random() * 10}s ease-in-out infinite;
-                    animation-delay: ${Math.random() * 10}s;
-                    transform: rotate(${Math.random() * 20 - 10}deg);
+                    left: ${Math.random() * 90 + 5}%; 
+                    top: ${Math.random() * 90 + 5}%;
+                    animation: fade-slide ${8 + Math.random() * 6}s ease-in-out infinite;
+                    animation-delay: ${Math.random() * 5}s;
+                    transform: rotate(${Math.random() * 15 - 7.5}deg);
+                    white-space: nowrap;
                 `;
                 codeContainer.appendChild(line);
             }
             
             document.body.appendChild(codeContainer);
+            console.log('Code background created with', codeContainer.children.length, 'elements');
         }
 
         // Add floating particles effect
