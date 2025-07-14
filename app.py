@@ -796,10 +796,32 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         @keyframes fade-out {
-            0% { opacity: 0.15; }
-            70% { opacity: 0.15; }
+            0% { opacity: 0.2; }
+            70% { opacity: 0.2; }
             100% { opacity: 0; }
         }
+
+        /* 新增以下兩個動畫 */
+        @keyframes line-glow {
+            0% { 
+                box-shadow: inset 0 0 0 rgba(0, 212, 255, 0);
+                background: rgba(0, 212, 255, 0);
+            }
+            50% { 
+                box-shadow: inset 0 0 20px rgba(0, 212, 255, 0.1);
+                background: rgba(0, 212, 255, 0.02);
+            }
+            100% { 
+                box-shadow: inset 0 0 0 rgba(0, 212, 255, 0);
+                background: rgba(0, 212, 255, 0);
+            }
+        }
+
+@keyframes matrix-scan {
+    0% { transform: translateY(-100%); opacity: 0; }
+    50% { opacity: 0.3; }
+    100% { transform: translateY(100vh); opacity: 0; }
+}
 
         /* Navigation */
         .navbar {
@@ -2329,6 +2351,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             }
         });
 
+        function createCodeBackground() {
         // 創建打字機效果的代碼背景
         function createCodeBackground() {
             const codeContainer = document.createElement('div');
@@ -2339,13 +2362,43 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 font-family: 'Courier New', monospace; color: #00d4ff;
                 overflow: hidden; font-size: 14px; font-weight: 400;
                 line-height: 1.6;
+                background: linear-gradient(rgba(0, 10, 20, 0.02), rgba(0, 30, 60, 0.01));
+                border-radius: 8px;
+                border: 1px solid rgba(0, 212, 255, 0.1);
             `;
             
             document.body.appendChild(codeContainer);
-            console.log('Code background container created');
+            
+            // 創建掃描線效果
+            createScanLines();
             
             // 開始第一個打字循環
             startTypingCycle();
+        }
+
+        function createScanLines() {
+            const container = document.getElementById('code-background');
+            
+            // 創建3條掃描線
+            for (let i = 0; i < 3; i++) {
+                const scanLine = document.createElement('div');
+                scanLine.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 2px;
+                    background: linear-gradient(90deg, 
+                        transparent 0%, 
+                        rgba(0, 212, 255, 0.1) 20%, 
+                        rgba(0, 212, 255, 0.3) 50%, 
+                        rgba(0, 212, 255, 0.1) 80%, 
+                        transparent 100%);
+                    animation: matrix-scan ${8 + i * 3}s linear infinite;
+                    animation-delay: ${i * 2.5}s;
+                `;
+                container.appendChild(scanLine);
+            }
         }
 
         function startTypingCycle() {
@@ -2456,3 +2509,4 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 </body>
 </html>
 """
+
