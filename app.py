@@ -636,9 +636,15 @@ def log_unauthorized_attempt(uuid_hash, client_ip):
     except Exception as e:
         logger.error(f"Failed to log unauthorized attempt: {str(e)}")
 
-# 在 app.py 中，將支付相關路由移動到正確位置
-# 找到這些路由並將它們移動到 if __name__ == '__main__': 之前
-
+# ================================
+# 🔥 關鍵修復：將 Firebase 初始化移到模塊級別
+# ================================
+logger.info("🚀 模塊載入時初始化 Firebase...")
+try:
+    init_firebase()
+    logger.info(f"✅ 模塊級別 Firebase 初始化完成: {firebase_initialized}")
+except Exception as e:
+    logger.error(f"❌ 模塊級別 Firebase 初始化失敗: {str(e)}")
 @app.route('/api/create-payment', methods=['POST'])
 @rate_limit(max_requests=10, time_window=300)
 def create_payment():
@@ -728,22 +734,6 @@ def payment_cancel():
     """PayPal 付款取消回調"""
     return redirect('/products?cancelled=true')
 
-@app.route('/products', methods=['GET'])
-def products_page():
-    """軟體服務展示頁面"""
-    return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
-
-# ================================
-# 🔥 關鍵修復：將 Firebase 初始化移到模塊級別
-# ================================
-logger.info("🚀 模塊載入時初始化 Firebase...")
-try:
-    init_firebase()
-    logger.info(f"✅ 模塊級別 Firebase 初始化完成: {firebase_initialized}")
-except Exception as e:
-    logger.error(f"❌ 模塊級別 Firebase 初始化失敗: {str(e)}")
-
-# 只有在直接運行時才執行
 if __name__ == '__main__':
     # 這裡只處理開發環境的直接運行
     port = int(os.environ.get('PORT', 5000))
