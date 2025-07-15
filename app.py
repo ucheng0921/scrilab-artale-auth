@@ -17,6 +17,7 @@ import threading
 import re
 import schedule
 import time as time_module
+from payment_service import PaymentService
 
 # 導入管理員模組和會話管理器
 from admin_panel import admin_bp
@@ -41,6 +42,7 @@ app.register_blueprint(admin_bp)
 # 全局變數
 db = None
 firebase_initialized = False
+payment_service = None
 
 # ===== IP 封鎖機制 =====
 blocked_ips = {}  # {ip: block_until_timestamp}
@@ -176,6 +178,10 @@ def init_firebase():
             start_background_tasks()
             
             logger.info("✅ Firebase 完全初始化成功")
+            # 初始化付款服務
+            global payment_service
+            payment_service = PaymentService(db)
+            logger.info("✅ Payment Service 已初始化")
             return True
         else:
             raise Exception("無法讀取測試文檔")
@@ -639,6 +645,82 @@ try:
     logger.info(f"✅ 模塊級別 Firebase 初始化完成: {firebase_initialized}")
 except Exception as e:
     logger.error(f"❌ 模塊級別 Firebase 初始化失敗: {str(e)}")
+@app.route('/api/create-payment', methods=['POST'])
+@rate_limit(max_requests=10, time_window=300)
+def create_payment():
+    """創建 PayPal 付款"""
+    try:
+        data = request.get_json()
+        plan_id = data.get('plan_id')
+        user_info = data.get('user_info')
+        
+        # 驗證資料
+        if not plan_id or not user_info:
+            return jsonify({'success': False, 'error': '缺少必要資料'}), 400
+        
+        if not user_info.get('name') or not user_info.get('email'):
+            return jsonify({'success': False, 'error': '請填寫姓名和信箱'}), 400
+        
+        # 方案資料
+        plans = {
+            'trial_7': {'id': 'trial_7', 'name': '體驗服務', 'price': 299, 'period': '7天'},
+            'monthly_30': {'id': 'monthly_30', 'name': '標準服務', 'price': 549, 'period': '30天'},
+            'quarterly_90': {'id': 'quarterly_90', 'name': '季度服務', 'price': 1499, 'period': '90天'}
+        }
+        
+        plan_info = plans.get(plan_id)
+        if not plan_info:
+            return jsonify({'success': False, 'error': '無效的方案'}), 400
+        
+        # 創建付款
+        payment = payment_service.create_payment(plan_info, user_info)
+        
+        if payment:
+            # 找到 approval_url
+            approval_url = None
+            for link in payment.links:
+                if link.rel == "approval_url":
+                    approval_url = link.href
+                    break
+            
+            return jsonify({
+                'success': True,
+                'payment_id': payment.id,
+                'approval_url': approval_url
+            })
+        else:
+            return jsonify({'success': False, 'error': '付款創建失敗'}), 500
+            
+    except Exception as e:
+        logger.error(f"創建付款錯誤: {str(e)}")
+        return jsonify({'success': False, 'error': '系統錯誤'}), 500
+
+@app.route('/payment/success', methods=['GET'])
+def payment_success():
+    """PayPal 付款成功回調"""
+    try:
+        payment_id = request.args.get('paymentId')
+        payer_id = request.args.get('PayerID')
+        
+        if not payment_id or not payer_id:
+            return redirect('/products?error=invalid_payment')
+        
+        # 執行付款
+        success, user_uuid = payment_service.execute_payment(payment_id, payer_id)
+        
+        if success:
+            return redirect(f'/products?success=true&uuid={user_uuid}')
+        else:
+            return redirect('/products?error=payment_failed')
+            
+    except Exception as e:
+        logger.error(f"付款成功處理錯誤: {str(e)}")
+        return redirect('/products?error=system_error')
+
+@app.route('/payment/cancel', methods=['GET'])
+def payment_cancel():
+    """PayPal 付款取消回調"""
+    return redirect('/products?cancelled=true')
 
 if __name__ == '__main__':
     # 這裡只處理開發環境的直接運行
@@ -2246,20 +2328,35 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             document.getElementById('inquiry-btn-text').style.display = 'none';
             document.getElementById('inquiry-loading').style.display = 'inline-block';
             
-            // Simulate purchase process
-            setTimeout(() => {
-                const plan = servicePlans[selectedPlan];
-                alert('感謝您選擇 Scrilab 技術服務！\\n\\n服務方案：' + plan.name + '\\n' +
-                      '服務期限：' + plan.period + '\\n' +
-                      '服務費用：NT$ ' + plan.price.toLocaleString() + '\\n\\n' +
-                      '我們將在24小時內透過電子郵件發送服務啟用資訊。\\n' +
-                      '如有任何問題，歡迎聯繫客服。');
-                
+            // 創建 PayPal 付款
+            fetch('/api/create-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plan_id: selectedPlan,
+                    user_info: {
+                        name: userName,
+                        email: contactEmail,
+                        phone: contactPhone
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 重定向到 PayPal
+                    window.location.href = data.approval_url;
+                } else {
+                    alert('付款創建失敗: ' + data.error);
+                    document.getElementById('inquiry-btn-text').style.display = 'inline';
+                    document.getElementById('inquiry-loading').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                alert('系統錯誤: ' + error.message);
                 document.getElementById('inquiry-btn-text').style.display = 'inline';
                 document.getElementById('inquiry-loading').style.display = 'none';
-                
-                closeModal();
-            }, 2000);
+            });
         }
 
         function validateEmail(email) {

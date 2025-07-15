@@ -5,6 +5,7 @@ import uuid as uuid_lib
 from datetime import datetime, timedelta
 import logging
 import re
+from firebase_admin import firestore
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +107,7 @@ ADMIN_TEMPLATE = """
             <!-- 分頁標籤 -->
             <div class="tabs">
                 <div class="tab active" onclick="switchTab('user-management')">👥 用戶管理</div>
-                <div class="tab" onclick="switchTab('payment-management')">💳 付款管理</div>
+                <div class="tab" onclick="switchTab('payment-management')">💳 付款記錄</div>
                 <div class="tab" onclick="switchTab('uuid-generator')">🔧 UUID 生成器</div>
             </div>
             
@@ -221,22 +222,31 @@ ADMIN_TEMPLATE = """
             
             <!-- 付款管理分頁 -->
             <div id="payment-management" class="tab-content">
-                <div class="payment-section">
-                    <h2>💳 綠界金流整合</h2>
-                    <div class="payment-info">
-                        <h4>🚀 即將推出功能:</h4>
-                        <ul>
-                            <li>✅ 自動付款處理</li>
-                            <li>✅ 付款成功自動發放序號</li>
-                            <li>✅ 訂單狀態追蹤</li>
-                            <li>✅ 退款處理</li>
-                            <li>✅ 收益統計</li>
-                        </ul>
+                <div class="section">
+                    <h2>💳 PayPal 付款記錄</h2>
+                    <div style="margin-bottom: 15px;">
+                        <button onclick="loadPayments()" class="btn">🔄 刷新記錄</button>
+                        <input type="text" id="payment-search" placeholder="搜尋付款記錄..." class="search-box" onkeyup="filterPayments()">
                     </div>
+                    <table class="user-table" id="payments-table">
+                        <thead>
+                            <tr>
+                                <th>付款時間</th>
+                                <th>客戶姓名</th>
+                                <th>客戶信箱</th>
+                                <th>方案</th>
+                                <th>金額</th>
+                                <th>狀態</th>
+                                <th>用戶序號</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payments-tbody">
+                            <tr><td colspan="8" style="text-align: center;">載入中...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
-    </div>
 
     <script>
         let allUsers = [];
@@ -391,6 +401,10 @@ ADMIN_TEMPLATE = """
             
             document.getElementById(tabId).classList.add('active');
             event.target.classList.add('active');
+            // 如果切換到付款管理分頁，載入付款記錄
+            if (tabId === 'payment-management') {
+                loadPayments();
+            }
         }
 
         // UUID 生成器功能
@@ -735,6 +749,84 @@ ADMIN_TEMPLATE = """
                 });
             }
         });
+        let allPayments = [];
+
+        async function loadPayments() {
+            if (!isLoggedIn) return;
+            
+            try {
+                const response = await fetch('/admin/payments', {
+                    headers: { 'Admin-Token': ADMIN_TOKEN }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    allPayments = data.payments;
+                    renderPayments(allPayments);
+                }
+            } catch (error) {
+                console.error('載入付款記錄錯誤:', error);
+            }
+        }
+
+        function renderPayments(payments) {
+            const tbody = document.getElementById('payments-tbody');
+            tbody.innerHTML = '';
+            
+            if (payments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">暫無付款記錄</td></tr>';
+                return;
+            }
+            
+            payments.forEach(payment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${payment.created_at}</td>
+                    <td>${payment.user_name}</td>
+                    <td>${payment.user_email}</td>
+                    <td>${payment.plan_name}</td>
+                    <td>NT$ ${payment.amount}</td>
+                    <td><span class="status-${payment.status}">${payment.status}</span></td>
+                    <td><code>${payment.user_uuid || 'N/A'}</code></td>
+                    <td>
+                        <button onclick="resendEmail('${payment.payment_id}')" class="btn btn-info">重發Email</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterPayments() {
+            const searchTerm = document.getElementById('payment-search').value.toLowerCase();
+            const filteredPayments = allPayments.filter(payment => 
+                payment.user_name.toLowerCase().includes(searchTerm) ||
+                payment.user_email.toLowerCase().includes(searchTerm) ||
+                payment.plan_name.toLowerCase().includes(searchTerm)
+            );
+            renderPayments(filteredPayments);
+        }
+
+        async function resendEmail(paymentId) {
+            try {
+                const response = await fetch('/admin/resend-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Admin-Token': ADMIN_TOKEN
+                    },
+                    body: JSON.stringify({ payment_id: paymentId })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Email 已重新發送');
+                } else {
+                    alert('發送失敗: ' + data.error);
+                }
+            } catch (error) {
+                alert('發送錯誤: ' + error.message);
+            }
+        }
     </script>
 </body>
 </html>
@@ -1108,4 +1200,88 @@ def generate_uuid_api():
         
     except Exception as e:
         logger.error(f"Generate UUID API error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+    
+
+@admin_bp.route('/payments', methods=['GET'])
+def get_payments():
+    """獲取付款記錄"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+            
+        payments_ref = db.collection('payment_records')
+        payments = payments_ref.order_by('created_at', direction=firestore.Query.DESCENDING).stream()
+        
+        payment_list = []
+        for payment in payments:
+            payment_data = payment.to_dict()
+            
+            # 處理時間格式
+            created_at = payment_data.get('created_at')
+            if hasattr(created_at, 'strftime'):
+                created_at_str = created_at.strftime('%Y-%m-%d %H:%M')
+            else:
+                created_at_str = str(created_at)[:16] if created_at else 'Unknown'
+            
+            payment_list.append({
+                'payment_id': payment.id,
+                'created_at': created_at_str,
+                'user_name': payment_data.get('user_name', ''),
+                'user_email': payment_data.get('user_email', ''),
+                'plan_name': payment_data.get('plan_name', ''),
+                'amount': payment_data.get('amount', 0),
+                'status': payment_data.get('status', ''),
+                'user_uuid': payment_data.get('user_uuid', '')
+            })
+        
+        return jsonify({'success': True, 'payments': payment_list})
+        
+    except Exception as e:
+        logger.error(f"Get payments error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/resend-email', methods=['POST'])
+def resend_email():
+    """重新發送序號Email"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import payment_service
+        if payment_service is None:
+            return jsonify({'success': False, 'error': 'Payment service not available'}), 503
+            
+        data = request.get_json()
+        payment_id = data.get('payment_id')
+        
+        if not payment_id:
+            return jsonify({'success': False, 'error': '缺少付款ID'}), 400
+        
+        payment_record = payment_service.get_payment_record(payment_id)
+        if not payment_record:
+            return jsonify({'success': False, 'error': '找不到付款記錄'}), 404
+        
+        if not payment_record.get('user_uuid'):
+            return jsonify({'success': False, 'error': '該付款尚未生成序號'}), 400
+        
+        success = payment_service.send_license_email(
+            payment_record['user_email'],
+            payment_record['user_name'],
+            payment_record['user_uuid'],
+            payment_record['plan_name'],
+            payment_record['plan_period']
+        )
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Email已重新發送'})
+        else:
+            return jsonify({'success': False, 'error': 'Email發送失敗'}), 500
+            
+    except Exception as e:
+        logger.error(f"Resend email error: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
