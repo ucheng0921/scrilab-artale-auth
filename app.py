@@ -699,14 +699,26 @@ def create_payment():
 def payment_success():
     """PayPal 付款成功回調"""
     try:
+        logger.info(f"收到付款成功回調: {request.args}")
         payment_id = request.args.get('paymentId')
         payer_id = request.args.get('PayerID')
         
+        logger.info(f"Payment ID: {payment_id}, Payer ID: {payer_id}")
+        
         if not payment_id or not payer_id:
+            logger.error("缺少必要參數")
             return redirect('/products?error=invalid_payment')
         
+        # 檢查 payment_service 是否可用
+        if payment_service is None:
+            logger.error("payment_service 未初始化")
+            return redirect('/products?error=service_unavailable')
+        
         # 執行付款
+        logger.info("開始執行付款...")
         success, user_uuid = payment_service.execute_payment(payment_id, payer_id)
+        
+        logger.info(f"付款執行結果: success={success}, uuid={user_uuid}")
         
         if success:
             return redirect(f'/products?success=true&uuid={user_uuid}')
@@ -714,7 +726,7 @@ def payment_success():
             return redirect('/products?error=payment_failed')
             
     except Exception as e:
-        logger.error(f"付款成功處理錯誤: {str(e)}")
+        logger.error(f"付款成功處理錯誤: {str(e)}", exc_info=True)
         return redirect('/products?error=system_error')
 
 @app.route('/payment/cancel', methods=['GET'])
