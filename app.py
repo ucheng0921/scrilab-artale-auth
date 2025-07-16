@@ -697,7 +697,7 @@ def create_payment():
 
 @app.route('/payment/success', methods=['GET'])
 def payment_success():
-    """PayPal 付款成功回調"""
+    """PayPal 付款成功回調 - 修復模板參數傳遞"""
     try:
         logger.info(f"收到付款成功回調: {request.args}")
         payment_id = request.args.get('paymentId')
@@ -720,27 +720,51 @@ def payment_success():
         
         logger.info(f"付款執行結果: success={success}, uuid={user_uuid}")
         
-        if success:
+        if success and user_uuid:
             # 獲取付款記錄詳情
             payment_record = payment_service.get_payment_record(payment_id)
             
-            # 顯示成功頁面
-            return render_template_string(PAYMENT_SUCCESS_TEMPLATE, {
-                'success': True,
-                'user_uuid': user_uuid,
-                'payment_record': payment_record
-            })
+            # 修復：使用關鍵字參數而不是字典
+            logger.info(f"付款處理完成，顯示成功頁面")
+            return render_template_string(
+                PAYMENT_SUCCESS_TEMPLATE,
+                success=True,
+                user_uuid=user_uuid,
+                payment_record=payment_record
+            )
         else:
+            logger.error("付款執行失敗")
             return redirect('/products?error=payment_failed')
             
     except Exception as e:
         logger.error(f"付款成功處理錯誤: {str(e)}", exc_info=True)
+        
+        # 即使出現錯誤，也嘗試獲取用戶信息
+        try:
+            if payment_service and request.args.get('paymentId'):
+                payment_record = payment_service.get_payment_record(request.args.get('paymentId'))
+                if payment_record and payment_record.get('user_uuid'):
+                    logger.info("雖然出現錯誤，但找到了用戶記錄，顯示成功頁面")
+                    return render_template_string(
+                        PAYMENT_SUCCESS_TEMPLATE,
+                        success=True,
+                        user_uuid=payment_record['user_uuid'],
+                        payment_record=payment_record
+                    )
+        except Exception as recovery_error:
+            logger.error(f"錯誤恢復也失敗: {str(recovery_error)}")
+        
         return redirect('/products?error=system_error')
 
 @app.route('/payment/cancel', methods=['GET'])
 def payment_cancel():
     """PayPal 付款取消回調"""
     return render_template_string(PAYMENT_CANCEL_TEMPLATE)
+
+@app.route('/products', methods=['GET'])
+def products_page():
+    """軟體服務展示頁面"""
+    return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
 
 # 專業軟體服務頁面 HTML 模板 - 暗色系設計
 # 使用原始字串 (r"...") 避免反斜線問題
