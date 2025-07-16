@@ -181,27 +181,27 @@ class PaymentService:
             logger.error(f"創建用戶帳號失敗: {str(e)}")
             return None
     
-def send_license_email(self, email, name, uuid, plan_name, plan_period):
-    """發送序號 Email - 修改寄送者顯示名稱"""
-    try:
-        smtp_server = os.environ.get('SMTP_SERVER')
-        smtp_port = int(os.environ.get('SMTP_PORT', 587))
-        email_user = os.environ.get('EMAIL_USER')
-        email_password = os.environ.get('EMAIL_PASSWORD')
-        
-        msg = MIMEMultipart()
-        
-        # 設置顯示名稱，而不是直接顯示帳號
-        from_display_name = "Scrilab"
-        msg['From'] = f"{from_display_name} <{email_user}>"
-        msg['To'] = email
-        msg['Subject'] = f"Scrilab Artale 服務序號 - {plan_name}"
-        
-        # 設置回覆地址（可選）
-        support_email = os.environ.get('SUPPORT_EMAIL', email_user)
-        msg['Reply-To'] = f"Scrilab Support <{support_email}>"
-        
-        body = f"""
+    def send_license_email(self, email, name, uuid, plan_name, plan_period):
+        """發送序號 Email - 修復縮進並改善顯示名稱"""
+        try:
+            smtp_server = os.environ.get('SMTP_SERVER')
+            smtp_port = int(os.environ.get('SMTP_PORT', 587))
+            email_user = os.environ.get('EMAIL_USER')
+            email_password = os.environ.get('EMAIL_PASSWORD')
+            
+            msg = MIMEMultipart()
+            
+            # 設置顯示名稱，而不是直接顯示帳號
+            from_display_name = "Scrilab"
+            msg['From'] = f"{from_display_name} <{email_user}>"
+            msg['To'] = email
+            msg['Subject'] = f"Scrilab Artale 服務序號 - {plan_name}"
+            
+            # 設置回覆地址（可選）
+            support_email = os.environ.get('SUPPORT_EMAIL', email_user)
+            msg['Reply-To'] = f"Scrilab Support <{support_email}>"
+            
+            body = f"""
 親愛的 {name}，
 
 感謝您購買 Scrilab Artale 遊戲技術服務！
@@ -230,19 +230,19 @@ def send_license_email(self, email, name, uuid, plan_name, plan_period):
 
 Scrilab 技術團隊
 {datetime.now().strftime('%Y年%m月%d日')}
-        """
-        
-        msg.attach(MIMEText(body, 'plain', 'utf-8'))
-        
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(email_user, email_password)
-        server.send_message(msg)
-        server.quit()
-        
-        logger.info(f"序號 Email 已發送至: {email}")
-        return True
-        
-    except Exception as e:
-        logger.error(f"發送 Email 失敗: {str(e)}")
-        return False
+            """
+            
+            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+            
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(email_user, email_password)
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info(f"序號 Email 已發送至: {email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"發送 Email 失敗: {str(e)}")
+            return False

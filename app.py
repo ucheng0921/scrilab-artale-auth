@@ -725,11 +725,11 @@ def payment_success():
             payment_record = payment_service.get_payment_record(payment_id)
             
             # 顯示成功頁面
-            return render_template_string(PAYMENT_SUCCESS_TEMPLATE, 
-                success=True,
-                user_uuid=user_uuid,
-                payment_record=payment_record
-            )
+            return render_template_string(PAYMENT_SUCCESS_TEMPLATE, {
+                'success': True,
+                'user_uuid': user_uuid,
+                'payment_record': payment_record
+            })
         else:
             return redirect('/products?error=payment_failed')
             
@@ -741,27 +741,6 @@ def payment_success():
 def payment_cancel():
     """PayPal 付款取消回調"""
     return render_template_string(PAYMENT_CANCEL_TEMPLATE)
-
-if __name__ == '__main__':
-    # 這裡只處理開發環境的直接運行
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_ENV') == 'development'
-    
-    logger.info(f"🔧 開發模式啟動:")
-    logger.info(f"   Port: {port}")
-    logger.info(f"   Debug: {debug}")
-    logger.info(f"   Firebase initialized: {firebase_initialized}")
-    logger.info(f"   Database object exists: {db is not None}")
-    logger.info(f"   Admin panel: http://localhost:{port}/admin")
-    logger.info(f"   Products page: http://localhost:{port}/products")
-    logger.info(f"   Session storage: Firestore")
-    
-    app.run(host='0.0.0.0', port=port, debug=debug)
-
-@app.route('/products', methods=['GET'])
-def products_page():
-    """軟體服務展示頁面"""
-    return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
 
 # 專業軟體服務頁面 HTML 模板 - 暗色系設計
 # 使用原始字串 (r"...") 避免反斜線問題
