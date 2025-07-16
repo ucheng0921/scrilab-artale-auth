@@ -724,12 +724,12 @@ def payment_success():
             # 獲取付款記錄詳情
             payment_record = payment_service.get_payment_record(payment_id)
             
-            # 顯示成功頁面 - 修復參數傳遞
-            return render_template_string(PAYMENT_SUCCESS_TEMPLATE, 
-                success=True,
-                user_uuid=user_uuid,
-                payment_record=payment_record
-            )
+            # 顯示成功頁面
+            return render_template_string(PAYMENT_SUCCESS_TEMPLATE, {
+                'success': True,
+                'user_uuid': user_uuid,
+                'payment_record': payment_record
+            })
         else:
             return redirect('/products?error=payment_failed')
             
