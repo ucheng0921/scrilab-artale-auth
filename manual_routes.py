@@ -1,5 +1,5 @@
 """
-manual_routes.py - 操作手冊路由處理
+manual_routes.py - 操作手冊路由處理（更新版）
 """
 from flask import Blueprint, render_template_string
 
@@ -303,6 +303,100 @@ MANUAL_TEMPLATE = r"""
             overflow-y: auto;
         }
 
+        /* Mock settings styles */
+        .mock-settings {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.8rem;
+            font-family: inherit;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .mock-settings-category {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mock-settings-category h4 {
+            color: var(--accent-blue);
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+        }
+
+        .mock-setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.7rem;
+        }
+
+        .mock-setting-item span {
+            color: var(--text-secondary);
+        }
+
+        /* Advanced config styles */
+        .config-section-detailed {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .config-category-title {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-blue);
+        }
+
+        .config-param-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .config-param-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .config-param-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .param-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .param-range {
+            font-size: 0.9rem;
+            color: var(--accent-green);
+            margin-bottom: 0.8rem;
+            font-weight: 500;
+        }
+
+        .param-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
         /* Section Styles */
         .manual-section {
             background: var(--bg-card);
@@ -500,46 +594,15 @@ MANUAL_TEMPLATE = r"""
             gap: 0.5rem;
         }
 
-        /* Config Panel Visual */
-        .config-panel-visual {
+        /* Keyboard key styling */
+        kbd {
             background: var(--bg-tertiary);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-        }
-
-        .config-section {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 1rem;
-        }
-
-        .config-section h4 {
-            color: var(--accent-blue);
-            font-size: 0.9rem;
-            margin-bottom: 0.8rem;
-        }
-
-        .config-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            padding: 0.2rem 0.4rem;
             font-size: 0.8rem;
-        }
-
-        .config-label {
-            color: var(--text-secondary);
-        }
-
-        .config-value {
-            color: var(--accent-green);
-            font-weight: 500;
+            color: var(--text-primary);
+            font-weight: 600;
         }
 
         /* Responsive */
@@ -563,6 +626,10 @@ MANUAL_TEMPLATE = r"""
             
             .manual-section {
                 padding: 2rem;
+            }
+            
+            .config-param-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -629,16 +696,52 @@ MANUAL_TEMPLATE = r"""
                 </div>
                 <div class="right-panel">
                     <div class="mock-tabs">
-                        <div class="mock-tab active">即時日誌</div>
-                        <div class="mock-tab">進階設定</div>
+                        <div class="mock-tab active" onclick="showMockTab('log')">即時日誌</div>
+                        <div class="mock-tab" onclick="showMockTab('settings')">進階設定</div>
                     </div>
-                    <div class="mock-log">
+                    <div class="mock-log" id="mock-log-tab">
                         [12:34:56] 歡迎使用 Artale Script GUI<br>
                         [12:34:56] 認證系統已就緒<br>
                         [12:34:56] 請輸入您的授權 UUID 以開始使用<br>
                         [12:34:56] 提示: 只有授權用戶才能使用腳本功能<br>
                         [12:34:56] 登入後確保遊戲視窗已開啟，然後點擊開始腳本<br>
                         [12:34:56] 怪物下載功能已整合至進階設定中
+                    </div>
+                    <div class="mock-settings" id="mock-settings-tab" style="display: none;">
+                        <div class="mock-settings-category">
+                            <h4>怪物檢測與攻擊配置</h4>
+                            <div class="mock-setting-item">
+                                <span>攻擊按鍵:</span>
+                                <input type="text" value="z" style="width: 30px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px;">
+                            </div>
+                            <div class="mock-setting-item">
+                                <span>攻擊範圍:</span>
+                                <input type="text" value="100" style="width: 50px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px;">
+                            </div>
+                        </div>
+                        <div class="mock-settings-category">
+                            <h4>被動技能系統</h4>
+                            <div class="mock-setting-item">
+                                <span>啟用被動技能:</span>
+                                <input type="checkbox" checked>
+                            </div>
+                            <div class="mock-setting-item">
+                                <span>技能1按鍵:</span>
+                                <input type="text" value="q" style="width: 30px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px;">
+                            </div>
+                        </div>
+                        <div class="mock-settings-category">
+                            <h4>血量監控配置</h4>
+                            <div class="mock-setting-item">
+                                <span>HP補血閾值:</span>
+                                <input type="text" value="0.3" style="width: 50px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px;">
+                            </div>
+                            <div class="mock-setting-item">
+                                <span>補血按鍵:</span>
+                                <input type="text" value="home" style="width: 50px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px;">
+                            </div>
+                        </div>
+                        <button class="mock-button" style="margin-top: 10px;">保存設定</button>
                     </div>
                 </div>
             </div>
@@ -653,19 +756,38 @@ MANUAL_TEMPLATE = r"""
                 登入教學
             </h2>
 
+            <div class="warning-box">
+                <div class="box-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    遊戲視窗設定重要提醒
+                </div>
+                <strong>請務必將遊戲設定為 1280x720 視窗模式才能使用腳本！</strong><br><br>
+                <strong>設定步驟：</strong><br>
+                1. 進入遊戲後，按 <kbd>Alt</kbd> 鍵打開遊戲選單<br>
+                2. 點擊「選項」→「圖形」<br>
+                3. 將「解析度」設定為 <strong>1280x720</strong><br>
+                4. 確認「視窗模式」已勾選 ✓<br>
+                5. 點擊「確定」套用設定<br><br>
+                <strong>為什麼要使用 1280x720？</strong><br>
+                • 這是腳本最佳化的解析度，檢測精確度最高<br>
+                • 視窗大小適中，方便操作和監控<br>
+                • 與腳本的圖像識別系統完美匹配<br>
+                • 效能負擔較輕，運行更穩定
+            </div>
+
             <div class="step-container">
                 <div class="step">
                     <div class="step-number">1</div>
-                    <div class="step-title">啟動程式</div>
+                    <div class="step-title">準備工作</div>
                     <div class="step-content">
-                        <p>下載並執行 Artale Script GUI 程式，首次啟動時程式會自動初始化認證系統。</p>
+                        <p>確保遊戲已設定為 1280x720 視窗模式，然後啟動 Artale Script GUI 程式。</p>
                         <div class="step-visual">
                             <div class="visual-icon">
-                                <i class="fas fa-rocket"></i>
+                                <i class="fas fa-desktop"></i>
                             </div>
                             <div class="visual-content">
-                                <div class="visual-title">啟動提示</div>
-                                <div class="visual-desc">程式啟動後會顯示「認證系統已就緒」的訊息，表示可以開始登入。</div>
+                                <div class="visual-title">視窗設定檢查</div>
+                                <div class="visual-desc">確認遊戲視窗可見且未被遮蔽，解析度為 1280x720。</div>
                             </div>
                         </div>
                     </div>
@@ -781,125 +903,290 @@ MANUAL_TEMPLATE = r"""
                 <div class="section-icon">
                     <i class="fas fa-cogs"></i>
                 </div>
-                進階設定
+                進階設定詳細說明
             </h2>
 
             <p style="margin-bottom: 2rem; color: var(--text-secondary);">
-                進階設定面板提供豐富的自定義選項，讓您調整腳本行為以符合個人需求。
+                進階設定面板提供豐富的自定義選項，讓您調整腳本行為以符合個人需求。所有設定都會自動保存並在重啟時載入。
             </p>
 
-            <div class="config-panel-visual">
-                <div class="config-section">
-                    <h4>怪物檢測與攻擊</h4>
-                    <div class="config-item">
-                        <span class="config-label">攻擊按鍵</span>
-                        <span class="config-value">z</span>
+            <!-- 怪物檢測與攻擊配置 -->
+            <div class="config-section-detailed">
+                <h3 class="config-category-title">
+                    <i class="fas fa-crosshairs"></i>
+                    怪物檢測與攻擊配置
+                </h3>
+                
+                <div class="config-param-grid">
+                    <div class="config-param-card">
+                        <div class="param-name">攻擊按鍵 (ATTACK_KEY)</div>
+                        <div class="param-range">預設值：z</div>
+                        <div class="param-desc">主要攻擊技能的按鍵，支援單字符或特殊按鍵名稱（如 alt、ctrl、space）</div>
                     </div>
-                    <div class="config-item">
-                        <span class="config-label">跳躍按鍵</span>
-                        <span class="config-value">alt</span>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">次要攻擊按鍵 (SECONDARY_ATTACK_KEY)</div>
+                        <div class="param-range">預設值：x</div>
+                        <div class="param-desc">次要攻擊技能的按鍵，可用於群體攻擊或特殊技能</div>
                     </div>
-                    <div class="config-item">
-                        <span class="config-label">攻擊範圍</span>
-                        <span class="config-value">100px</span>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">攻擊範圍 (ATTACK_RANGE_X)</div>
+                        <div class="param-range">範圍：50-300 像素</div>
+                        <div class="param-desc">角色攻擊範圍的橫向距離，數值越大檢測範圍越廣</div>
                     </div>
-                    <div class="config-item">
-                        <span class="config-label">啟用怪物</span>
-                        <span class="config-value">3個</span>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">主要攻擊機率 (PRIMARY_ATTACK_CHANCE)</div>
+                        <div class="param-range">範圍：0.0-1.0</div>
+                        <div class="param-desc">使用主要攻擊的機率，0.8表示80%機率使用主要攻擊</div>
                     </div>
-                </div>
-
-                <div class="config-section">
-                    <h4>被動技能系統</h4>
-                    <div class="config-item">
-                        <span class="config-label">啟用被動技能</span>
-                        <span class="config-value">開啟</span>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">次要攻擊機率 (SECONDARY_ATTACK_CHANCE)</div>
+                        <div class="param-range">範圍：0.0-1.0</div>
+                        <div class="param-desc">使用次要攻擊的機率，0.2表示20%機率使用次要攻擊</div>
                     </div>
-                    <div class="config-item">
-                        <span class="config-label">技能1按鍵</span>
-                        <span class="config-value">q</span>
-                    </div>
-                    <div class="config-item">
-                        <span class="config-label">技能1冷卻</span>
-                        <span class="config-value">30秒</span>
-                    </div>
-                    <div class="config-item">
-                        <span class="config-label">啟用技能數</span>
-                        <span class="config-value">2個</span>
-                    </div>
-                </div>
-
-                <div class="config-section">
-                    <h4>血量監控</h4>
-                    <div class="config-item">
-                        <span class="config-label">啟用監控</span>
-                        <span class="config-value">開啟</span>
-                    </div>
-                    <div class="config-item">
-                        <span class="config-label">HP閾值</span>
-                        <span class="config-value">30%</span>
-                    </div>
-                    <div class="config-item">
-                        <span class="config-label">MP閾值</span>
-                        <span class="config-value">20%</span>
-                    </div>
-                    <div class="config-item">
-                        <span class="config-label">補血按鍵</span>
-                        <span class="config-value">home</span>
-                    </div>
-                </div>
-
-                <div class="config-section">
-                    <h4>移動系統</h4>
-                    <div class="config-item">
-                        <span class="config-label">跳躍移動</span>
-                        <span class="config-value">開啟</span>
-                    </div>
-                    <div class="config-item">
-                        <span class="config-label">位移技能</span>
-                        <span class="config-value">開啟</span>
-                    </div>
-                    <div class="config-item">
-                        <span class="config-label">爬繩功能</span>
-                        <span class="config-value">開啟</span>
-                    </div>
-                    <div class="config-item">
-                        <span class="config-label">下跳功能</span>
-                        <span class="config-value">開啟</span>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">跳躍攻擊模式 (JUMP_ATTACK_MODE)</div>
+                        <div class="param-range">選項：original、mage、disabled</div>
+                        <div class="param-desc">
+                            • original: 原始模式，適合戰士、盜賊等職業<br>
+                            • mage: 法師模式，適合法師職業<br>
+                            • disabled: 禁用跳躍攻擊
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-save"></i>
+            <!-- 被動技能系統配置 -->
+            <div class="config-section-detailed">
+                <h3 class="config-category-title">
+                    <i class="fas fa-magic"></i>
+                    被動技能系統配置
+                </h3>
+                
+                <div class="config-param-grid">
+                    <div class="config-param-card">
+                        <div class="param-name">啟用被動技能 (ENABLE_PASSIVE_SKILLS)</div>
+                        <div class="param-range">選項：開啟/關閉</div>
+                        <div class="param-desc">總開關，控制是否啟用被動技能自動使用功能</div>
                     </div>
-                    <div class="feature-title">保存設定</div>
-                    <div class="feature-desc">
-                        點擊「保存設定」按鈕將配置保存到外部文件，下次啟動時會自動載入。
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">被動技能按鍵 (PASSIVE_SKILL_1~4_KEY)</div>
+                        <div class="param-range">預設值：q, w, e, r</div>
+                        <div class="param-desc">四個被動技能的按鍵設定，支援任意按鍵配置</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">技能冷卻時間 (PASSIVE_SKILL_1~4_COOLDOWN)</div>
+                        <div class="param-range">範圍：1.0-300.0 秒</div>
+                        <div class="param-desc">每個技能的冷卻時間，建議根據實際技能冷卻設定</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">隨機延遲 (PASSIVE_SKILL_RANDOM_DELAY)</div>
+                        <div class="param-range">最小值：0.0-5.0 秒<br>最大值：0.0-10.0 秒</div>
+                        <div class="param-desc">技能使用間的隨機延遲，讓行為更自然</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-sync"></i>
+            <!-- 移動系統配置 -->
+            <div class="config-section-detailed">
+                <h3 class="config-category-title">
+                    <i class="fas fa-running"></i>
+                    移動系統配置
+                </h3>
+                
+                <div class="config-param-grid">
+                    <div class="config-param-card">
+                        <div class="param-name">跳躍移動 (ENABLE_JUMP_MOVEMENT)</div>
+                        <div class="param-range">選項：開啟/關閉</div>
+                        <div class="param-desc">啟用後角色會偶爾跳躍移動，增加移動的自然性</div>
                     </div>
-                    <div class="feature-title">重置默認</div>
-                    <div class="feature-desc">
-                        「重置默認」按鈕會將所有設定恢復為原始值，清除自定義配置。
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">跳躍移動機率 (JUMP_MOVEMENT_CHANCE)</div>
+                        <div class="param-range">範圍：0.0-1.0</div>
+                        <div class="param-desc">跳躍移動的觸發機率，0.3表示30%機率跳躍</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">位移技能 (ENABLE_DASH_MOVEMENT)</div>
+                        <div class="param-range">選項：開啟/關閉</div>
+                        <div class="param-desc">啟用位移技能自動使用，適合有閃現類技能的職業</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">位移技能按鍵 (DASH_SKILL_KEY)</div>
+                        <div class="param-range">預設值：shift</div>
+                        <div class="param-desc">位移技能的按鍵，如閃現、衝刺等</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">位移技能冷卻 (DASH_SKILL_COOLDOWN)</div>
+                        <div class="param-range">範圍：1.0-60.0 秒</div>
+                        <div class="param-desc">位移技能的冷卻時間，根據實際技能設定</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">隨機下跳 (ENABLE_DOWN_JUMP)</div>
+                        <div class="param-range">選項：開啟/關閉</div>
+                        <div class="param-desc">啟用後角色會偶爾下跳，增加移動多樣性</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-check"></i>
+            <!-- 攀爬系統配置 -->
+            <div class="config-section-detailed">
+                <h3 class="config-category-title">
+                    <i class="fas fa-grip-lines"></i>
+                    攀爬系統配置
+                </h3>
+                
+                <div class="config-param-grid">
+                    <div class="config-param-card">
+                        <div class="param-name">啟用爬繩 (ENABLE_ROPE_CLIMBING)</div>
+                        <div class="param-range">選項：開啟/關閉</div>
+                        <div class="param-desc">啟用自動爬繩功能，角色會自動檢測並使用繩索</div>
                     </div>
-                    <div class="feature-title">應用更改</div>
-                    <div class="feature-desc">
-                        「應用更改」按鈕會立即將設定套用到運行中的腳本，無需重啟。
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">爬繩最小距離 (ROPE_MIN_DISTANCE)</div>
+                        <div class="param-range">範圍：10-200 像素</div>
+                        <div class="param-desc">角色開始爬繩時離繩索的最小距離</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">爬繩最大距離 (ROPE_MAX_DISTANCE)</div>
+                        <div class="param-range">範圍：20-300 像素</div>
+                        <div class="param-desc">角色檢測繩索的最大距離範圍</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">爬繩冷卻時間 (ROPE_COOLDOWN_TIME)</div>
+                        <div class="param-range">範圍：1.0-10.0 秒</div>
+                        <div class="param-desc">爬繩動作間的冷卻時間，避免頻繁觸發</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- 血量監控配置 -->
+            <div class="config-section-detailed">
+                <h3 class="config-category-title">
+                    <i class="fas fa-heart"></i>
+                    血量監控配置
+                </h3>
+                
+                <div class="config-param-grid">
+                    <div class="config-param-card">
+                        <div class="param-name">啟用血量監控 (ENABLE_HEALTH_MONITOR)</div>
+                        <div class="param-range">選項：開啟/關閉</div>
+                        <div class="param-desc">啟用後會自動監控血量和藍量，自動補血補藍</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">HP補血閾值 (HEALTH_MONITOR_HP_THRESHOLD)</div>
+                        <div class="param-range">範圍：0.0-1.0</div>
+                        <div class="param-desc">血量低於此比例時自動補血，0.3表示血量低於30%時補血</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">MP補藍閾值 (HEALTH_MONITOR_MP_THRESHOLD)</div>
+                        <div class="param-range">範圍：0.0-1.0</div>
+                        <div class="param-desc">藍量低於此比例時自動補藍，0.2表示藍量低於20%時補藍</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">補血按鍵 (HEALTH_MONITOR_HEAL_KEY)</div>
+                        <div class="param-range">預設值：home</div>
+                        <div class="param-desc">補血藥水或技能的按鍵，需要先設定好快捷鍵</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">補藍按鍵 (HEALTH_MONITOR_MP_KEY)</div>
+                        <div class="param-range">預設值：end</div>
+                        <div class="param-desc">補藍藥水或技能的按鍵，需要先設定好快捷鍵</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">補血冷卻時間 (HEALTH_MONITOR_HEAL_COOLDOWN)</div>
+                        <div class="param-range">範圍：1.0-10.0 秒</div>
+                        <div class="param-desc">補血動作間的冷卻時間，避免頻繁使用</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">補藍冷卻時間 (HEALTH_MONITOR_MP_COOLDOWN)</div>
+                        <div class="param-range">範圍：1.0-10.0 秒</div>
+                        <div class="param-desc">補藍動作間的冷卻時間，避免頻繁使用</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 紅點偵測配置 -->
+            <div class="config-section-detailed">
+                <h3 class="config-category-title">
+                    <i class="fas fa-eye"></i>
+                    紅點偵測與換頻道配置
+                </h3>
+                
+                <div class="config-param-grid">
+                    <div class="config-param-card">
+                        <div class="param-name">啟用紅點偵測 (ENABLE_RED_DOT_DETECTION)</div>
+                        <div class="param-range">選項：開啟/關閉</div>
+                        <div class="param-desc">啟用後會檢測螢幕上的紅點，發現時自動換頻道</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">紅點檢測最小時間 (RED_DOT_MIN_TIME)</div>
+                        <div class="param-range">範圍：1.0-10.0 秒</div>
+                        <div class="param-desc">檢測到紅點後的最小等待時間，避免誤判</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">紅點檢測最大時間 (RED_DOT_MAX_TIME)</div>
+                        <div class="param-range">範圍：5.0-30.0 秒</div>
+                        <div class="param-desc">檢測到紅點後的最大等待時間，超過即觸發換頻道</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 效能優化配置 -->
+            <div class="config-section-detailed">
+                <h3 class="config-category-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    效能優化配置
+                </h3>
+                
+                <div class="config-param-grid">
+                    <div class="config-param-card">
+                        <div class="param-name">檢測間隔 (DETECTION_INTERVAL)</div>
+                        <div class="param-range">範圍：0.01-0.1 秒</div>
+                        <div class="param-desc">主循環的檢測間隔，數值越小反應越快但CPU使用率越高</div>
+                    </div>
+                    
+                    <div class="config-param-card">
+                        <div class="param-name">血量監控更新頻率 (HEALTH_MONITOR_FPS_LIMIT)</div>
+                        <div class="param-range">範圍：1-60 FPS</div>
+                        <div class="param-desc">血量監控的更新頻率，建議設為10-30以平衡效能</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <div class="box-title">
+                    <i class="fas fa-lightbulb"></i>
+                    參數調整建議
+                </div>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li>• <strong>新手建議：</strong>先使用預設值，熟悉後再調整</li>
+                    <li>• <strong>效能優化：</strong>檢測間隔可調整為0.05-0.08秒</li>
+                    <li>• <strong>職業適配：</strong>根據職業特性調整攻擊模式和技能設定</li>
+                    <li>• <strong>安全考量：</strong>建議保持一定的隨機延遲，避免過於機械化</li>
+                </ul>
             </div>
         </section>
 
@@ -909,7 +1196,7 @@ MANUAL_TEMPLATE = r"""
                 <div class="section-icon">
                     <i class="fas fa-tools"></i>
                 </div>
-                工具功能
+                工具功能詳細教學
             </h2>
 
             <div class="step-container">
@@ -923,8 +1210,13 @@ MANUAL_TEMPLATE = r"""
                                 <i class="fas fa-camera"></i>
                             </div>
                             <div class="visual-content">
-                                <div class="visual-title">擷取角色ID</div>
-                                <div class="visual-desc">點擊「📸 開始擷取角色ID」按鈕，選擇角色下方的名稱區域。</div>
+                                <div class="visual-title">使用步驟</div>
+                                <div class="visual-desc">
+                                    1. 點擊「📸 開始擷取角色ID」按鈕<br>
+                                    2. 程式會自動尋找並截取遊戲視窗<br>
+                                    3. 在彈出的視窗中框選角色下方的名稱區域<br>
+                                    4. 點擊「✅ 確認選擇」完成擷取
+                                </div>
                             </div>
                         </div>
                         <div class="tip-box">
@@ -932,7 +1224,11 @@ MANUAL_TEMPLATE = r"""
                                 <i class="fas fa-lightbulb"></i>
                                 使用技巧
                             </div>
-                            建議在角色站立不動時進行擷取，選擇包含完整角色名稱的矩形區域。
+                            <strong>最佳擷取時機：</strong><br>
+                            • 角色站立不動時進行擷取<br>
+                            • 選擇包含完整角色名稱的矩形區域<br>
+                            • 避免選擇到背景或其他UI元素<br>
+                            • 建議在明亮的地圖上進行擷取
                         </div>
                     </div>
                 </div>
@@ -944,29 +1240,183 @@ MANUAL_TEMPLATE = r"""
                         <p>擷取繩子圖片以優化爬繩功能的檢測精度。</p>
                         <div class="step-visual">
                             <div class="visual-icon">
-                                <i class="fas fa-image"></i>
+                                <i class="fas fa-grip-lines"></i>
                             </div>
                             <div class="visual-content">
-                                <div class="visual-title">繩子圖片管理</div>
-                                <div class="visual-desc">支援多個繩子圖片，可預覽、刪除和新增繩子截圖。</div>
+                                <div class="visual-title">操作說明</div>
+                                <div class="visual-desc">
+                                    1. 點擊「📸 新增繩子截圖」<br>
+                                    2. 在截圖界面中框選繩子區域<br>
+                                    3. 系統會自動命名並保存（rope_1.png, rope_2.png...）<br>
+                                    4. 可在列表中預覽、管理已保存的繩子圖片
+                                </div>
                             </div>
+                        </div>
+                        <div class="info-box">
+                            <div class="box-title">
+                                <i class="fas fa-info-circle"></i>
+                                繩子管理功能
+                            </div>
+                            <strong>支援的操作：</strong><br>
+                            • 點擊繩子名稱可預覽圖片<br>
+                            • 勾選多個繩子後點擊「🗑️ 刪除選中」<br>
+                            • 使用搜尋功能快速找到特定繩子<br>
+                            • 支援全選/全不選操作
                         </div>
                     </div>
                 </div>
 
                 <div class="step">
                     <div class="step-number">3</div>
-                    <div class="step-title">怪物搜尋下載</div>
+                    <div class="step-title">怪物搜尋下載系統</div>
                     <div class="step-content">
                         <p>從官方API下載怪物圖片，支援搜尋和批量下載功能。</p>
-                        <div class="step-visual">
-                            <div class="visual-icon">
-                                <i class="fas fa-download"></i>
+                        
+                        <div class="config-section-detailed">
+                            <h4>🔍 搜尋功能使用方法</h4>
+                            
+                            <div class="step-visual">
+                                <div class="visual-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <div class="visual-content">
+                                    <div class="visual-title">搜尋步驟</div>
+                                    <div class="visual-desc">
+                                        1. 在搜尋框中輸入怪物名稱（支援中文）<br>
+                                        2. 系統會即時過濾顯示匹配的怪物<br>
+                                        3. 每次最多顯示50個結果避免卡頓<br>
+                                        4. 點擊「清除」可重置搜尋結果
+                                    </div>
+                                </div>
                             </div>
-                            <div class="visual-content">
-                                <div class="visual-title">怪物圖片下載</div>
-                                <div class="visual-desc">搜尋怪物名稱，勾選需要的怪物後點擊下載，會自動生成翻轉版本。</div>
+                            
+                            <div class="warning-box">
+                                <div class="box-title">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    搜尋注意事項
+                                </div>
+                                • 首次載入需要從API獲取怪物資料，請耐心等待<br>
+                                • 搜尋支援部分匹配，如搜尋「史萊姆」會找到所有史萊姆類怪物<br>
+                                • 如果結果太多，請使用更具體的搜尋條件
                             </div>
+                        </div>
+                        
+                        <div class="config-section-detailed">
+                            <h4>📥 下載功能使用方法</h4>
+                            
+                            <div class="step-visual">
+                                <div class="visual-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                                <div class="visual-content">
+                                    <div class="visual-title">下載步驟</div>
+                                    <div class="visual-desc">
+                                        1. 勾選想要下載的怪物（支援多選）<br>
+                                        2. 確認「跳過死亡動畫」是否勾選<br>
+                                        3. 點擊「📥 下載勾選怪物」開始下載<br>
+                                        4. 觀察下載日誌了解進度和結果
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="tip-box">
+                                <div class="box-title">
+                                    <i class="fas fa-lightbulb"></i>
+                                    下載優化建議
+                                </div>
+                                <strong>下載設定：</strong><br>
+                                • 建議勾選「跳過死亡動畫」減少無用圖片<br>
+                                • 每次下載建議不超過20個怪物<br>
+                                • 系統會自動生成水平翻轉版本（適應左右移動）<br>
+                                • 下載的圖片會自動命名為安全的英文檔名
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-title">已下載怪物管理</div>
+                    <div class="step-content">
+                        <p>管理已下載的怪物圖片，選擇要啟用的怪物類型。</p>
+                        
+                        <div class="config-section-detailed">
+                            <h4>✅ 怪物啟用方法</h4>
+                            
+                            <div class="step-visual">
+                                <div class="visual-icon">
+                                    <i class="fas fa-check-square"></i>
+                                </div>
+                                <div class="visual-content">
+                                    <div class="visual-title">啟用步驟</div>
+                                    <div class="visual-desc">
+                                        1. 切換到「已下載」選項卡<br>
+                                        2. 勾選想要腳本檢測的怪物<br>
+                                        3. 點擊「應用更改」或「保存設定」<br>
+                                        4. 重啟腳本使設定生效
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="info-box">
+                                <div class="box-title">
+                                    <i class="fas fa-info-circle"></i>
+                                    怪物顯示格式
+                                </div>
+                                <strong>顯示格式：</strong><br>
+                                <code>中文名稱 -> 英文名稱 (等級: xxx) - N 張圖片</code><br><br>
+                                <strong>例如：</strong><br>
+                                <code>綠水靈 -> Green Slime (等級: 15) - 4 張圖片</code><br><br>
+                                圖片數量包含原始圖片和翻轉版本
+                            </div>
+                        </div>
+                        
+                        <div class="config-section-detailed">
+                            <h4>🔧 管理功能</h4>
+                            
+                            <div class="feature-grid">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                    <div class="feature-title">搜尋功能</div>
+                                    <div class="feature-desc">
+                                        可搜尋中文名稱或英文檔名，支援即時過濾顯示
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-check-double"></i>
+                                    </div>
+                                    <div class="feature-title">批量操作</div>
+                                    <div class="feature-desc">
+                                        支援全選/全不選功能，可快速管理大量怪物
+                                    </div>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-sync"></i>
+                                    </div>
+                                    <div class="feature-title">即時更新</div>
+                                    <div class="feature-desc">
+                                        下載完成後會自動刷新列表，顯示最新的怪物
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="warning-box">
+                            <div class="box-title">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                效能考量
+                            </div>
+                            <strong>建議啟用怪物數量：</strong><br>
+                            • 一般練功：啟用3-5種怪物即可<br>
+                            • 混合地圖：可啟用5-10種怪物<br>
+                            • 避免啟用過多怪物影響檢測速度<br>
+                            • 只啟用當前地圖會出現的怪物
                         </div>
                     </div>
                 </div>
@@ -1089,8 +1539,9 @@ MANUAL_TEMPLATE = r"""
                         <p><strong>解決方案：</strong></p>
                         <ul style="margin: 1rem 0; padding-left: 2rem;">
                             <li>確認遊戲已啟動且視窗可見</li>
+                            <li>檢查遊戲解析度是否為1280x720</li>
+                            <li>確認遊戲處於視窗模式</li>
                             <li>檢查是否有系統管理員權限</li>
-                            <li>確認遊戲視窗名稱正確</li>
                             <li>重新啟動程式嘗試</li>
                         </ul>
                         <div class="warning-box">
@@ -1098,7 +1549,7 @@ MANUAL_TEMPLATE = r"""
                                 <i class="fas fa-exclamation-triangle"></i>
                                 注意
                             </div>
-                            遊戲必須處於前台且未被其他視窗遮蔽，腳本才能正常檢測遊戲畫面。
+                            遊戲必須處於1280x720視窗模式且未被其他視窗遮蔽，腳本才能正常檢測遊戲畫面。
                         </div>
                     </div>
                 </div>
@@ -1125,10 +1576,26 @@ MANUAL_TEMPLATE = r"""
                         <p><strong>問題現象：</strong>角色定位或繩子定位工具無法正常運作</p>
                         <p><strong>解決方案：</strong></p>
                         <ul style="margin: 1rem 0; padding-left: 2rem;">
-                            <li>確認遊戲處於視窗模式</li>
+                            <li>確認遊戲處於1280x720視窗模式</li>
                             <li>檢查螢幕解析度設定</li>
                             <li>確保遊戲畫面完整可見</li>
                             <li>嘗試重新擷取截圖</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">Q5</div>
+                    <div class="step-title">怪物檢測不準確</div>
+                    <div class="step-content">
+                        <p><strong>問題現象：</strong>腳本無法正確檢測怪物或攻擊錯誤目標</p>
+                        <p><strong>解決方案：</strong></p>
+                        <ul style="margin: 1rem 0; padding-left: 2rem;">
+                            <li>確認已下載並啟用正確的怪物圖片</li>
+                            <li>只啟用當前地圖會出現的怪物</li>
+                            <li>檢查攻擊範圍設定是否合理</li>
+                            <li>重新擷取角色ID圖片</li>
+                            <li>調整檢測間隔設定</li>
                         </ul>
                     </div>
                 </div>
@@ -1229,12 +1696,34 @@ MANUAL_TEMPLATE = r"""
                     <li>• 定期備份自定義配置，避免意外丟失</li>
                     <li>• 遇到問題時先查看即時日誌，通常會有詳細的錯誤信息</li>
                     <li>• 建議在測試環境中調整設定，確認無誤後再正式使用</li>
+                    <li>• 務必使用1280x720視窗模式以獲得最佳體驗</li>
                 </ul>
             </div>
         </section>
     </div>
 
     <script>
+        // Show mock tab function
+        function showMockTab(tabName) {
+            // Hide all tabs
+            document.getElementById('mock-log-tab').style.display = 'none';
+            document.getElementById('mock-settings-tab').style.display = 'none';
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.mock-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            if (tabName === 'log') {
+                document.getElementById('mock-log-tab').style.display = 'block';
+                document.querySelector('.mock-tab[onclick="showMockTab(\'log\')"]').classList.add('active');
+            } else if (tabName === 'settings') {
+                document.getElementById('mock-settings-tab').style.display = 'block';
+                document.querySelector('.mock-tab[onclick="showMockTab(\'settings\')"]').classList.add('active');
+            }
+        }
+
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
