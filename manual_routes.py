@@ -13,7 +13,7 @@ MANUAL_TEMPLATE = r"""
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Artale 操作手冊 - Scrilab</title>
+    <title>Artale GUI 操作手冊 - 圖文教學版</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -144,15 +144,15 @@ MANUAL_TEMPLATE = r"""
 
         .manual-header {
             text-align: center;
-            margin-bottom: 4rem;
-            padding: 3rem 0;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
             background: var(--bg-secondary);
             border-radius: var(--border-radius);
             border: 1px solid var(--border-color);
         }
 
         .manual-title {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: 800;
             margin-bottom: 1rem;
             background: var(--gradient-accent);
@@ -162,9 +162,9 @@ MANUAL_TEMPLATE = r"""
         }
 
         .manual-subtitle {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--text-secondary);
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
         .version-badge {
@@ -172,76 +172,149 @@ MANUAL_TEMPLATE = r"""
             background: rgba(16, 185, 129, 0.1);
             border: 1px solid rgba(16, 185, 129, 0.3);
             color: var(--accent-green);
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.8rem;
             border-radius: 20px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
         }
 
-        /* Table of Contents */
-        .toc {
+        /* Interface Screenshot */
+        .interface-preview {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
             padding: 2rem;
             margin-bottom: 3rem;
-            position: sticky;
-            top: 100px;
-            z-index: 100;
+            text-align: center;
         }
 
-        .toc h3 {
+        .interface-preview h3 {
             font-size: 1.4rem;
             margin-bottom: 1.5rem;
             color: var(--accent-blue);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
-        .toc-list {
-            list-style: none;
+        .gui-mockup {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 0 auto;
+            max-width: 800px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: 280px 1fr;
+            gap: 1rem;
+            height: 500px;
+        }
+
+        .left-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
             gap: 1rem;
         }
 
-        .toc-item {
-            background: var(--bg-tertiary);
+        .right-panel {
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            transition: var(--transition);
-        }
-
-        .toc-item:hover {
-            border-color: var(--accent-blue);
-            transform: translateY(-2px);
-        }
-
-        .toc-link {
-            display: block;
             padding: 1rem;
-            color: var(--text-primary);
-            text-decoration: none;
-            font-weight: 500;
+            display: flex;
+            flex-direction: column;
         }
 
-        .toc-link:hover {
+        .panel-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            font-weight: 600;
             color: var(--accent-blue);
+            margin-bottom: 0.5rem;
         }
 
-        /* Content Sections */
+        .mock-input {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .mock-button {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-bottom: 0.3rem;
+        }
+
+        .mock-button.green {
+            background: var(--accent-green);
+        }
+
+        .mock-button.red {
+            background: var(--accent-red);
+        }
+
+        .mock-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .mock-tab {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .mock-tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .mock-log {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.8rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--accent-green);
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Section Styles */
         .manual-section {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
-            padding: 3rem;
+            padding: 2.5rem;
             margin-bottom: 2rem;
             scroll-margin-top: 100px;
         }
 
         .section-title {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
             margin-bottom: 1.5rem;
             color: var(--accent-blue);
@@ -251,21 +324,21 @@ MANUAL_TEMPLATE = r"""
         }
 
         .section-icon {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             background: var(--gradient-accent);
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
         }
 
         .step-container {
             display: grid;
-            gap: 2rem;
-            margin-top: 2rem;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
         }
 
         .step {
@@ -294,7 +367,7 @@ MANUAL_TEMPLATE = r"""
         }
 
         .step-title {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 1rem;
             margin-top: 0.5rem;
@@ -306,55 +379,97 @@ MANUAL_TEMPLATE = r"""
             line-height: 1.7;
         }
 
-        /* Code blocks */
-        .code-block {
+        .step-visual {
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 1.5rem;
             margin: 1rem 0;
-            font-family: 'Courier New', monospace;
-            color: var(--accent-green);
-            font-size: 0.95rem;
-            overflow-x: auto;
-            position: relative;
-        }
-
-        .code-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
+            gap: 1rem;
         }
 
-        .code-title {
-            color: var(--accent-blue);
+        .visual-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .visual-content {
+            flex: 1;
+        }
+
+        .visual-title {
             font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .visual-desc {
+            color: var(--text-secondary);
             font-size: 0.9rem;
         }
 
-        .copy-btn {
-            background: var(--accent-blue);
-            color: white;
-            border: none;
-            padding: 0.3rem 0.8rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            cursor: pointer;
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
             transition: var(--transition);
         }
 
-        .copy-btn:hover {
-            background: var(--accent-purple);
+        .feature-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
         }
 
-        /* Warning boxes */
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            color: white;
+        }
+
+        .feature-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .feature-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Warning/Info boxes */
         .warning-box, .info-box, .tip-box {
             border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
+            padding: 1.2rem;
+            margin: 1rem 0;
             border-left: 4px solid;
             position: relative;
         }
@@ -385,51 +500,46 @@ MANUAL_TEMPLATE = r"""
             gap: 0.5rem;
         }
 
-        /* Feature grid */
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin: 2rem 0;
-        }
-
-        .feature-card {
+        /* Config Panel Visual */
+        .config-panel-visual {
             background: var(--bg-tertiary);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 2rem;
-            transition: var(--transition);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
         }
 
-        .feature-card:hover {
-            border-color: var(--accent-blue);
-            transform: translateY(-5px);
+        .config-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
         }
 
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            background: var(--gradient-accent);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-            color: white;
-        }
-
-        .feature-title {
-            font-size: 1.2rem;
-            font-weight: 600;
+        .config-section h4 {
+            color: var(--accent-blue);
+            font-size: 0.9rem;
             margin-bottom: 0.8rem;
-            color: var(--text-primary);
         }
 
-        .feature-desc {
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .config-label {
             color: var(--text-secondary);
-            font-size: 0.95rem;
-            line-height: 1.6;
+        }
+
+        .config-value {
+            color: var(--accent-green);
+            font-weight: 500;
         }
 
         /* Responsive */
@@ -442,8 +552,9 @@ MANUAL_TEMPLATE = r"""
                 font-size: 2rem;
             }
             
-            .toc-list {
+            .gui-mockup {
                 grid-template-columns: 1fr;
+                height: auto;
             }
             
             .nav-links {
@@ -467,15 +578,17 @@ MANUAL_TEMPLATE = r"""
         <div class="nav-container">
             <a href="/products" class="logo">
                 <div class="logo-icon">
-                    <i class="fas fa-code"></i>
+                    <i class="fas fa-gamepad"></i>
                 </div>
-                <span>Scrilab</span>
+                <span>Artale Script</span>
             </a>
             <ul class="nav-links">
-                <li><a href="/products#home">首頁</a></li>
-                <li><a href="/products#features">服務特色</a></li>
-                <li><a href="/products#games">遊戲服務</a></li>
-                <li><a href="/products#contact">聯絡我們</a></li>
+                <li><a href="#interface">界面介紹</a></li>
+                <li><a href="#login">登入教學</a></li>
+                <li><a href="#basic-usage">基本操作</a></li>
+                <li><a href="#advanced">進階設定</a></li>
+                <li><a href="#tools">工具功能</a></li>
+                <li><a href="#troubleshooting">常見問題</a></li>
             </ul>
             <a href="/products" class="back-btn">
                 <i class="fas fa-arrow-left"></i>
@@ -487,124 +600,49 @@ MANUAL_TEMPLATE = r"""
     <div class="container">
         <!-- Manual Header -->
         <div class="manual-header">
-            <h1 class="manual-title">Artale 操作手冊</h1>
-            <p class="manual-subtitle">MapleStory Worlds - Artale 遊戲技術服務完整操作指南</p>
-            <span class="version-badge">版本 v2.1.0</span>
+            <h1 class="manual-title">Artale Script GUI 操作手冊</h1>
+            <p class="manual-subtitle">圖形化界面操作指南 - 快速上手必備教學</p>
+            <span class="version-badge">GUI版本 v1.2.0</span>
         </div>
 
-        <!-- Table of Contents -->
-        <div class="toc">
+        <!-- Interface Preview -->
+        <div class="interface-preview">
             <h3>
-                <i class="fas fa-list"></i>
-                目錄導航
+                <i class="fas fa-desktop"></i>
+                主界面預覽
             </h3>
-            <ul class="toc-list">
-                <li class="toc-item">
-                    <a href="#installation" class="toc-link">
-                        <i class="fas fa-download" style="margin-right: 0.5rem; color: var(--accent-green);"></i>
-                        安裝與設置
-                    </a>
-                </li>
-                <li class="toc-item">
-                    <a href="#login" class="toc-link">
-                        <i class="fas fa-sign-in-alt" style="margin-right: 0.5rem; color: var(--accent-blue);"></i>
-                        登入與認證
-                    </a>
-                </li>
-                <li class="toc-item">
-                    <a href="#features" class="toc-link">
-                        <i class="fas fa-cogs" style="margin-right: 0.5rem; color: var(--accent-purple);"></i>
-                        功能介紹
-                    </a>
-                </li>
-                <li class="toc-item">
-                    <a href="#configuration" class="toc-link">
-                        <i class="fas fa-sliders-h" style="margin-right: 0.5rem; color: var(--accent-orange);"></i>
-                        參數設定
-                    </a>
-                </li>
-                <li class="toc-item">
-                    <a href="#troubleshooting" class="toc-link">
-                        <i class="fas fa-wrench" style="margin-right: 0.5rem; color: var(--accent-red);"></i>
-                        常見問題
-                    </a>
-                </li>
-                <li class="toc-item">
-                    <a href="#support" class="toc-link">
-                        <i class="fas fa-life-ring" style="margin-right: 0.5rem; color: var(--accent-green);"></i>
-                        技術支援
-                    </a>
-                </li>
-            </ul>
+            <div class="gui-mockup">
+                <div class="left-panel">
+                    <div class="panel-section">
+                        <div class="panel-title">登入驗證</div>
+                        <div class="mock-input">請輸入您的授權 UUID</div>
+                        <button class="mock-button">登入</button>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">狀態: 未登入</div>
+                    </div>
+                    <div class="panel-section">
+                        <div class="panel-title">腳本控制</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">腳本狀態: 未運行</div>
+                        <button class="mock-button green">開始</button>
+                        <button class="mock-button red">停止</button>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">運行時間: 00:00:00</div>
+                    </div>
+                </div>
+                <div class="right-panel">
+                    <div class="mock-tabs">
+                        <div class="mock-tab active">即時日誌</div>
+                        <div class="mock-tab">進階設定</div>
+                    </div>
+                    <div class="mock-log">
+                        [12:34:56] 歡迎使用 Artale Script GUI<br>
+                        [12:34:56] 認證系統已就緒<br>
+                        [12:34:56] 請輸入您的授權 UUID 以開始使用<br>
+                        [12:34:56] 提示: 只有授權用戶才能使用腳本功能<br>
+                        [12:34:56] 登入後確保遊戲視窗已開啟，然後點擊開始腳本<br>
+                        [12:34:56] 怪物下載功能已整合至進階設定中
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <!-- Installation Section -->
-        <section id="installation" class="manual-section">
-            <h2 class="section-title">
-                <div class="section-icon">
-                    <i class="fas fa-download"></i>
-                </div>
-                安裝與設置
-            </h2>
-            
-            <div class="warning-box">
-                <div class="box-title">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    重要提醒
-                </div>
-                使用前請確認您已購買合法序號，並且電腦符合最低系統需求。
-            </div>
-
-            <div class="step-container">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-title">系統需求檢查</div>
-                    <div class="step-content">
-                        <p>在開始安裝前，請確認您的系統符合以下需求：</p>
-                        <ul style="margin: 1rem 0; padding-left: 2rem;">
-                            <li>作業系統：Windows 10/11 (64位元)</li>
-                            <li>記憶體：至少 4GB RAM</li>
-                            <li>硬碟空間：500MB 可用空間</li>
-                            <li>網路：穩定的網際網路連線</li>
-                            <li>權限：系統管理員權限</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-title">下載客戶端</div>
-                    <div class="step-content">
-                        <p>請從官方指定管道下載最新版本的客戶端程式。</p>
-                        <div class="info-box">
-                            <div class="box-title">
-                                <i class="fas fa-info-circle"></i>
-                                下載資訊
-                            </div>
-                            下載連結將在購買完成後透過 Email 提供，或透過 Discord 客服獲取。
-                        </div>
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-title">安裝程式</div>
-                    <div class="step-content">
-                        <p>解壓縮下載的檔案，並以系統管理員身分執行安裝程式：</p>
-                        <div class="code-block">
-                            <div class="code-header">
-                                <span class="code-title">安裝步驟</span>
-                                <button class="copy-btn" onclick="copyCode(this)">複製</button>
-                            </div>
-                            <pre>1. 右鍵點選安裝檔案
-2. 選擇「以系統管理員身分執行」
-3. 依照安裝精靈指示完成安裝
-4. 安裝完成後重新啟動電腦</pre>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
 
         <!-- Login Section -->
         <section id="login" class="manual-section">
@@ -612,7 +650,7 @@ MANUAL_TEMPLATE = r"""
                 <div class="section-icon">
                     <i class="fas fa-sign-in-alt"></i>
                 </div>
-                登入與認證
+                登入教學
             </h2>
 
             <div class="step-container">
@@ -620,93 +658,361 @@ MANUAL_TEMPLATE = r"""
                     <div class="step-number">1</div>
                     <div class="step-title">啟動程式</div>
                     <div class="step-content">
-                        <p>從桌面或開始選單啟動 Scrilab Artale 客戶端。首次啟動可能需要較長時間進行初始化。</p>
+                        <p>下載並執行 Artale Script GUI 程式，首次啟動時程式會自動初始化認證系統。</p>
+                        <div class="step-visual">
+                            <div class="visual-icon">
+                                <i class="fas fa-rocket"></i>
+                            </div>
+                            <div class="visual-content">
+                                <div class="visual-title">啟動提示</div>
+                                <div class="visual-desc">程式啟動後會顯示「認證系統已就緒」的訊息，表示可以開始登入。</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="step">
                     <div class="step-number">2</div>
-                    <div class="step-title">輸入序號</div>
+                    <div class="step-title">輸入授權 UUID</div>
                     <div class="step-content">
-                        <p>在登入畫面輸入您購買時獲得的專屬序號：</p>
-                        <div class="code-block">
-                            <div class="code-header">
-                                <span class="code-title">序號格式範例</span>
-                                <button class="copy-btn" onclick="copyCode(this)">複製</button>
+                        <p>在左側面板的「登入驗證」區域中，將您購買時獲得的 UUID 輸入到文字框中。</p>
+                        <div class="step-visual">
+                            <div class="visual-icon">
+                                <i class="fas fa-key"></i>
                             </div>
-                            <pre>artale_paid_a1b2c3d4e5f6_20241217</pre>
+                            <div class="visual-content">
+                                <div class="visual-title">UUID 輸入框</div>
+                                <div class="visual-desc">UUID 為隱藏顯示，確保輸入正確後點擊「登入」按鈕。</div>
+                            </div>
                         </div>
                         <div class="tip-box">
                             <div class="box-title">
                                 <i class="fas fa-lightbulb"></i>
                                 小提示
                             </div>
-                            建議複製貼上序號以避免輸入錯誤。序號區分大小寫。
+                            建議使用複製貼上方式輸入 UUID，避免輸入錯誤。UUID 區分大小寫。
                         </div>
                     </div>
                 </div>
 
                 <div class="step">
                     <div class="step-number">3</div>
-                    <div class="step-title">完成認證</div>
+                    <div class="step-title">認證成功</div>
                     <div class="step-content">
-                        <p>點擊「登入」按鈕，系統將自動驗證您的序號。認證成功後即可開始使用服務。</p>
+                        <p>登入成功後，左側面板會顯示用戶信息，「腳本控制」區域的按鈕會變為可用狀態。</p>
+                        <div class="step-visual">
+                            <div class="visual-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="visual-content">
+                                <div class="visual-title">登入成功指示</div>
+                                <div class="visual-desc">狀態變更為「已登入」，顯示用戶名稱和權限信息。</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section id="features" class="manual-section">
+        <!-- Basic Usage Section -->
+        <section id="basic-usage" class="manual-section">
+            <h2 class="section-title">
+                <div class="section-icon">
+                    <i class="fas fa-play"></i>
+                </div>
+                基本操作
+            </h2>
+
+            <div class="step-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-title">啟動遊戲</div>
+                    <div class="step-content">
+                        <p>在使用腳本前，請確保 MapleStory Worlds-Artale 遊戲已經開啟並處於遊戲畫面。</p>
+                        <div class="warning-box">
+                            <div class="box-title">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                重要提醒
+                            </div>
+                            遊戲視窗必須可見且未被其他視窗遮蔽，腳本才能正常運作。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-title">開始腳本</div>
+                    <div class="step-content">
+                        <p>點擊左側面板「腳本控制」區域的綠色「開始」按鈕，啟動腳本功能。</p>
+                        <div class="step-visual">
+                            <div class="visual-icon">
+                                <i class="fas fa-power-off"></i>
+                            </div>
+                            <div class="visual-content">
+                                <div class="visual-title">控制按鈕</div>
+                                <div class="visual-desc">綠色「開始」按鈕啟動腳本，紅色「停止」按鈕停止腳本。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-title">監控運行狀態</div>
+                    <div class="step-content">
+                        <p>右側面板的「即時日誌」選項卡會顯示腳本的運行狀態和檢測信息。</p>
+                        <div class="step-visual">
+                            <div class="visual-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="visual-content">
+                                <div class="visual-title">狀態監控</div>
+                                <div class="visual-desc">運行時間、檢測次數、腳本狀態等信息會即時更新。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced Settings Section -->
+        <section id="advanced" class="manual-section">
             <h2 class="section-title">
                 <div class="section-icon">
                     <i class="fas fa-cogs"></i>
                 </div>
-                功能介紹
+                進階設定
             </h2>
 
             <p style="margin-bottom: 2rem; color: var(--text-secondary);">
-                Scrilab Artale 提供多種先進的遊戲優化功能，以下是主要功能的詳細說明：
+                進階設定面板提供豐富的自定義選項，讓您調整腳本行為以符合個人需求。
             </p>
+
+            <div class="config-panel-visual">
+                <div class="config-section">
+                    <h4>怪物檢測與攻擊</h4>
+                    <div class="config-item">
+                        <span class="config-label">攻擊按鍵</span>
+                        <span class="config-value">z</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">跳躍按鍵</span>
+                        <span class="config-value">alt</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">攻擊範圍</span>
+                        <span class="config-value">100px</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">啟用怪物</span>
+                        <span class="config-value">3個</span>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h4>被動技能系統</h4>
+                    <div class="config-item">
+                        <span class="config-label">啟用被動技能</span>
+                        <span class="config-value">開啟</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">技能1按鍵</span>
+                        <span class="config-value">q</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">技能1冷卻</span>
+                        <span class="config-value">30秒</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">啟用技能數</span>
+                        <span class="config-value">2個</span>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h4>血量監控</h4>
+                    <div class="config-item">
+                        <span class="config-label">啟用監控</span>
+                        <span class="config-value">開啟</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">HP閾值</span>
+                        <span class="config-value">30%</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">MP閾值</span>
+                        <span class="config-value">20%</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">補血按鍵</span>
+                        <span class="config-value">home</span>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <h4>移動系統</h4>
+                    <div class="config-item">
+                        <span class="config-label">跳躍移動</span>
+                        <span class="config-value">開啟</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">位移技能</span>
+                        <span class="config-value">開啟</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">爬繩功能</span>
+                        <span class="config-value">開啟</span>
+                    </div>
+                    <div class="config-item">
+                        <span class="config-label">下跳功能</span>
+                        <span class="config-value">開啟</span>
+                    </div>
+                </div>
+            </div>
 
             <div class="feature-grid">
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-eye"></i>
+                        <i class="fas fa-save"></i>
                     </div>
-                    <div class="feature-title">視覺識別系統</div>
+                    <div class="feature-title">保存設定</div>
                     <div class="feature-desc">
-                        採用先進的圖像識別技術，能夠精確識別遊戲畫面中的各種元素，提供智能化的環境感知能力。
+                        點擊「保存設定」按鈕將配置保存到外部文件，下次啟動時會自動載入。
                     </div>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-random"></i>
+                        <i class="fas fa-sync"></i>
                     </div>
-                    <div class="feature-title">隨機性演算法</div>
+                    <div class="feature-title">重置默認</div>
                     <div class="feature-desc">
-                        內建先進的隨機演算法系統，確保每次執行都具有獨特性，提供最自然的遊戲體驗。
+                        「重置默認」按鈕會將所有設定恢復為原始值，清除自定義配置。
                     </div>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-layer-group"></i>
+                        <i class="fas fa-check"></i>
                     </div>
-                    <div class="feature-title">多線程處理</div>
+                    <div class="feature-title">應用更改</div>
                     <div class="feature-desc">
-                        支援多線程並行處理，確保在各種複雜環境下都能穩定運行，提供流暢的使用體驗。
+                        「應用更改」按鈕會立即將設定套用到運行中的腳本，無需重啟。
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tools Section -->
+        <section id="tools" class="manual-section">
+            <h2 class="section-title">
+                <div class="section-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                工具功能
+            </h2>
+
+            <div class="step-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-title">角色定位工具</div>
+                    <div class="step-content">
+                        <p>用於擷取角色下方的ID圖片，提高腳本檢測精確度。</p>
+                        <div class="step-visual">
+                            <div class="visual-icon">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <div class="visual-content">
+                                <div class="visual-title">擷取角色ID</div>
+                                <div class="visual-desc">點擊「📸 開始擷取角色ID」按鈕，選擇角色下方的名稱區域。</div>
+                            </div>
+                        </div>
+                        <div class="tip-box">
+                            <div class="box-title">
+                                <i class="fas fa-lightbulb"></i>
+                                使用技巧
+                            </div>
+                            建議在角色站立不動時進行擷取，選擇包含完整角色名稱的矩形區域。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-title">繩子定位工具</div>
+                    <div class="step-content">
+                        <p>擷取繩子圖片以優化爬繩功能的檢測精度。</p>
+                        <div class="step-visual">
+                            <div class="visual-icon">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <div class="visual-content">
+                                <div class="visual-title">繩子圖片管理</div>
+                                <div class="visual-desc">支援多個繩子圖片，可預覽、刪除和新增繩子截圖。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-title">怪物搜尋下載</div>
+                    <div class="step-content">
+                        <p>從官方API下載怪物圖片，支援搜尋和批量下載功能。</p>
+                        <div class="step-visual">
+                            <div class="visual-icon">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <div class="visual-content">
+                                <div class="visual-title">怪物圖片下載</div>
+                                <div class="visual-desc">搜尋怪物名稱，勾選需要的怪物後點擊下載，會自動生成翻轉版本。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interface Details Section -->
+        <section id="interface" class="manual-section">
+            <h2 class="section-title">
+                <div class="section-icon">
+                    <i class="fas fa-desktop"></i>
+                </div>
+                界面詳細介紹
+            </h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="feature-title">左側控制面板</div>
+                    <div class="feature-desc">
+                        <strong>登入驗證區域：</strong><br>
+                        • UUID 輸入框（隱藏顯示）<br>
+                        • 登入/登出按鈕<br>
+                        • 用戶信息顯示<br><br>
+                        <strong>腳本控制區域：</strong><br>
+                        • 開始/停止按鈕<br>
+                        • 運行時間顯示<br>
+                        • 腳本狀態指示
                     </div>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
+                        <i class="fas fa-terminal"></i>
                     </div>
-                    <div class="feature-title">安全保護機制</div>
+                    <div class="feature-title">即時日誌選項卡</div>
                     <div class="feature-desc">
-                        採用多層次加密保護，確保使用過程的安全性，保護您的帳號和個人資料安全。
+                        <strong>日誌功能：</strong><br>
+                        • 即時顯示腳本運行狀態<br>
+                        • 怪物檢測和攻擊信息<br>
+                        • 錯誤和警告訊息<br><br>
+                        <strong>控制選項：</strong><br>
+                        • 清空日誌按鈕<br>
+                        • 自動滾動開關
                     </div>
                 </div>
 
@@ -714,89 +1020,30 @@ MANUAL_TEMPLATE = r"""
                     <div class="feature-icon">
                         <i class="fas fa-sliders-h"></i>
                     </div>
-                    <div class="feature-title">自定義設定</div>
+                    <div class="feature-title">進階設定選項卡</div>
                     <div class="feature-desc">
-                        提供豐富的參數調整選項，支援完全客製化設定，滿足不同玩家的個人化需求。
+                        <strong>配置分類：</strong><br>
+                        • 怪物檢測與攻擊配置<br>
+                        • 被動技能系統配置<br>
+                        • 血量監控配置<br>
+                        • 移動系統配置<br><br>
+                        <strong>操作按鈕：</strong><br>
+                        • 保存設定、重置默認<br>
+                        • 應用更改
                     </div>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-chart-line"></i>
+                        <i class="fas fa-info-circle"></i>
                     </div>
-                    <div class="feature-title">效能監控</div>
+                    <div class="feature-title">底部狀態欄</div>
                     <div class="feature-desc">
-                        即時監控系統效能和運行狀態，提供詳細的統計數據和優化建議。
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Configuration Section -->
-        <section id="configuration" class="manual-section">
-            <h2 class="section-title">
-                <div class="section-icon">
-                    <i class="fas fa-sliders-h"></i>
-                </div>
-                參數設定
-            </h2>
-
-            <div class="step-container">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-title">基本設定</div>
-                    <div class="step-content">
-                        <p>在主介面點擊「設定」按鈕，進入參數設定頁面。基本設定包括：</p>
-                        <ul style="margin: 1rem 0; padding-left: 2rem;">
-                            <li><strong>執行間隔：</strong>調整動作執行的時間間隔（建議 100-300ms）</li>
-                            <li><strong>隨機延遲：</strong>開啟隨機延遲以增加自然性</li>
-                            <li><strong>視窗模式：</strong>選擇全螢幕或視窗模式運行</li>
-                            <li><strong>自動暫停：</strong>設定自動暫停的條件</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-title">進階設定</div>
-                    <div class="step-content">
-                        <p>進階設定適合有經驗的使用者調整：</p>
-                        <div class="code-block">
-                            <div class="code-header">
-                                <span class="code-title">設定檔範例</span>
-                                <button class="copy-btn" onclick="copyCode(this)">複製</button>
-                            </div>
-                            <pre>{
-  "execution_interval": 150,
-  "random_delay": true,
-  "max_random_delay": 50,
-  "auto_pause_on_player": true,
-  "detection_sensitivity": 0.8,
-  "multi_thread_enabled": true,
-  "thread_count": 2
-}</pre>
-                        </div>
-                        <div class="warning-box">
-                            <div class="box-title">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                注意事項
-                            </div>
-                            請勿隨意修改進階設定，錯誤的設定可能導致程式無法正常運行。
-                        </div>
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-title">熱鍵設定</div>
-                    <div class="step-content">
-                        <p>自定義熱鍵來快速控制程式運行：</p>
-                        <ul style="margin: 1rem 0; padding-left: 2rem;">
-                            <li><strong>F1：</strong>開始/暫停功能</li>
-                            <li><strong>F2：</strong>停止所有功能</li>
-                            <li><strong>F3：</strong>顯示/隱藏主介面</li>
-                            <li><strong>F4：</strong>緊急停止</li>
-                        </ul>
+                        <strong>狀態信息：</strong><br>
+                        • 左側：當前操作狀態<br>
+                        • 中間：登入用戶信息<br>
+                        • 右側：程式版本信息<br><br>
+                        提供快速的狀態概覽，方便了解當前程式狀態。
                     </div>
                 </div>
             </div>
@@ -808,112 +1055,111 @@ MANUAL_TEMPLATE = r"""
                 <div class="section-icon">
                     <i class="fas fa-wrench"></i>
                 </div>
-                常見問題與解決方案
+                常見問題解決
             </h2>
 
             <div class="step-container">
                 <div class="step">
                     <div class="step-number">Q1</div>
-                    <div class="step-title">程式無法啟動</div>
+                    <div class="step-title">登入認證失敗</div>
                     <div class="step-content">
-                        <p><strong>可能原因：</strong></p>
+                        <p><strong>問題現象：</strong>輸入UUID後顯示「認證失敗」</p>
+                        <p><strong>解決方案：</strong></p>
                         <ul style="margin: 1rem 0; padding-left: 2rem;">
-                            <li>防毒軟體阻擋</li>
-                            <li>缺少系統管理員權限</li>
-                            <li>缺少必要的執行檔</li>
+                            <li>檢查UUID是否正確（建議複製貼上）</li>
+                            <li>確認網路連接正常</li>
+                            <li>檢查防火牆是否阻擋程式</li>
+                            <li>確認授權未過期</li>
                         </ul>
-                        <p><strong>解決方法：</strong></p>
-                        <ol style="margin: 1rem 0; padding-left: 2rem;">
-                            <li>將程式加入防毒軟體白名單</li>
-                            <li>以系統管理員身分執行</li>
-                            <li>重新安裝最新版本</li>
-                        </ol>
+                        <div class="info-box">
+                            <div class="box-title">
+                                <i class="fas fa-info-circle"></i>
+                                提示
+                            </div>
+                            程式會自動驗證UUID，如果多次失敗請聯繫客服確認授權狀態。
+                        </div>
                     </div>
                 </div>
 
                 <div class="step">
                     <div class="step-number">Q2</div>
-                    <div class="step-title">序號驗證失敗</div>
+                    <div class="step-title">腳本無法啟動</div>
                     <div class="step-content">
-                        <p><strong>可能原因：</strong></p>
+                        <p><strong>問題現象：</strong>點擊開始按鈕後腳本無法正常啟動</p>
+                        <p><strong>解決方案：</strong></p>
                         <ul style="margin: 1rem 0; padding-left: 2rem;">
-                            <li>序號輸入錯誤</li>
-                            <li>序號已過期</li>
-                            <li>網路連線問題</li>
+                            <li>確認遊戲已啟動且視窗可見</li>
+                            <li>檢查是否有系統管理員權限</li>
+                            <li>確認遊戲視窗名稱正確</li>
+                            <li>重新啟動程式嘗試</li>
                         </ul>
-                        <p><strong>解決方法：</strong></p>
-                        <ol style="margin: 1rem 0; padding-left: 2rem;">
-                            <li>檢查序號拼寫，建議複製貼上</li>
-                            <li>確認服務是否仍在有效期內</li>
-                            <li>檢查網路連線並重試</li>
-                        </ol>
+                        <div class="warning-box">
+                            <div class="box-title">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                注意
+                            </div>
+                            遊戲必須處於前台且未被其他視窗遮蔽，腳本才能正常檢測遊戲畫面。
+                        </div>
                     </div>
                 </div>
 
                 <div class="step">
                     <div class="step-number">Q3</div>
-                    <div class="step-title">功能無法正常運作</div>
+                    <div class="step-title">設定無法保存</div>
                     <div class="step-content">
-                        <p><strong>可能原因：</strong></p>
+                        <p><strong>問題現象：</strong>修改設定後無法成功保存</p>
+                        <p><strong>解決方案：</strong></p>
                         <ul style="margin: 1rem 0; padding-left: 2rem;">
-                            <li>遊戲版本更新</li>
-                            <li>螢幕解析度問題</li>
-                            <li>設定參數錯誤</li>
+                            <li>確認程式資料夾有寫入權限</li>
+                            <li>檢查設定值是否在有效範圍內</li>
+                            <li>先點擊「應用更改」再「保存設定」</li>
+                            <li>關閉防毒軟體的即時保護</li>
                         </ul>
-                        <p><strong>解決方法：</strong></p>
-                        <ol style="margin: 1rem 0; padding-left: 2rem;">
-                            <li>確認使用最新版本客戶端</li>
-                            <li>調整螢幕解析度至建議設定</li>
-                            <li>重置設定至預設值</li>
-                        </ol>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">Q4</div>
+                    <div class="step-title">工具功能無法使用</div>
+                    <div class="step-content">
+                        <p><strong>問題現象：</strong>角色定位或繩子定位工具無法正常運作</p>
+                        <p><strong>解決方案：</strong></p>
+                        <ul style="margin: 1rem 0; padding-left: 2rem;">
+                            <li>確認遊戲處於視窗模式</li>
+                            <li>檢查螢幕解析度設定</li>
+                            <li>確保遊戲畫面完整可見</li>
+                            <li>嘗試重新擷取截圖</li>
+                        </ul>
                     </div>
                 </div>
             </div>
-
-            <div class="info-box">
-                <div class="box-title">
-                    <i class="fas fa-info-circle"></i>
-                    找不到解決方案？
-                </div>
-                如果以上方法都無法解決您的問題，請透過 Discord 或 Email 聯繫我們的技術支援團隊。
-            </div>
         </section>
 
-        <!-- Support Section -->
-        <section id="support" class="manual-section">
+        <!-- Quick Reference -->
+        <section class="manual-section">
             <h2 class="section-title">
                 <div class="section-icon">
-                    <i class="fas fa-life-ring"></i>
+                    <i class="fas fa-bookmark"></i>
                 </div>
-                技術支援
+                快速參考
             </h2>
 
             <div class="feature-grid">
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fab fa-discord"></i>
+                        <i class="fas fa-keyboard"></i>
                     </div>
-                    <div class="feature-title">Discord 即時支援</div>
+                    <div class="feature-title">預設按鍵配置</div>
                     <div class="feature-desc">
-                        加入我們的 Discord 伺服器，獲得即時的技術支援和與其他用戶交流的機會。
-                        <br><br>
-                        <a href="https://discord.gg/HPzNrQmN" target="_blank" style="color: var(--accent-blue); text-decoration: none;">
-                            <i class="fas fa-external-link-alt"></i> 立即加入 Discord
-                        </a>
-                    </div>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-envelope"></i>
-                    </div>
-                    <div class="feature-title">Email 客服</div>
-                    <div class="feature-desc">
-                        透過 Email 與我們聯繫，我們會在 24 小時內回覆您的問題。
-                        <br><br>
-                        <a href="mailto:pink870921aa@gmail.com" style="color: var(--accent-blue); text-decoration: none;">
-                            <i class="fas fa-envelope"></i> pink870921aa@gmail.com
-                        </a>
+                        <strong>基本操作：</strong><br>
+                        • 攻擊按鍵：z<br>
+                        • 跳躍按鍵：alt<br>
+                        • 補血按鍵：home<br>
+                        • 補藍按鍵：end<br><br>
+                        <strong>技能按鍵：</strong><br>
+                        • 被動技能1：q<br>
+                        • 被動技能2：w<br>
+                        • 位移技能：shift
                     </div>
                 </div>
 
@@ -921,28 +1167,54 @@ MANUAL_TEMPLATE = r"""
                     <div class="feature-icon">
                         <i class="fas fa-clock"></i>
                     </div>
-                    <div class="feature-title">服務時間</div>
+                    <div class="feature-title">時間設定參考</div>
                     <div class="feature-desc">
-                        <strong>Discord 即時支援：</strong><br>
-                        週一至週日 09:00 - 23:00<br><br>
-                        <strong>Email 回覆：</strong><br>
-                        24 小時內回覆（節假日可能延遲）
+                        <strong>檢測間隔：</strong><br>
+                        • 主循環：0.05秒<br>
+                        • 怪物檢測：0.05秒<br>
+                        • 繩索檢測：1.0秒<br><br>
+                        <strong>冷卻時間：</strong><br>
+                        • 被動技能：30秒<br>
+                        • 補血冷卻：3.0秒<br>
+                        • 補藍冷卻：2.0秒
                     </div>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-file-alt"></i>
+                        <i class="fas fa-percentage"></i>
                     </div>
-                    <div class="feature-title">提交問題時請提供</div>
+                    <div class="feature-title">閾值設定參考</div>
                     <div class="feature-desc">
-                        <ul style="list-style: none; padding: 0;">
-                            <li>• 您的序號（前8位即可）</li>
-                            <li>• 問題發生的詳細描述</li>
-                            <li>• 錯誤訊息截圖</li>
-                            <li>• 您的作業系統版本</li>
-                            <li>• 遊戲版本資訊</li>
-                        </ul>
+                        <strong>血量監控：</strong><br>
+                        • HP閾值：30%<br>
+                        • MP閾值：20%<br><br>
+                        <strong>移動機率：</strong><br>
+                        • 跳躍移動：30%<br>
+                        • 位移技能：20%<br>
+                        • 下跳功能：10%<br><br>
+                        <strong>攻擊機率：</strong><br>
+                        • 主要攻擊：80%<br>
+                        • 次要攻擊：20%
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-life-ring"></i>
+                    </div>
+                    <div class="feature-title">技術支援</div>
+                    <div class="feature-desc">
+                        <strong>Discord 即時支援：</strong><br>
+                        <a href="https://discord.gg/HPzNrQmN" target="_blank" style="color: var(--accent-blue);">
+                            discord.gg/HPzNrQmN
+                        </a><br><br>
+                        <strong>Email 客服：</strong><br>
+                        <a href="mailto:pink870921aa@gmail.com" style="color: var(--accent-blue);">
+                            pink870921aa@gmail.com
+                        </a><br><br>
+                        <strong>服務時間：</strong><br>
+                        週一至週日 09:00-23:00
                     </div>
                 </div>
             </div>
@@ -950,56 +1222,32 @@ MANUAL_TEMPLATE = r"""
             <div class="tip-box">
                 <div class="box-title">
                     <i class="fas fa-lightbulb"></i>
-                    獲得更快支援的秘訣
+                    使用建議
                 </div>
-                詳細描述您的問題，包含錯誤訊息和操作步驟，可以讓我們更快速地為您解決問題。
-            </div>
-
-            <div class="warning-box">
-                <div class="box-title">
-                    <i class="fas fa-shield-alt"></i>
-                    隱私保護
-                </div>
-                請勿在公開場合分享您的完整序號。我們的客服人員絕不會要求您提供完整序號或密碼。
+                <ul style="list-style: none; padding-left: 0;">
+                    <li>• 首次使用建議先熟悉基本操作，再進行進階設定</li>
+                    <li>• 定期備份自定義配置，避免意外丟失</li>
+                    <li>• 遇到問題時先查看即時日誌，通常會有詳細的錯誤信息</li>
+                    <li>• 建議在測試環境中調整設定，確認無誤後再正式使用</li>
+                </ul>
             </div>
         </section>
     </div>
 
     <script>
-        // Smooth scrolling for TOC links
-        document.querySelectorAll('.toc-link').forEach(link => {
-            link.addEventListener('click', function(e) {
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                const targetId = this.getAttribute('href').substring(1);
-                const targetElement = document.getElementById(targetId);
-                if (targetElement) {
-                    targetElement.scrollIntoView({
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
                         behavior: 'smooth',
                         block: 'start'
                     });
                 }
             });
         });
-
-        // Copy code functionality
-        function copyCode(button) {
-            const codeBlock = button.closest('.code-block');
-            const code = codeBlock.querySelector('pre').textContent;
-            
-            navigator.clipboard.writeText(code).then(() => {
-                const originalText = button.textContent;
-                button.textContent = '已複製';
-                button.style.background = 'var(--accent-green)';
-                
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.style.background = 'var(--accent-blue)';
-                }, 2000);
-            }).catch(err => {
-                console.error('複製失敗:', err);
-                alert('複製失敗，請手動選取文字複製');
-            });
-        }
 
         // Navbar scroll effect
         window.addEventListener('scroll', function() {
@@ -1013,10 +1261,10 @@ MANUAL_TEMPLATE = r"""
             }
         });
 
-        // Highlight current section in TOC
+        // Highlight current section in navigation
         window.addEventListener('scroll', function() {
             const sections = document.querySelectorAll('.manual-section');
-            const tocLinks = document.querySelectorAll('.toc-link');
+            const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
             
             let currentSection = '';
             sections.forEach(section => {
@@ -1026,15 +1274,44 @@ MANUAL_TEMPLATE = r"""
                 }
             });
             
-            tocLinks.forEach(link => {
+            navLinks.forEach(link => {
                 const href = link.getAttribute('href').substring(1);
                 if (href === currentSection) {
                     link.style.color = 'var(--accent-blue)';
-                    link.closest('.toc-item').style.borderColor = 'var(--accent-blue)';
                 } else {
-                    link.style.color = 'var(--text-primary)';
-                    link.closest('.toc-item').style.borderColor = 'var(--border-color)';
+                    link.style.color = 'var(--text-secondary)';
                 }
+            });
+        });
+
+        // Add interactive effects to feature cards
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+                this.style.boxShadow = '0 10px 30px rgba(0, 212, 255, 0.1)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Mock GUI interactions
+        document.querySelectorAll('.mock-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const originalText = this.textContent;
+                this.textContent = '執行中...';
+                setTimeout(() => {
+                    this.textContent = originalText;
+                }, 1000);
+            });
+        });
+
+        document.querySelectorAll('.mock-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.mock-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
             });
         });
     </script>
