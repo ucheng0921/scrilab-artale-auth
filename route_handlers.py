@@ -343,6 +343,10 @@ class RouteHandlers:
     def authenticate_user(self, uuid, force_login=True, client_ip='unknown'):
         """認證用戶"""
         try:
+            if self.db is None:
+                logger.error("authenticate_user: db 對象為 None")
+                return False, "認證服務不可用", None
+            
             uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
             
             user_ref = self.db.collection('authorized_users').document(uuid_hash)
@@ -389,9 +393,23 @@ class RouteHandlers:
             
             return True, "認證成功", user_data
             
+    def log_unauthorized_attempt(self, uuid_hash, client_ip):
+        """記錄未授權登入嘗試"""
+        try:
+            if self.db is None:
+                logger.error("log_unauthorized_attempt: db 對象為 None")
+                return
+                
+            attempts_ref = self.db.collection('unauthorized_attempts')
+            attempts_ref.add({
+                'uuid_hash': uuid_hash,
+                'timestamp': datetime.now(),
+                'client_ip': client_ip,
+                'user_agent': request.headers.get('User-Agent', 'Unknown')
+            })
         except Exception as e:
-            logger.error(f"Authentication error: {str(e)}")
-            return False, f"認證過程發生錯誤: {str(e)}", None
+            logger.error(f"Failed to log unauthorized attempt: {str(e)}")
+
     
     def log_unauthorized_attempt(self, uuid_hash, client_ip):
         """記錄未授權登入嘗試"""
