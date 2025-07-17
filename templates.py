@@ -1,4 +1,4 @@
-# 專業軟體服務頁面 HTML 模板
+# 專業軟體服務頁面 HTML 模板 - 修復版本，恢復打字機特效和遊戲圖片
 PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -54,9 +54,89 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: hidden;
+            position: relative;
         }
 
-        /* 導航欄 */
+        /* 打字機代碼背景特效 CSS */
+        @keyframes typewriter {
+            0% { width: 0; }
+            90% { width: 100%; }
+            100% { width: 100%; }
+        }
+
+        @keyframes blink-cursor {
+            0%, 50% { border-right: 2px solid #00d4ff; }
+            51%, 100% { border-right: 2px solid transparent; }
+        }
+
+        @keyframes fade-out {
+            0% { opacity: 0.15; }
+            70% { opacity: 0.15; }
+            100% { opacity: 0; }
+        }
+
+        /* 增強版背景動效 */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 1;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 30%, rgba(0, 212, 255, 0.02) 50%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                conic-gradient(from 0deg at 70% 30%, transparent, rgba(139, 92, 246, 0.03), transparent),
+                conic-gradient(from 180deg at 30% 70%, transparent, rgba(0, 212, 255, 0.02), transparent);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(1deg); }
+            66% { transform: translate(-20px, 20px) rotate(-1deg); }
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Navigation */
         .navbar {
             position: fixed;
             top: 0;
@@ -165,6 +245,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             font-size: 0.85rem;
             font-weight: 500;
             margin-bottom: 2rem;
+            animation: slideInUp 1s ease-out;
         }
 
         .hero h1 {
@@ -172,6 +253,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             font-weight: 800;
             margin-bottom: 1.5rem;
             line-height: 1.1;
+            animation: slideInUp 1s ease-out 0.2s both;
         }
 
         .hero .highlight {
@@ -187,12 +269,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             margin-bottom: 3rem;
             max-width: 700px;
             line-height: 1.7;
+            animation: slideInUp 1s ease-out 0.4s both;
         }
 
         .hero-buttons {
             display: flex;
             gap: 1.5rem;
             flex-wrap: wrap;
+            animation: slideInUp 1s ease-out 0.6s both;
         }
 
         .btn-primary {
@@ -755,6 +839,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     </style>
 </head>
 <body>
+    <div class="bg-animation"></div>
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
@@ -1226,6 +1312,193 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 closeModal();
             }
         });
+
+        // =============================================
+        // 打字機代碼背景特效 - 恢復版本
+        // =============================================
+
+        // 創建打字機效果的代碼背景
+        function createCodeBackground() {
+            const codeContainer = document.createElement('div');
+            codeContainer.id = 'code-background';
+            codeContainer.style.cssText = `
+                position: fixed; 
+                top: 10%; 
+                left: 5%; 
+                width: 90%; 
+                height: 80%; 
+                pointer-events: none; 
+                z-index: 1; 
+                opacity: 1; 
+                font-family: 'Courier New', monospace; 
+                color: #00d4ff;
+                overflow: hidden; 
+                font-size: 14px; 
+                font-weight: 400;
+                line-height: 1.6;
+            `;
+            
+            document.body.appendChild(codeContainer);
+            console.log('Code background container created');
+            
+            // 開始第一個打字循環
+            startTypingCycle();
+        }
+
+        function startTypingCycle() {
+            const container = document.getElementById('code-background');
+            if (!container) return;
+            
+            const codeSnippets = [
+                'import cv2',
+                'import numpy as np', 
+                'import threading',
+                'import time',
+                'import random',
+                'from selenium import webdriver',
+                'from PIL import Image',
+                '',
+                'def optimize_game():',
+                '    while True:',
+                '        screenshot = cv2.imread("game.png")',
+                '        if detect_target(screenshot):',
+                '            execute_action()',
+                '        time.sleep(random.uniform(0.1, 0.3))',
+                '',
+                'class GameBot:',
+                '    def __init__(self):',
+                '        self.running = True',
+                '        self.thread_pool = []',
+                '        self.config = load_config()',
+                '',
+                '    async def process_frame(self):',
+                '        frame = await self.capture_screen()',
+                '        result = self.analyze_frame(frame)',
+                '        return result',
+                '',
+                '    def detect_enemy(self, frame):',
+                '        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)',
+                '        mask = cv2.inRange(hsv, lower_red, upper_red)',
+                '        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)',
+                '        return len(contours) > 0',
+                '',
+                'def main():',
+                '    bot = GameBot()',
+                '    try:',
+                '        bot.start()',
+                '    except KeyboardInterrupt:',
+                '        bot.stop()',
+                '        print("Bot stopped safely")',
+                '',
+                'if __name__ == "__main__":',
+                '    main()'
+            ];
+            
+            let currentLine = 0;
+            let lineHeight = 22; // 行高
+            
+            function typeLine() {
+                if (currentLine >= codeSnippets.length) {
+                    // 清空容器，重新開始
+                    setTimeout(() => {
+                        container.innerHTML = '';
+                        currentLine = 0;
+                        typeLine();
+                    }, 3000);
+                    return;
+                }
+                
+                const line = codeSnippets[currentLine];
+                const lineElement = document.createElement('div');
+                
+                lineElement.style.cssText = `
+                    position: absolute;
+                    left: 0;
+                    top: ${currentLine * lineHeight}px;
+                    white-space: pre;
+                    overflow: hidden;
+                    opacity: 0.12;
+                    width: 0;
+                    animation: 
+                        typewriter ${1.5 + (line.length * 0.05)}s steps(${Math.max(line.length, 1)}) 1 forwards,
+                        blink-cursor 1s step-end infinite,
+                        fade-out ${6 + Math.random() * 2}s ease-in-out ${2 + Math.random()}s forwards;
+                `;
+                
+                lineElement.textContent = line;
+                container.appendChild(lineElement);
+                
+                currentLine++;
+                
+                // 下一行的延遲
+                setTimeout(typeLine, 400 + Math.random() * 600);
+            }
+            
+            typeLine();
+        }
+
+        // 添加浮動粒子效果
+        function createFloatingParticles() {
+            const particlesContainer = document.createElement('div');
+            particlesContainer.style.cssText = `
+                position: fixed; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                height: 100%; 
+                pointer-events: none; 
+                z-index: -1;
+            `;
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute; 
+                    width: 2px; 
+                    height: 2px; 
+                    background: var(--accent-blue); 
+                    border-radius: 50%; 
+                    opacity: 0.3; 
+                    animation: float-particle ${10 + Math.random() * 10}s linear infinite; 
+                    left: ${Math.random() * 100}%; 
+                    top: ${Math.random() * 100}%; 
+                    animation-delay: ${Math.random() * 10}s;
+                `;
+                particlesContainer.appendChild(particle);
+            }
+            
+            document.body.appendChild(particlesContainer);
+        }
+
+        // 添加粒子動畫 CSS
+        const particleStyle = document.createElement('style');
+        particleStyle.textContent = `
+            @keyframes float-particle { 
+                0% { transform: translateY(0) translateX(0); opacity: 0; } 
+                10% { opacity: 0.3; } 
+                90% { opacity: 0.3; } 
+                100% { transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px); opacity: 0; } 
+            }
+        `;
+        document.head.appendChild(particleStyle);
+
+        // 初始化增強背景效果
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing background effects');
+            createCodeBackground();
+            createFloatingParticles();
+        });
+
+        // 如果 DOMContentLoaded 已經觸發，立即執行
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                createCodeBackground();
+                createFloatingParticles();
+            });
+        } else {
+            createCodeBackground();
+            createFloatingParticles();
+        }
     </script>
 </body>
 </html>
