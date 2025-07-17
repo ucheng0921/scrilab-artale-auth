@@ -402,8 +402,21 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 4rem;
-            color: var(--accent-blue);
+        }
+
+        .game-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .game-card.active:hover .game-image img {
+            transform: scale(1.05);
+        }
+
+        .game-card.coming-soon .game-image img {
+            opacity: 0.7;
         }
 
         .game-overlay {
@@ -895,7 +908,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- MapleStory Worlds - Artale -->
                 <div class="game-card active" onclick="showGamePlans('artale')">
                     <div class="game-image">
-                        <i class="fas fa-leaf"></i>
+                        <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale" style="width: 100%; height: 100%; object-fit: cover;">
                         <div class="game-overlay">
                             <i class="fas fa-arrow-right"></i>
                         </div>
@@ -917,7 +930,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- Coming Soon Games -->
                 <div class="game-card coming-soon">
                     <div class="game-image">
-                        <i class="fas fa-clock"></i>
+                        <img src="/static/images/coming-soon.jpg" alt="Coming Soon Games" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div class="game-overlay">
+                            <i class="fas fa-clock"></i>
+                        </div>
                     </div>
                     <div class="game-info">
                         <h3>更多遊戲</h3>
