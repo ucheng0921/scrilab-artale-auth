@@ -200,28 +200,28 @@ MANUAL_TEMPLATE = r"""
             border-radius: 12px;
             padding: 1.5rem;
             margin: 0 auto;
-            max-width: 800px;
+            max-width: 900px;
             display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 1rem;
-            height: 500px;
+            grid-template-columns: 300px 1fr;
+            gap: 1.2rem;
+            height: 550px;
         }
 
         .left-panel {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 1rem;
+            padding: 1.2rem;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.2rem;
         }
 
         .right-panel {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 1rem;
+            padding: 1.2rem;
             display: flex;
             flex-direction: column;
         }
@@ -230,36 +230,47 @@ MANUAL_TEMPLATE = r"""
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            padding: 0.8rem;
-            margin-bottom: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
         }
 
         .panel-title {
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-weight: 600;
             color: var(--accent-blue);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .mock-input {
             background: var(--bg-tertiary);
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            padding: 0.4rem 0.6rem;
-            font-size: 0.8rem;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.9rem;
             color: var(--text-secondary);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.8rem;
+            width: 100%;
         }
 
         .mock-button {
             background: var(--accent-blue);
             color: white;
             border: none;
-            border-radius: 4px;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
             cursor: pointer;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.5rem;
+            transition: var(--transition);
+            width: 100%;
+            font-weight: 500;
+        }
+
+        .mock-button:hover {
+            opacity: 0.8;
         }
 
         .mock-button.green {
@@ -268,6 +279,50 @@ MANUAL_TEMPLATE = r"""
 
         .mock-button.red {
             background: var(--accent-red);
+        }
+
+        .mock-button-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .mock-button-row .mock-button {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .mock-status {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+        }
+
+        .status-dot.green {
+            background: var(--accent-green);
+        }
+
+        .status-dot.red {
+            background: var(--accent-red);
+        }
+
+        .user-info {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.6rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
         }
 
         .mock-tabs {
@@ -279,28 +334,75 @@ MANUAL_TEMPLATE = r"""
         .mock-tab {
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.8rem;
+            border-radius: 6px 6px 0 0;
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
             color: var(--text-secondary);
             cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+            text-align: center;
         }
 
         .mock-tab.active {
             background: var(--accent-blue);
             color: white;
+            border-bottom-color: var(--accent-blue);
+        }
+
+        .mock-tab:hover:not(.active) {
+            background: var(--bg-tertiary);
         }
 
         .mock-log {
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 0.8rem;
-            font-family: monospace;
-            font-size: 0.75rem;
+            border-radius: 0 0 4px 4px;
+            padding: 1rem;
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
             color: var(--accent-green);
             flex: 1;
             overflow-y: auto;
+            line-height: 1.4;
+        }
+
+        .log-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.8rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .mock-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .mock-checkbox input {
+            width: 14px;
+            height: 14px;
+        }
+
+        .mock-mini-button {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .mock-mini-button:hover {
+            background: var(--accent-blue);
+            color: white;
         }
 
         /* Mock settings styles */
@@ -340,7 +442,96 @@ MANUAL_TEMPLATE = r"""
             color: var(--text-secondary);
         }
 
-        /* Advanced config styles */
+        /* Auth gate styles */
+        .auth-gate {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-red);
+            border-radius: var(--border-radius);
+            padding: 3rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .auth-gate-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .auth-gate h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--accent-red);
+        }
+
+        .auth-input-group {
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .auth-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .auth-submit {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: var(--gradient-accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .auth-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .auth-error {
+            color: var(--accent-red);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .auth-success {
+            color: var(--accent-green);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .protected-content {
+            display: none;
+        }
+
+        .protected-content.unlocked {
+            display: block;
+        }
         .config-section-detailed {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -681,67 +872,131 @@ MANUAL_TEMPLATE = r"""
             <div class="gui-mockup">
                 <div class="left-panel">
                     <div class="panel-section">
-                        <div class="panel-title">登入驗證</div>
+                        <div class="panel-title">
+                            <i class="fas fa-shield-alt"></i>
+                            登入驗證
+                        </div>
                         <div class="mock-input">請輸入您的授權 UUID</div>
                         <button class="mock-button">登入</button>
-                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">狀態: 未登入</div>
+                        <div class="mock-status">
+                            <div class="status-dot"></div>
+                            <span>狀態: 未登入</span>
+                        </div>
+                        <div class="user-info" style="display: none;">
+                            <strong>用戶: Demo User</strong><br>
+                            權限: 腳本執行, 配置修改<br>
+                            到期: 2024-12-31
+                        </div>
                     </div>
+                    
                     <div class="panel-section">
-                        <div class="panel-title">腳本控制</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">腳本狀態: 未運行</div>
-                        <button class="mock-button green">開始</button>
-                        <button class="mock-button red">停止</button>
-                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">運行時間: 00:00:00</div>
+                        <div class="panel-title">
+                            <i class="fas fa-play-circle"></i>
+                            腳本控制
+                        </div>
+                        <div class="mock-status" style="margin-bottom: 0.8rem;">
+                            <div class="status-dot red"></div>
+                            <span>腳本狀態: 未運行</span>
+                        </div>
+                        <div class="mock-button-row">
+                            <button class="mock-button green">開始</button>
+                            <button class="mock-button red">停止</button>
+                        </div>
+                        <div class="mock-status" style="margin-top: 0.8rem;">
+                            <i class="fas fa-clock"></i>
+                            <span>運行時間: 00:00:00</span>
+                        </div>
+                        <div class="mock-status">
+                            <i class="fas fa-crosshairs"></i>
+                            <span>檢測次數: 0</span>
+                        </div>
                     </div>
                 </div>
+                
                 <div class="right-panel">
                     <div class="mock-tabs">
-                        <div class="mock-tab active" onclick="showMockTab('log')">即時日誌</div>
-                        <div class="mock-tab" onclick="showMockTab('settings')">進階設定</div>
+                        <div class="mock-tab active" onclick="showMockTab('log')">
+                            <i class="fas fa-terminal"></i> 即時日誌
+                        </div>
+                        <div class="mock-tab" onclick="showMockTab('settings')">
+                            <i class="fas fa-cogs"></i> 進階設定
+                        </div>
                     </div>
+                    
                     <div class="mock-log" id="mock-log-tab">
-                        [12:34:56] 歡迎使用 Artale Script GUI<br>
-                        [12:34:56] 認證系統已就緒<br>
-                        [12:34:56] 請輸入您的授權 UUID 以開始使用<br>
-                        [12:34:56] 提示: 只有授權用戶才能使用腳本功能<br>
-                        [12:34:56] 登入後確保遊戲視窗已開啟，然後點擊開始腳本<br>
-                        [12:34:56] 怪物下載功能已整合至進階設定中
+                        <div style="color: var(--accent-blue);">[12:34:56] 🚀 歡迎使用 Artale Script GUI</div>
+                        <div style="color: var(--accent-green);">[12:34:56] ✅ 認證系統已就緒</div>
+                        <div>[12:34:56] 📝 請輸入您的授權 UUID 以開始使用</div>
+                        <div style="color: var(--accent-orange);">[12:34:56] ⚠️  提示: 只有授權用戶才能使用腳本功能</div>
+                        <div>[12:34:56] 🎮 登入後確保遊戲視窗已開啟，然後點擊開始腳本</div>
+                        <div style="color: var(--accent-purple);">[12:34:56] 🔧 怪物下載功能已整合至進階設定中</div>
+                        <div style="color: var(--text-muted);">[12:34:56] 📐 建議使用 1280x720 視窗模式</div>
+                        <div style="color: var(--accent-green);">[12:34:56] 🛡️  血量監控系統已啟用</div>
+                        <div>[12:34:56] 📊 被動技能管理器已就緒</div>
+                        <div style="color: var(--accent-blue);">[12:34:56] 🔍 紅點檢測系統已初始化</div>
                     </div>
+                    
                     <div class="mock-settings" id="mock-settings-tab" style="display: none;">
                         <div class="mock-settings-category">
-                            <h4>怪物檢測與攻擊配置</h4>
+                            <h4><i class="fas fa-crosshairs"></i> 怪物檢測與攻擊配置</h4>
                             <div class="mock-setting-item">
                                 <span>攻擊按鍵:</span>
-                                <input type="text" value="z" style="width: 30px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px;">
+                                <input type="text" value="z" style="width: 40px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; color: var(--text-primary);">
                             </div>
                             <div class="mock-setting-item">
                                 <span>攻擊範圍:</span>
-                                <input type="text" value="100" style="width: 50px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px;">
+                                <input type="text" value="100" style="width: 60px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; color: var(--text-primary);">
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">px</span>
+                            </div>
+                            <div class="mock-setting-item">
+                                <span>啟用次要攻擊:</span>
+                                <input type="checkbox" checked style="transform: scale(1.2);">
                             </div>
                         </div>
+                        
                         <div class="mock-settings-category">
-                            <h4>被動技能系統</h4>
+                            <h4><i class="fas fa-magic"></i> 被動技能系統</h4>
                             <div class="mock-setting-item">
                                 <span>啟用被動技能:</span>
-                                <input type="checkbox" checked>
+                                <input type="checkbox" checked style="transform: scale(1.2);">
                             </div>
                             <div class="mock-setting-item">
                                 <span>技能1按鍵:</span>
-                                <input type="text" value="q" style="width: 30px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px;">
+                                <input type="text" value="q" style="width: 40px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; color: var(--text-primary);">
+                            </div>
+                            <div class="mock-setting-item">
+                                <span>技能1冷卻:</span>
+                                <input type="text" value="30" style="width: 50px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; color: var(--text-primary);">
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">秒</span>
                             </div>
                         </div>
+                        
                         <div class="mock-settings-category">
-                            <h4>血量監控配置</h4>
+                            <h4><i class="fas fa-heart"></i> 血量監控配置</h4>
                             <div class="mock-setting-item">
                                 <span>HP補血閾值:</span>
-                                <input type="text" value="0.3" style="width: 50px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px;">
+                                <input type="text" value="0.3" style="width: 60px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; color: var(--text-primary);">
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">(30%)</span>
                             </div>
                             <div class="mock-setting-item">
                                 <span>補血按鍵:</span>
-                                <input type="text" value="home" style="width: 50px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px;">
+                                <input type="text" value="home" style="width: 80px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; color: var(--text-primary);">
                             </div>
                         </div>
-                        <button class="mock-button" style="margin-top: 10px;">保存設定</button>
+                        
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <button class="mock-button" style="width: auto; padding: 0.6rem 1.5rem;">
+                                <i class="fas fa-save"></i> 保存設定
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="log-controls">
+                        <div class="mock-checkbox">
+                            <input type="checkbox" checked>
+                            <span>自動滾動</span>
+                        </div>
+                        <button class="mock-mini-button">清空日誌</button>
                     </div>
                 </div>
             </div>
@@ -1686,23 +1941,69 @@ MANUAL_TEMPLATE = r"""
                 </div>
             </div>
 
-            <div class="tip-box">
-                <div class="box-title">
-                    <i class="fas fa-lightbulb"></i>
-                    使用建議
-                </div>
-                <ul style="list-style: none; padding-left: 0;">
-                    <li>• 首次使用建議先熟悉基本操作，再進行進階設定</li>
-                    <li>• 定期備份自定義配置，避免意外丟失</li>
-                    <li>• 遇到問題時先查看即時日誌，通常會有詳細的錯誤信息</li>
-                    <li>• 建議在測試環境中調整設定，確認無誤後再正式使用</li>
-                    <li>• 務必使用1280x720視窗模式以獲得最佳體驗</li>
-                </ul>
-            </div>
-        </section>
+        </div>
+        <!-- End of Protected Content -->
+
     </div>
 
     <script>
+        // Demo UUIDs for testing (in real implementation, this would be server-side verification)
+        const validUUIDs = [
+            'demo-uuid-12345',
+            'test-user-67890',
+            'sample-key-abcde'
+        ];
+
+        function verifyUUID() {
+            const input = document.getElementById('uuid-input');
+            const errorDiv = document.getElementById('auth-error');
+            const successDiv = document.getElementById('auth-success');
+            const authGate = document.getElementById('auth-gate');
+            const protectedContent = document.getElementById('protected-content');
+            
+            const uuid = input.value.trim();
+            
+            // Reset messages
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (!uuid) {
+                errorDiv.textContent = '請輸入 UUID';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            // Simulate verification (in real implementation, this would be an API call)
+            if (uuid.length >= 8 && (validUUIDs.includes(uuid) || uuid.toLowerCase().includes('demo') || uuid.toLowerCase().includes('test'))) {
+                successDiv.style.display = 'block';
+                
+                setTimeout(() => {
+                    authGate.style.display = 'none';
+                    protectedContent.classList.add('unlocked');
+                    
+                    // Smooth scroll to the unlocked content
+                    protectedContent.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 1500);
+            } else {
+                errorDiv.style.display = 'block';
+                input.style.borderColor = 'var(--accent-red)';
+                
+                setTimeout(() => {
+                    input.style.borderColor = 'var(--border-color)';
+                }, 2000);
+            }
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('uuid-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyUUID();
+            }
+        });
+
         // Show mock tab function
         function showMockTab(tabName) {
             // Hide all tabs
@@ -1789,10 +2090,10 @@ MANUAL_TEMPLATE = r"""
         // Mock GUI interactions
         document.querySelectorAll('.mock-button').forEach(button => {
             button.addEventListener('click', function() {
-                const originalText = this.textContent;
-                this.textContent = '執行中...';
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 執行中...';
                 setTimeout(() => {
-                    this.textContent = originalText;
+                    this.innerHTML = originalText;
                 }, 1000);
             });
         });
