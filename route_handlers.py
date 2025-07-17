@@ -392,6 +392,9 @@ class RouteHandlers:
             user_ref.update(update_data)
             
             return True, "認證成功", user_data
+        except Exception as e:
+            logger.error(f"authenticate_user error: {str(e)}")
+            return False, "認證服務發生錯誤", None
             
     def log_unauthorized_attempt(self, uuid_hash, client_ip):
         """記錄未授權登入嘗試"""
