@@ -446,36 +446,53 @@ DISCLAIMER_TEMPLATE = r"""
             <div class="section-content">
                 <div class="important-box">
                     <div class="box-title">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        重要聲明
+                        <i class="fas fa-info-circle"></i>
+                        軟體定義
                     </div>
                     <div class="box-content">
-                        本服務所提供之軟體程式為「人工智慧娛樂性輔助軟體」，採用非侵入性技術，僅在本地電腦環境中運行。
+                        本服務所提供之軟體程式為「智能遊戲輔助工具」，採用純本地運算技術，專為提升使用者遊戲體驗而設計。
                     </div>
                 </div>
 
-                <h4>技術實現原理</h4>
-                <p>本網站 (scrilab.com) 所提供、銷售之軟體程式，其實現原理包括但不限於：</p>
+                <h4>核心技術架構</h4>
+                <p>本網站 (scrilab.com) 所提供、銷售之軟體程式，基於以下先進技術實現：</p>
                 <ul>
-                    <li><strong>圖像AI識別技術：</strong>透過電腦視覺技術識別遊戲畫面元素</li>
-                    <li><strong>內存讀取技術：</strong>僅讀取電腦記憶體中的公開資料，不進行修改</li>
-                    <li><strong>模擬操作功能：</strong>透過CPU、GPU、RAM計算實現自動化操作</li>
-                    <li><strong>輔助線圈繪製：</strong>在本地電腦上繪製輔助線圈，不修改遊戲資料</li>
-                    <li><strong>系統權限利用：</strong>可能利用作業系統或遊戲軟體本身的技術實現功能</li>
+                    <li><strong>計算機視覺技術：</strong>運用深度學習算法進行畫面識別與分析</li>
+                    <li><strong>本地數據處理：</strong>僅在使用者電腦內進行數據讀取與計算處理</li>
+                    <li><strong>智能決策系統：</strong>基於AI算法提供遊戲策略建議與操作優化</li>
+                    <li><strong>視覺輔助渲染：</strong>在本地畫面上疊加輔助資訊與視覺提示</li>
+                    <li><strong>自動化腳本引擎：</strong>提供可自定義的操作自動化功能</li>
                 </ul>
 
-                <h4>非侵入性保證</h4>
-                <p>本軟體的所有操作均在使用者的PC電腦上執行，具有以下特性：</p>
+                <h4>技術特性說明</h4>
+                <p>本軟體採用完全本地化的技術架構，具有以下核心特性：</p>
                 <ol>
-                    <li>不會修改、入侵或攻擊遊戲伺服器</li>
-                    <li>不會篡改遊戲核心數據或資料庫</li>
-                    <li>不會進行網路攻擊或惡意行為</li>
-                    <li>僅在本地環境中提供輔助功能</li>
-                    <li>不會造成遊戲伺服器負擔或損害</li>
+                    <li><strong>本地運算：</strong>所有功能均在使用者電腦上獨立運行</li>
+                    <li><strong>純粹輔助：</strong>提供資訊輔助與操作建議，不修改遊戲數據</li>
+                    <li><strong>視覺增強：</strong>透過畫面疊加技術提供額外視覺資訊</li>
+                    <li><strong>智能分析：</strong>運用AI技術分析遊戲狀況並提供優化建議</li>
+                    <li><strong>個人化設定：</strong>支援使用者自定義功能參數與使用偏好</li>
                 </ol>
 
-                <h4>術語定義澄清</h4>
-                <p>本網站所稱之「外掛」並非傳統意義上的外掛程式，而是「輔助軟體」的通俗稱呼。本軟體屬於合法的技術輔助工具，不涉及非法破解或攻擊行為。</p>
+                <h4>技術邊界與限制</h4>
+                <p>為確保技術的合法性與安全性，本軟體嚴格遵循以下技術邊界：</p>
+                <ul>
+                    <li><strong>無網路交互：</strong>不與遊戲伺服器進行任何形式的通訊或交互</li>
+                    <li><strong>無數據修改：</strong>不對遊戲檔案、記憶體數據或網路封包進行修改</li>
+                    <li><strong>無系統入侵：</strong>不利用任何系統漏洞或進行未授權的系統存取</li>
+                    <li><strong>無惡意行為：</strong>不包含病毒、木馬或其他惡意程式碼</li>
+                    <li><strong>透明運作：</strong>所有功能對使用者完全透明，無隱藏或後門程式</li>
+                </ul>
+
+                <div class="info-box">
+                    <div class="box-title">
+                        <i class="fas fa-shield-alt"></i>
+                        安全性保證
+                    </div>
+                    <div class="box-content">
+                        本軟體經過嚴格的安全測試，不含任何惡意程式碼，不會損害使用者電腦或洩露個人資訊。所有功能均為合法的技術實現，符合軟體工程的最佳實踐標準。
+                    </div>
+                </div>
             </div>
         </section>
 
