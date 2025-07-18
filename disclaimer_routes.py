@@ -1142,10 +1142,6 @@ DISCLAIMER_TEMPLATE = r"""
                     <i class="fas fa-envelope"></i>
                     <span>Email 客服</span>
                 </a>
-                <a href="/manual" class="contact-link">
-                    <i class="fas fa-book"></i>
-                    <span>操作手冊</span>
-                </a>
             </div>
             <div class="contact-footer">
                 <p>
