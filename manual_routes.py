@@ -2515,7 +2515,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         showError(data.message || '驗證失敗，請檢查序號是否正確');
                     }
                 }
-                #}
+                }
                 
             } catch (error) {
                 showError('網路錯誤，請稍後再試');
