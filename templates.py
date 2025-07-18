@@ -907,7 +907,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- MapleStory Worlds - Artale -->
                 <div class="game-card active" onclick="showGamePlans('artale')">
                     <div class="game-image">
-                        <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale Script" style="width: 100%; height: 100%; object-fit: cover;">
                         <div class="game-overlay">
                             <i class="fas fa-arrow-right"></i>
                         </div>
@@ -915,7 +915,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <div class="game-info">
                         <h3>MapleStory Worlds - Artale</h3>
                         <p class="game-subtitle">繁體中文版</p>
-                        <p class="game-description">專為 Artale 玩家打造的優化解決方案</p>
+                        <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案</p>
                         <div class="game-status">
                             <span class="status-badge active">服務中</span>
                             <a href="/manual" class="manual-btn">
