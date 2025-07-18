@@ -1191,6 +1191,44 @@ INTRO_TEMPLATE = r"""
             </div>
         </section>
 
+                <!-- 系統需求說明 -->
+                <section class="manual-section">
+                    <h2 class="section-title">💻 系統配置需求</h2>
+                    
+                    <div class="feature-card" style="max-width: 100%; margin: 0;">
+                        <div class="feature-description" style="text-align: left;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+                                <div>
+                                    <h4 style="color: var(--accent-green); margin-bottom: 0.8rem;">✅ 最低配置</h4>
+                                    <ul style="list-style: none; padding: 0;">
+                                        <li style="margin-bottom: 0.5rem;">• CPU: Intel i3 / AMD 同級</li>
+                                        <li style="margin-bottom: 0.5rem;">• 記憶體: 4GB RAM</li>
+                                        <li style="margin-bottom: 0.5rem;">• 硬碟: 1GB 可用空間</li>
+                                        <li style="margin-bottom: 0.5rem;">• 作業系統: Windows 10</li>
+                                        <li style="margin-bottom: 0.5rem;">• 網路: 穩定網路連接</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 style="color: var(--accent-blue); margin-bottom: 0.8rem;">⭐ 建議配置</h4>
+                                    <ul style="list-style: none; padding: 0;">
+                                        <li style="margin-bottom: 0.5rem;">• CPU: Intel i5 / AMD 同級以上</li>
+                                        <li style="margin-bottom: 0.5rem;">• 記憶體: 8GB RAM 以上</li>
+                                        <li style="margin-bottom: 0.5rem;">• 硬碟: SSD 固態硬碟</li>
+                                        <li style="margin-bottom: 0.5rem;">• 作業系統: Windows 10/11</li>
+                                        <li style="margin-bottom: 0.5rem;">• 網路: 穩定寬頻連接</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--accent-orange); border-radius: 6px;">
+                                <strong style="color: var(--accent-orange);">⚠️ 重要提醒：</strong><br>
+                                • 軟體資料夾必須放在<strong>英文路徑</strong>中（不可包含中文）<br>
+                                • 配置過低可能導致截圖分析延遲，影響使用體驗<br>
+                                • 建議關閉不必要的背景程式以提升效能
+                            </div>
+                        </div>
+                    </div>
+                </section>        
+
         <!-- CTA 區域 -->
         <section class="cta-section">
             <h2 class="cta-title">🚀 準備好體驗專業級遊戲技術服務了嗎？</h2>

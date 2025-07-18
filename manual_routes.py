@@ -4,6 +4,25 @@ manual_routes.py - 操作手冊路由處理（序號驗證版）
 from flask import Blueprint, render_template_string, request, jsonify
 import hashlib
 import logging
+from collections import defaultdict
+import time
+
+# 簡單的驗證失敗計數器
+failed_attempts = defaultdict(list)  # IP -> [timestamp1, timestamp2, ...]
+
+def is_rate_limited(ip):
+    """檢查是否超過速率限制"""
+    now = time.time()
+    # 清理5分鐘前的記錄
+    failed_attempts[ip] = [t for t in failed_attempts[ip] if now - t < 300]
+    
+    # 5分鐘內超過5次失敗就封鎖
+    return len(failed_attempts[ip]) >= 5
+
+def record_failed_attempt(ip):
+    """記錄失敗嘗試"""
+    failed_attempts[ip].append(time.time())
+
 
 logger = logging.getLogger(__name__)
 
@@ -1684,6 +1703,27 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <div class="step-title">準備工作</div>
                         <div class="step-content">
                             <p>確保遊戲已設定為 1280x720 視窗模式，然後啟動 Artale Script GUI 程式。</p>
+                            
+                            <div class="warning-box">
+                                <div class="box-title">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    重要：檔案路徑設定
+                                </div>
+                                <strong>軟體必須放置在英文路徑中！</strong><br><br>
+                                <strong>✅ 正確路徑範例：</strong><br>
+                                • C:\ArtaleScript\<br>
+                                • D:\Games\ArtaleScript\<br>
+                                • C:\Users\UserName\Desktop\ArtaleScript\<br><br>
+                                <strong>❌ 錯誤路徑範例：</strong><br>
+                                • C:\楓之谷\ArtaleScript\ （包含中文）<br>
+                                • D:\遊戲資料夾\ArtaleScript\ （包含中文）<br>
+                                • C:\Users\使用者\Desktop\ArtaleScript\ （包含中文）<br><br>
+                                <strong>原因說明：</strong><br>
+                                • Python 程式在處理中文路徑時可能發生編碼錯誤<br>
+                                • 圖片識別模組對中文路徑支援不佳<br>
+                                • 避免因路徑問題導致軟體無法正常運行
+                            </div>
+                            
                             <div class="step-visual">
                                 <div class="visual-icon">
                                     <i class="fas fa-desktop"></i>
@@ -2462,8 +2502,20 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                     }, 1500);
                     
                 } else {
-                    showError(data.message || '驗證失敗，請檢查序號是否正確');
+                    // 處理不同類型的錯誤 - 在現有的 else 分支中添加
+                    if (data.rate_limited) {
+                        showError('🚫 驗證失敗次數過多，請5分鐘後再試');
+                        verifyBtn.disabled = true;
+                        // 5分鐘後重新啟用按鈕
+                        setTimeout(() => {
+                            verifyBtn.disabled = false;
+                            hideMessages();
+                        }, 300000); // 5分鐘
+                    } else {
+                        showError(data.message || '驗證失敗，請檢查序號是否正確');
+                    }
                 }
+                #}
                 
             } catch (error) {
                 showError('網路錯誤，請稍後再試');
@@ -2876,6 +2928,17 @@ def manual_home():
 def verify_uuid():
     """驗證UUID端點"""
     try:
+        # 獲取客戶端 IP
+        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr).split(',')[0].strip()
+        
+        # 檢查是否被限制
+        if is_rate_limited(client_ip):
+            return jsonify({
+                'success': False,
+                'message': '驗證失敗次數過多，請5分鐘後再試',
+                'rate_limited': True
+            }), 429
+        
         data = request.get_json()
         uuid = data.get('uuid', '').strip()
         
@@ -2889,11 +2952,16 @@ def verify_uuid():
         is_valid, message = verify_user_uuid(uuid)
         
         if is_valid:
+            # 成功時清除失敗記錄
+            if client_ip in failed_attempts:
+                del failed_attempts[client_ip]
             return jsonify({
                 'success': True,
                 'message': message
             })
         else:
+            # 失敗時記錄
+            record_failed_attempt(client_ip)
             return jsonify({
                 'success': False,
                 'message': message
