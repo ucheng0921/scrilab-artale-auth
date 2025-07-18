@@ -2502,19 +2502,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                     }, 1500);
                     
                 } else {
-                    // 處理不同類型的錯誤 - 在現有的 else 分支中添加
-                    if (data.rate_limited) {
-                        showError('🚫 驗證失敗次數過多，請5分鐘後再試');
-                        verifyBtn.disabled = true;
-                        // 5分鐘後重新啟用按鈕
-                        setTimeout(() => {
-                            verifyBtn.disabled = false;
-                            hideMessages();
-                        }, 300000); // 5分鐘
-                    } else {
-                        showError(data.message || '驗證失敗，請檢查序號是否正確');
-                    }
-                }
+                    showError(data.message || '驗證失敗，請檢查序號是否正確');
                 }
                 
             } catch (error) {
