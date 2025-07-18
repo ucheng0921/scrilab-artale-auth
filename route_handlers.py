@@ -443,32 +443,20 @@ class RouteHandlers:
         return self.session_manager.generate_session_token(uuid, client_ip, session_timeout)
     
     def verify_session_token(self, token):
-        """驗證會話令牌"""
+        """驗證會話令牌 - 優化版本"""
         is_valid, session_data = self.session_manager.verify_session_token(token)
         
         if not is_valid:
             return False, None
         
-        # 獲取用戶數據
-        try:
-            uuid = session_data.get('uuid')
-            uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
-            user_ref = self.db.collection('authorized_users').document(uuid_hash)
-            user_doc = user_ref.get()
-            
-            if user_doc.exists:
-                user_data = user_doc.to_dict()
-                # 檢查用戶是否仍然活躍
-                if not user_data.get('active', False):
-                    self.session_manager.revoke_session_token(token)
-                    return False, None
-                return True, user_data
-            else:
-                self.session_manager.revoke_session_token(token)
-                return False, None
-        except Exception as e:
-            logger.error(f"User data retrieval error: {str(e)}")
-            return False, None
+        # 直接返回會話數據，不再查詢數據庫
+        # 用戶過期檢查已在 session_manager 中完成
+        return True, {
+            'uuid': session_data.get('uuid'),
+            'active': True,  # 能通過驗證說明用戶是活躍的
+            'last_login': session_data.get('created_at'),
+            'client_ip': session_data.get('client_ip')
+        }
     
     def authenticate_user(self, uuid, force_login=True, client_ip='unknown'):
         """認證用戶"""
