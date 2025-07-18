@@ -2305,8 +2305,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                                 discord.gg/HPzNrQmN
                             </a><br><br>
                             <strong>Email 客服：</strong><br>
-                            <a href="mailto:pink870921aa@gmail.com" style="color: var(--accent-blue);">
-                                pink870921aa@gmail.com
+                            <a href="mailto:scrilabstaff@gmail.com" style="color: var(--accent-blue);">
+                                scrilabstaff@gmail.com
                             </a><br><br>
                             <strong>服務時間：</strong><br>
                             週一至週日 09:00-23:00

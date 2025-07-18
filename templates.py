@@ -1107,9 +1107,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <i class="fab fa-discord"></i>
                         <span>Discord 技術支援</span>
                     </a>
-                    <a href="mailto:pink870921aa@gmail.com" class="email-link">
+                    <a href="mailto:scrilabstaff@gmail.com" class="email-link">
                         <i class="fas fa-envelope"></i>
-                        <span>pink870921aa@gmail.com</span>
+                        <span>scrilabstaff@gmail.com</span>
                     </a>
                 </div>
                 <p style="color: var(--text-muted); font-size: 0.95rem;">所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
@@ -1850,7 +1850,7 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
                     <i class="fab fa-discord"></i>
                     <span>Discord 技術支援</span>
                 </a>
-                <a href="mailto:pink870921aa@gmail.com" class="contact-link">
+                <a href="mailto:scrilabstaff@gmail.com" class="contact-link">
                     <i class="fas fa-envelope"></i>
                     <span>Email 客服</span>
                 </a>
@@ -1909,7 +1909,7 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
 
 技術支援：
 - Discord：https://discord.gg/HPzNrQmN
-- Email：pink870921aa@gmail.com
+- Email：scrilabstaff@gmail.com
 
 Scrilab 技術團隊
 ${new Date().toLocaleDateString('zh-TW')}`;

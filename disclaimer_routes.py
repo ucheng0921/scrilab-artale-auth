@@ -432,7 +432,7 @@ DISCLAIMER_TEMPLATE = r"""
         <div class="disclaimer-header">
             <h1 class="disclaimer-title">免責聲明</h1>
             <p class="disclaimer-subtitle">服務條款與法律聲明</p>
-            <span class="last-updated">最後更新：2025年1月18日</span>
+            <span class="last-updated">最後更新：2025年7月18日</span>
         </div>
 
         <!-- 1. 軟體性質與技術說明 -->
@@ -636,7 +636,7 @@ DISCLAIMER_TEMPLATE = r"""
                         權利行使方式
                     </div>
                     <div class="box-content">
-                        如需行使上述權利，請透過Email（pink870921aa@gmail.com）或Discord社群聯繫我們，我們將在15個工作日內回應您的請求。
+                        如需行使上述權利，請透過Email（scrilabstaff@gmail.com）或Discord社群聯繫我們，我們將在15個工作日內回應您的請求。
                     </div>
                 </div>
             </div>
@@ -729,7 +729,7 @@ DISCLAIMER_TEMPLATE = r"""
                         權利行使方式
                     </div>
                     <div class="box-content">
-                        如需行使上述權利，請透過Email（pink870921aa@gmail.com）或Discord社群聯繫我們，我們將在15個工作日內回應您的請求。
+                        如需行使上述權利，請透過Email（scrilabstaff@gmail.com）或Discord社群聯繫我們，我們將在15個工作日內回應您的請求。
                     </div>
                 </div>
 
@@ -842,7 +842,7 @@ DISCLAIMER_TEMPLATE = r"""
                     </div>
                     <div class="box-content">
                         <strong>Discord社群：</strong>https://discord.gg/HPzNrQmN（推薦使用，回應最快）<br>
-                        <strong>Email客服：</strong>pink870921aa@gmail.com<br>
+                        <strong>Email客服：</strong>scrilabstaff@gmail.com<br>
                         <strong>操作手冊：</strong>/manual（詳細使用說明文檔）
                     </div>
                 </div>
@@ -1122,7 +1122,7 @@ DISCLAIMER_TEMPLATE = r"""
                 <h4>聲明解釋權與聯繫方式</h4>
                 <p>本免責聲明的最終解釋權歸Scrilab所有。在法律允許的範圍內，本公司對聲明內容的解釋為最終解釋。如對本聲明有任何疑問或需要澄清，請透過以下方式聯繫我們：</p>
                 <ul>
-                    <li><strong>法律事務諮詢：</strong>pink870921aa@gmail.com</li>
+                    <li><strong>法律事務諮詢：</strong>scrilabstaff@gmail.com</li>
                     <li><strong>一般服務問題：</strong>Discord社群 (https://discord.gg/HPzNrQmN)</li>
                     <li><strong>官方網站：</strong>https://scrilab.com</li>
                 </ul>
@@ -1138,7 +1138,7 @@ DISCLAIMER_TEMPLATE = r"""
                     <i class="fab fa-discord"></i>
                     <span>Discord 社群</span>
                 </a>
-                <a href="mailto:pink870921aa@gmail.com" class="contact-link">
+                <a href="mailto:scrilabstaff@gmail.com" class="contact-link">
                     <i class="fas fa-envelope"></i>
                     <span>Email 客服</span>
                 </a>
