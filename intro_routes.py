@@ -689,11 +689,10 @@ INTRO_TEMPLATE = r"""
                 <div class="emoji">🌟</div>
             </div>
             <h1 class="hero-title">歡迎來到 Artale Script 的世界！</h1>
-            <p class="hero-subtitle">🎮 讓你的角色擁有超越人類的反應速度和永不疲倦的精神！</p>
+            <p class="hero-subtitle">🎮 專業級遊戲技術服務，讓你的角色擁有AI級別的智能！</p>
             <p class="hero-description">
-                還在手動打怪嗎？還在為了練等而犧牲睡眠時間嗎？<br>
-                別再折磨自己了！讓我們的 AI 助手接管你的角色，<br>
-                你只需要負責睡覺、吃飯、和欣賞你的角色變強！ 😴✨
+                台灣製造，專為 MapleStory Worlds - Artale 打造的專業技術服務。<br>
+                採用最先進的電腦視覺技術，提供安全、穩定、高效的遊戲體驗！ ✨
             </p>
         </section>
 
@@ -703,158 +702,154 @@ INTRO_TEMPLATE = r"""
             <div class="features-grid">
                 <div class="feature-card fade-in-up delay-1">
                     <div class="feature-icon">
-                        <i class="fas fa-robot"></i>
+                        <i class="fas fa-eye"></i>
                     </div>
-                    <h3 class="feature-title">AI 級別的智能</h3>
+                    <h3 class="feature-title">先進電腦視覺技術</h3>
                     <p class="feature-description">
-                        我們的腳本比你想像的還要聰明！它會自動識別怪物、避開玩家、<br>
-                        甚至知道什麼時候該喝水休息（雖然它不需要）。
+                        採用最新的螢幕截圖技術進行即時分析，智能識別遊戲場景、<br>
+                        怪物位置、角色狀態等資訊，提供精準的自動化操作。
                     </p>
                     <div class="feature-highlight">
-                        💡 智商等級：天才級（至少比我寫代碼時聰明）
+                        🎯 精準度：99%+ 的目標識別率
                     </div>
                 </div>
 
                 <div class="feature-card fade-in-up delay-2">
                     <div class="feature-icon">
-                        <i class="fas fa-lightning-bolt"></i>
+                        <i class="fas fa-shield-alt"></i>
                     </div>
-                    <h3 class="feature-title">反應速度超越人類</h3>
+                    <h3 class="feature-title">非侵入式安全技術</h3>
                     <p class="feature-description">
-                        0.01 秒的反應時間！比眨眼還快！<br>
-                        怪物：「剛出現就被秒了，我連自我介紹都來不及...」
+                        完全不讀取遊戲記憶體或修改任何檔案，純粹基於視覺分析，<br>
+                        確保您的帳號安全，符合綠色軟體標準。
                     </p>
                     <div class="feature-highlight">
-                        ⚡ 反應速度：光速級（物理學定律允許的最快）
+                        🛡️ 安全等級：軍用級加密保護
                     </div>
                 </div>
 
                 <div class="feature-card fade-in-up delay-3">
                     <div class="feature-icon">
-                        <i class="fas fa-bed"></i>
+                        <i class="fas fa-random"></i>
                     </div>
-                    <h3 class="feature-title">24/7 不知疲倦</h3>
+                    <h3 class="feature-title">全隨機演算法</h3>
                     <p class="feature-description">
-                        當你在睡覺時，你的角色還在勤奮練功！<br>
-                        早上起來發現升了 10 級，這種感覺比中樂透還爽！
+                        所有操作都經過隨機化處理，移動路徑、攻擊時機、休息間隔<br>
+                        都模擬真實玩家行為，讓檢測系統難以識別。
                     </p>
                     <div class="feature-highlight">
-                        😴 你睡覺時間 = 角色練功時間 = 雙贏！
+                        🎲 隨機性：接近真人的自然行為模式
                     </div>
                 </div>
 
                 <div class="feature-card fade-in-up delay-4">
                     <div class="feature-icon">
-                        <i class="fas fa-brain"></i>
+                        <i class="fas fa-desktop"></i>
                     </div>
-                    <h3 class="feature-title">學會避開其他玩家</h3>
+                    <h3 class="feature-title">超直觀 GUI 介面</h3>
                     <p class="feature-description">
-                        檢測到紅點（其他玩家）會自動換頻道！<br>
-                        比你還會看臉色，社交恐懼症的最佳解決方案。
+                        台灣團隊精心設計的圖形化介面，一鍵啟動，即時監控，<br>
+                        詳細日誌顯示，讓您輕鬆掌控每個細節。
                     </p>
                     <div class="feature-highlight">
-                        👻 隱身技能：忍者級別（只差沒有煙霧彈）
+                        👨‍💻 易用性：3分鐘上手，無需技術背景
                     </div>
                 </div>
 
                 <div class="feature-card fade-in-up delay-1">
                     <div class="feature-icon">
-                        <i class="fas fa-heart"></i>
+                        <i class="fas fa-map"></i>
                     </div>
-                    <h3 class="feature-title">自動生命管理</h3>
+                    <h3 class="feature-title">廣泛地圖支援</h3>
                     <p class="feature-description">
-                        血量低了自動喝水，藍量不夠自動補充！<br>
-                        比你媽媽還關心你的健康（雖然這是虛擬健康）。
+                        理論上支援全部地圖，實際上完美適配平坦及多層簡易架構地圖，<br>
+                        足夠您從新手村練到滿級都不會無聊。
                     </p>
                     <div class="feature-highlight">
-                        💊 醫療保健：全方位守護（比保險公司還可靠）
+                        🗺️ 支援地圖：200+ 個主流練功地點
                     </div>
                 </div>
 
                 <div class="feature-card fade-in-up delay-2">
                     <div class="feature-icon">
-                        <i class="fas fa-cogs"></i>
+                        <i class="fas fa-clock"></i>
                     </div>
-                    <h3 class="feature-title">超級易用界面</h3>
+                    <h3 class="feature-title">24/7 不間斷運行</h3>
                     <p class="feature-description">
-                        連你奶奶都會用的 GUI 界面！<br>
-                        一鍵開始，一鍵停止，比開電視還簡單。
+                        上班時、睡覺時、出門時，讓腳本為您持續練功，<br>
+                        回來就能看到滿滿的經驗值和戰利品！
                     </p>
                     <div class="feature-highlight">
-                        👵 難度等級：奶奶友善級（已通過奶奶認證）
+                        ⏰ 目標：起床看到耳敏或香菇的小確幸
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 使用對比 -->
-        <section id="comparison" class="comparison-section">
-            <h2 class="section-title">📊 使用前 VS 使用後</h2>
-            <div class="comparison-grid">
-                <div class="comparison-card without">
-                    <h3 class="comparison-title without">
-                        <i class="fas fa-times-circle"></i>
-                        沒有腳本的悲慘人生
-                    </h3>
-                    <ul class="comparison-list">
-                        <li class="comparison-item negative">
-                            <i class="fas fa-tired"></i>
-                            <span>眼睛酸澀，手指抽筋，腰酸背痛</span>
-                        </li>
-                        <li class="comparison-item negative">
-                            <i class="fas fa-clock"></i>
-                            <span>熬夜練功，生活作息大亂</span>
-                        </li>
-                        <li class="comparison-item negative">
-                            <i class="fas fa-snail"></i>
-                            <span>升級速度比蝸牛還慢</span>
-                        </li>
-                        <li class="comparison-item negative">
-                            <i class="fas fa-angry"></i>
-                            <span>被搶怪氣到內傷</span>
-                        </li>
-                        <li class="comparison-item negative">
-                            <i class="fas fa-skull"></i>
-                            <span>忘記補血慘死，裝備掉滿地</span>
-                        </li>
-                        <li class="comparison-item negative">
-                            <i class="fas fa-coffee"></i>
-                            <span>咖啡當水喝，熊貓眼加深</span>
-                        </li>
+        <!-- 技術特色與注意事項 -->
+        <section id="technical" class="technical-section">
+            <h2 class="section-title">技術特色與重要說明</h2>
+            <div class="tech-grid">
+                <div class="tech-card advantage">
+                    <div class="tech-icon advantage">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>技術優勢</h3>
+                    <ul class="tech-list">
+                        <li><strong>台灣製造</strong> - 本土團隊開發，了解玩家需求</li>
+                        <li><strong>直觀GUI介面</strong> - 圖形化操作，3分鐘上手</li>
+                        <li><strong>全功能整合</strong> - 怪物檢測、攀爬、補血、避人一應俱全</li>
+                        <li><strong>即時日誌監控</strong> - 清楚掌握腳本運行狀態</li>
+                        <li><strong>高度自定義</strong> - 數十種參數可調整</li>
+                        <li><strong>智能紅點檢測</strong> - 自動避開其他玩家</li>
+                        <li><strong>被動技能管理</strong> - 智能CD管理，效率最大化</li>
+                        <li><strong>多層地圖支援</strong> - 自動攀爬繩索，適應複雜地形</li>
+                        <li><strong>血藍量監控</strong> - 智能補給，永不死亡</li>
+                        <li><strong>完全隨機化</strong> - 模擬真人行為，降低檢測風險</li>
                     </ul>
                 </div>
-
-                <div class="comparison-card with">
-                    <h3 class="comparison-title with">
-                        <i class="fas fa-check-circle"></i>
-                        使用腳本的美好生活
-                    </h3>
-                    <ul class="comparison-list">
-                        <li class="comparison-item positive">
-                            <i class="fas fa-spa"></i>
-                            <span>輕鬆愉快，身心健康</span>
-                        </li>
-                        <li class="comparison-item positive">
-                            <i class="fas fa-bed"></i>
-                            <span>睡眠充足，夢裡都在升級</span>
-                        </li>
-                        <li class="comparison-item positive">
-                            <i class="fas fa-rocket"></i>
-                            <span>升級速度快如火箭</span>
-                        </li>
-                        <li class="comparison-item positive">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>自動避開玩家，零衝突</span>
-                        </li>
-                        <li class="comparison-item positive">
-                            <i class="fas fa-heart"></i>
-                            <span>血量藍量滿滿，永不死亡</span>
-                        </li>
-                        <li class="comparison-item positive">
-                            <i class="fas fa-cocktail"></i>
-                            <span>有時間享受生活，喝茶看劇</span>
-                        </li>
+                
+                <div class="tech-card limitation">
+                    <div class="tech-icon limitation">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>使用限制與注意事項</h3>
+                    <ul class="tech-list">
+                        <li><strong>必須保持前景</strong> - 使用螢幕截圖技術，遊戲視窗不能被遮蔽</li>
+                        <li><strong>固定解析度</strong> - 需設定為1280x720視窗模式</li>
+                        <li><strong>爬繩流暢度</strong> - 非侵入式設計導致爬繩動作不如真人流暢</li>
+                        <li><strong>效率取捨</strong> - 全隨機移動確保安全，但效率會低於手動操作</li>
+                        <li><strong>地圖限制</strong> - 最適合平坦或多層簡易架構地圖</li>
+                        <li><strong>網路需求</strong> - 需要穩定的網路連接進行授權驗證</li>
                     </ul>
+                </div>
+            </div>
+            
+            <div class="expectation-card">
+                <h3>📈 效率期待值設定</h3>
+                <p>我們的設計理念：<strong>「安全第一，效率第二」</strong></p>
+                <div class="expectation-grid">
+                    <div class="expectation-item">
+                        <i class="fas fa-target"></i>
+                        <div>
+                            <strong>目標設定</strong>
+                            <p>上班時、睡覺時掛機，起床能看到一張耳敏或一顆香菇的小確幸</p>
+                        </div>
+                    </div>
+                    <div class="expectation-item">
+                        <i class="fas fa-balance-scale"></i>
+                        <div>
+                            <strong>效率平衡</strong>
+                            <p>犧牲部分效率換取更高的安全性，讓您能長期穩定使用</p>
+                        </div>
+                    </div>
+                    <div class="expectation-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <strong>時間價值</strong>
+                            <p>解放雙手，把時間投資在更有意義的事情上</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -890,13 +885,13 @@ INTRO_TEMPLATE = r"""
             
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFAQ(this)">
-                    <span>🤔 這個腳本真的這麼神奇嗎？</span>
+                    <span>🤔 這個腳本真的安全嗎？</span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    當然！我們的腳本經過了 999 次測試（沒錯，就差 1 次到 1000），
-                    能夠在 99.9% 的情況下正常工作。剩下的 0.1% 是因為電腦也需要休息時間。
-                    就像超級英雄也會有星期一症候群一樣！
+                    我們的腳本採用完全非侵入式技術，純粹基於螢幕截圖進行分析，
+                    不讀取遊戲記憶體、不修改任何檔案、不進行網路封包攔截。
+                    這就像您請了一個朋友在旁邊看著螢幕幫您操作滑鼠鍵盤一樣自然！
                 </div>
             </div>
 
@@ -906,9 +901,9 @@ INTRO_TEMPLATE = r"""
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    我們的腳本比忍者還隱密！採用最先進的「裝傻技術」，
-                    模擬真實玩家的行為模式，包括偶爾發呆、走錯路、甚至模擬手滑。
-                    連我們自己有時候都分不出來是真人還是腳本在玩！
+                    我們採用全隨機演算法，所有操作都經過隨機化處理，
+                    移動路徑、攻擊時機、技能使用都模擬真實玩家行為。
+                    但仍建議您理性使用，任何第三方工具都存在一定風險，請自行評估。
                 </div>
             </div>
 
@@ -918,63 +913,84 @@ INTRO_TEMPLATE = r"""
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    我們的腳本比你想像的還要輕量！只要你的電腦能開機、能顯示桌面、
-                    能運行計算器，就能完美運行我們的腳本。甚至有用戶說：
-                    「我的電腦本來很慢，用了腳本後感覺整台電腦都變快了！」
-                    （好吧，這可能是心理作用）
+                    我們的腳本非常輕量！只要能順暢運行 Artale 遊戲的電腦就能完美支援。
+                    主要需求就是穩定的 CPU 進行截圖分析，記憶體需求很低，
+                    甚至比很多瀏覽器佔用的資源還少。
                 </div>
             </div>
 
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFAQ(this)">
-                    <span>⏰ 需要多久才能看到效果？</span>
+                    <span>⏰ 效率到底如何？真的有用嗎？</span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    立竿見影！按下開始鍵的那一瞬間，你就會看到你的角色開始展現超人般的能力。
-                    第一天：「哇，好快！」
-                    第一週：「我怎麼變這麼強？」
-                    第一個月：「我是不是在作弊？」（是的，但這是合法的作弊）
+                    老實說，效率肯定比不上您專心手動練功。我們的設計理念是「安全第一，效率第二」。
+                    目標是讓您在上班、睡覺時能持續獲得經驗值，起床看到一張耳敏或一顆香菇的小確幸。
+                    把它當作「被動收入」的概念，而不是高效率練功工具。
                 </div>
             </div>
 
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFAQ(this)">
-                    <span>🎮 支援哪些遊戲？</span>
+                    <span>🗺️ 支援哪些地圖？複雜地圖能用嗎？</span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    目前專精於 MapleStory Worlds - Artale，我們是這個遊戲的專家！
-                    就像米其林星級餐廳只專精於一道料理一樣，我們把所有的愛都給了 Artale。
-                    未來可能會支援更多遊戲，但現在請讓我們先把 Artale 玩到極致！
+                    理論上支援全部地圖，實際上最適合平坦或多層簡易架構的地圖。
+                    像是各種蘑菇地圖、史萊姆系列地圖都很完美。複雜的迷宮型地圖可能會讓角色迷路，
+                    但說實話，光是現有支援的地圖就夠您從新手練到滿級了！
                 </div>
             </div>
 
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFAQ(this)">
-                    <span>💰 價格貴不貴？</span>
+                    <span>🎮 遊戲視窗一定要保持前景嗎？</span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    比起你省下的時間和精力，這個價格簡直是佛心價！
-                    想想看：一杯咖啡 50 元只能讓你清醒 2 小時，
-                    我們的腳本可以讓你的角色清醒 24 小時！
-                    CP 值高到爆表，你阿嬤都會說划算！
+                    是的，由於我們使用螢幕截圖技術進行分析，遊戲視窗必須保持可見且不被遮蔽。
+                    同時需要設定為 1280x720 視窗模式。這確實是個限制，
+                    但也是我們採用非侵入式技術必須付出的代價。建議您準備一台專門的電腦來跑腳本。
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <span>🧗 為什麼爬繩動作看起來不太流暢？</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    這是因為我們堅持不讀取遊戲內部資料所導致的。腳本只能透過視覺判斷角色位置和繩索位置，
+                    所以爬繩時需要多次修正方向，看起來確實不如真人那麼流暢。
+                    但功能是正常的，只是美觀度稍差，請多包涵！
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <span>💰 價格會不會太貴？值得嗎？</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    以台灣的消費水準來說，我們的定價相當實惠。想想看：一頓便當的錢換來一週的自動練功，
+                    一杯手搖飲的錢換來一個月的解放雙手時間，這個投資報酬率其實很不錯！
+                    況且我們是台灣製造，提供完整的中文客服支援。
                 </div>
             </div>
         </section>
 
         <!-- CTA 區域 -->
         <section class="cta-section">
-            <h2 class="cta-title">🚀 準備好開始你的 AI 助手之旅了嗎？</h2>
+            <h2 class="cta-title">🚀 準備好體驗專業級遊戲技術服務了嗎？</h2>
             <p class="cta-description">
-                加入我們，讓你的遊戲人生從此不同！<br>
-                成為那個讓其他玩家羨慕的「練功機器」！
+                台灣製造，專業品質，完整支援<br>
+                加入我們，讓您的 Artale 之旅更加輕鬆愉快！
             </p>
             <div class="cta-buttons">
                 <a href="/products#services" class="cta-button primary">
-                    <i class="fas fa-rocket"></i>
-                    立即購買，開始躺贏！
+                    <i class="fas fa-shopping-cart"></i>
+                    立即選購服務
                 </a>
                 <a href="/manual" class="cta-button">
                     <i class="fas fa-book"></i>
