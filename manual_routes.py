@@ -1818,53 +1818,44 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <i class="fas fa-crosshairs"></i>
                         怪物檢測與攻擊配置
                     </h3>
-                    
                     <div class="config-param-grid">
                         <div class="config-param-card">
                             <div class="param-name">跳躍按鍵 (JUMP_KEY)</div>
                             <div class="param-range">預設值：z</div>
                             <div class="param-desc">跳躍的按鍵，支援單字符或特殊按鍵名稱（如 alt、ctrl、space）</div>
                         </div>
-
                         <div class="config-param-card">
                             <div class="param-name">主要攻擊按鍵 (ATTACK_KEY)</div>
                             <div class="param-range">預設值：z</div>
                             <div class="param-desc">主要攻擊技能的按鍵，支援單字符或特殊按鍵名稱（如 alt、ctrl、space）</div>
                         </div>
-                        
                         <div class="config-param-card">
                             <div class="param-name">次要攻擊按鍵 (SECONDARY_ATTACK_KEY)</div>
                             <div class="param-range">預設值：x</div>
                             <div class="param-desc">次要攻擊技能的按鍵，可用於群體攻擊或特殊技能</div>
                         </div>
-
                         <div class="config-param-card">
                             <div class="param-name">啟用次要攻擊按鍵 (ENABLE_SECONDARY_ATTACK)</div>
                             <div class="param-range">預設值：False</div>
                             <div class="param-desc">是否啟用次要攻擊，啟用則機率性觸發次要攻擊</div>
                         </div>
-                        
                         <div class="config-param-card">
                             <div class="param-name">主要攻擊機率 (PRIMARY_ATTACK_CHANCE)</div>
                             <div class="param-range">範圍：0.0-1.0</div>
                             <div class="param-desc">使用主要攻擊的機率，0.8表示80%機率使用主要攻擊</div>
-
                         <div class="config-param-card">
                             <div class="param-name">次要攻擊機率 (SECONDARY_ATTACK_CHANCE)</div>
                             <div class="param-range">範圍：0.0-1.0(若有開啟需主要攻擊機率+次要攻擊機率=1)</div>
                             <div class="param-desc">使用次要攻擊的機率，0.2表示20%機率使用主要攻擊</div>
-
                         <div class="config-param-card">
                             <div class="param-name">攻擊範圍X軸(像素) (ATTACK_RANGE_X)</div>
                             <div class="param-range">預設值：400(近戰建議~300、法師建議400~600、弓箭、鏢建議600~)</div>
                             <div class="param-desc">角色攻擊範圍的橫向距離，數值越大檢測範圍越廣</div>
                         </div>                            
-
                         <div class="config-param-card">
                             <div class="param-name">上跳攻擊模式 (JUMP_ATTACK_MOMDE)</div>
                             <div class="param-range">一般、法師、不啟用</div>
                             <div class="param-desc">上方怪物的處理:一般(跳+攻擊)、法師(順移+攻擊)、不啟用(直接攻擊)</div>
-
                         </div>
                     </div>
                 </div>
@@ -1874,26 +1865,22 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <i class="fas fa-magic"></i>
                         被動技能系統配置
                     </h3>
-                    
                     <div class="config-param-grid">
                         <div class="config-param-card">
                             <div class="param-name">啟用被動技能 (ENABLE_PASSIVE_SKILLS)</div>
                             <div class="param-range">選項：開啟/關閉</div>
                             <div class="param-desc">總開關，控制是否啟用被動技能自動使用功能</div>
                         </div>
-                        
                         <div class="config-param-card">
                             <div class="param-name">被動技能按鍵 (PASSIVE_SKILL_1~4_KEY)</div>
                             <div class="param-range">預設值：1, 2, 3, 4</div>
                             <div class="param-desc">四個被動技能的按鍵設定，支援任意按鍵配置</div>
                         </div>
-                        
                         <div class="config-param-card">
                             <div class="param-name">技能冷卻時間 (PASSIVE_SKILL_1~4_COOLDOWN)</div>
                             <div class="param-range">範圍：1.0-99999.0 秒</div>
                             <div class="param-desc">每個技能的冷卻時間，建議根據實際技能冷卻設定</div>
                         </div>
-                        
                         <div class="config-param-card">
                             <div class="param-name">隨機延遲 (PASSIVE_SKILL_RANDOM_DELAY)</div>
                             <div class="param-range">最小值：0.0-5.0 秒<br>最大值：0.0-10.0 秒</div>
