@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # 配置 PayPal SDK
 paypalrestsdk.configure({
-    "mode": os.environ.get('PAYPAL_MODE', 'sandbox'),
+    "mode": os.environ.get('PAYPAL_MODE', 'live'),  # 'live' or 'sandbox'
     "client_id": os.environ.get('PAYPAL_CLIENT_ID'),
     "client_secret": os.environ.get('PAYPAL_CLIENT_SECRET')
 })

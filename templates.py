@@ -973,7 +973,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">體驗服務</div>
                         <div class="service-subtitle">適合新手玩家體驗</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>299
+                            <span class="currency">NT$</span>5
                             <span class="period">/7天</span>
                         </div>
                     </div>
@@ -1018,7 +1018,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">標準服務</div>
                         <div class="service-subtitle">最佳性價比選擇</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>549
+                            <span class="currency">NT$</span>599
                             <span class="period">/30天</span>
                         </div>
                     </div>
@@ -1138,16 +1138,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- Plan info will be inserted here -->
             </div>
             <div class="form-group">
-                <label for="user-name">姓名</label>
-                <input type="text" id="user-name" placeholder="請輸入您的姓名" class="form-input" required>
+                <label for="user-name">用戶名稱</label>
+                <input type="text" id="user-name" placeholder="請輸入您的用戶名稱(暱稱)" class="form-input" required>
             </div>
             <div class="form-group">
                 <label for="contact-email">聯絡信箱</label>
-                <input type="email" id="contact-email" placeholder="請輸入聯絡信箱" class="form-input" required>
+                <input type="email" id="contact-email" placeholder="請輸入用於接收序號的信箱" class="form-input" required>
             </div>
             <div class="form-group">
-                <label for="contact-phone">聯絡電話（選填）</label>
-                <input type="tel" id="contact-phone" placeholder="請輸入聯絡電話" class="form-input">
+                <label for="contact-phone">備用信箱（選填）</label>
+                <input type="tel" id="contact-phone" placeholder="請輸入備用信箱" class="form-input">
             </div>
             <div class="form-group" style="text-align: left;">
                 <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
@@ -1173,13 +1173,13 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         const servicePlans = {
             'trial_7': {
                 name: '體驗服務',
-                price: 299,
+                price: 5,
                 period: '7天',
                 description: '適合新手玩家體驗的基礎技術服務'
             },
             'monthly_30': {
                 name: '標準服務',
-                price: 549,
+                price: 599,
                 period: '30天',
                 description: '最受歡迎的完整技術服務方案'
             },
