@@ -22,6 +22,7 @@ from session_manager import session_manager, init_session_manager
 from route_handlers import RouteHandlers
 from payment_service import PaymentService
 from templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_SUCCESS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
+from intro_routes import intro_bp
 
 # 設置日誌
 logging.basicConfig(
@@ -44,6 +45,7 @@ CORS(app, origins=allowed_origins, supports_credentials=True)
 app.register_blueprint(admin_bp)
 app.register_blueprint(manual_bp)
 app.register_blueprint(disclaimer_bp)
+app.register_blueprint(intro_bp)
 
 # 全局變數
 db = None

@@ -918,10 +918,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案</p>
                         <div class="game-status">
                             <span class="status-badge active">服務中</span>
-                            <a href="/manual" class="manual-btn">
-                                <i class="fas fa-book"></i>
-                                操作手冊
-                            </a>
+                            <div class="game-buttons">
+                                <a href="/intro" class="manual-btn intro-btn">
+                                    <i class="fas fa-info-circle"></i>
+                                    基本介紹
+                                </a>
+                                <a href="/manual" class="manual-btn">
+                                    <i class="fas fa-book"></i>
+                                    操作手冊
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
