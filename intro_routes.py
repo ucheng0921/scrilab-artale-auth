@@ -341,6 +341,147 @@ INTRO_TEMPLATE = r"""
             font-size: 0.9rem;
         }
 
+        /* 技術特色區域 - 補齊的 CSS */
+        .technical-section {
+            margin-bottom: 4rem;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .tech-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            border: 2px solid;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .tech-card.advantage {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .tech-card.limitation {
+            border-color: var(--accent-orange);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .tech-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .tech-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tech-icon.advantage {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+        }
+
+        .tech-icon.limitation {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .tech-card h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .tech-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tech-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .tech-list li:last-child {
+            border-bottom: none;
+        }
+
+        .tech-list li strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .expectation-card {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .expectation-card h3 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .expectation-card > p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .expectation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .expectation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            text-align: left;
+        }
+
+        .expectation-item i {
+            font-size: 1.5rem;
+            color: var(--accent-blue);
+            margin-top: 0.2rem;
+            flex-shrink: 0;
+        }
+
+        .expectation-item strong {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .expectation-item p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 0;
+        }
+
         /* 幽默對比區域 */
         .comparison-section {
             background: var(--bg-secondary);
@@ -604,7 +745,7 @@ INTRO_TEMPLATE = r"""
                 font-size: 2.5rem;
             }
             
-            .comparison-grid {
+            .comparison-grid, .tech-grid {
                 grid-template-columns: 1fr;
                 gap: 2rem;
             }
@@ -620,6 +761,10 @@ INTRO_TEMPLATE = r"""
             .cta-buttons {
                 flex-direction: column;
                 align-items: center;
+            }
+
+            .expectation-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -667,6 +812,7 @@ INTRO_TEMPLATE = r"""
             </a>
             <ul class="nav-links">
                 <li><a href="#features">功能特色</a></li>
+                <li><a href="#technical">技術說明</a></li>
                 <li><a href="#comparison">使用對比</a></li>
                 <li><a href="#faq">常見問題</a></li>
                 <li><a href="#demo">互動演示</a></li>
@@ -788,13 +934,13 @@ INTRO_TEMPLATE = r"""
 
         <!-- 技術特色與注意事項 -->
         <section id="technical" class="technical-section">
-            <h2 class="section-title">技術特色與重要說明</h2>
+            <h2 class="section-title">🔧 技術特色與重要說明</h2>
             <div class="tech-grid">
                 <div class="tech-card advantage">
                     <div class="tech-icon advantage">
                         <i class="fas fa-check-circle"></i>
                     </div>
-                    <h3>技術優勢</h3>
+                    <h3>✅ 技術優勢</h3>
                     <ul class="tech-list">
                         <li><strong>台灣製造</strong> - 本土團隊開發，了解玩家需求</li>
                         <li><strong>直觀GUI介面</strong> - 圖形化操作，3分鐘上手</li>
@@ -813,7 +959,7 @@ INTRO_TEMPLATE = r"""
                     <div class="tech-icon limitation">
                         <i class="fas fa-exclamation-triangle"></i>
                     </div>
-                    <h3>使用限制與注意事項</h3>
+                    <h3>⚠️ 使用限制與注意事項</h3>
                     <ul class="tech-list">
                         <li><strong>必須保持前景</strong> - 使用螢幕截圖技術，遊戲視窗不能被遮蔽</li>
                         <li><strong>固定解析度</strong> - 需設定為1280x720視窗模式</li>
@@ -850,6 +996,70 @@ INTRO_TEMPLATE = r"""
                             <p>解放雙手，把時間投資在更有意義的事情上</p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 使用對比 -->
+        <section id="comparison" class="comparison-section">
+            <h2 class="section-title">😴 沒有腳本 vs 🤖 有腳本</h2>
+            <div class="comparison-grid">
+                <div class="comparison-card without">
+                    <h3 class="comparison-title without">
+                        <i class="fas fa-tired"></i>
+                        沒有腳本的慘狀
+                    </h3>
+                    <ul class="comparison-list">
+                        <li class="comparison-item negative">
+                            <i class="fas fa-times"></i>
+                            <span>上班時間角色在城裡發呆</span>
+                        </li>
+                        <li class="comparison-item negative">
+                            <i class="fas fa-times"></i>
+                            <span>睡覺8小時 = 浪費8小時練功時間</span>
+                        </li>
+                        <li class="comparison-item negative">
+                            <i class="fas fa-times"></i>
+                            <span>週末得補班，還要補練功</span>
+                        </li>
+                        <li class="comparison-item negative">
+                            <i class="fas fa-times"></i>
+                            <span>看著朋友等級超越自己</span>
+                        </li>
+                        <li class="comparison-item negative">
+                            <i class="fas fa-times"></i>
+                            <span>永遠買不起心儀的裝備</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="comparison-card with">
+                    <h3 class="comparison-title with">
+                        <i class="fas fa-robot"></i>
+                        有腳本的爽感
+                    </h3>
+                    <ul class="comparison-list">
+                        <li class="comparison-item positive">
+                            <i class="fas fa-check"></i>
+                            <span>24小時不間斷練功賺錢</span>
+                        </li>
+                        <li class="comparison-item positive">
+                            <i class="fas fa-check"></i>
+                            <span>起床看到滿包裹的戰利品</span>
+                        </li>
+                        <li class="comparison-item positive">
+                            <i class="fas fa-check"></i>
+                            <span>工作生活兩不誤</span>
+                        </li>
+                        <li class="comparison-item positive">
+                            <i class="fas fa-check"></i>
+                            <span>等級領先朋友群組</span>
+                        </li>
+                        <li class="comparison-item positive">
+                            <i class="fas fa-check"></i>
+                            <span>成為全服的傳說玩家</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </section>
