@@ -1843,10 +1843,12 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                             <div class="param-name">主要攻擊機率 (PRIMARY_ATTACK_CHANCE)</div>
                             <div class="param-range">範圍：0.0-1.0</div>
                             <div class="param-desc">使用主要攻擊的機率，0.8表示80%機率使用主要攻擊</div>
+                        </div>                       
                         <div class="config-param-card">
                             <div class="param-name">次要攻擊機率 (SECONDARY_ATTACK_CHANCE)</div>
                             <div class="param-range">範圍：0.0-1.0(若有開啟需主要攻擊機率+次要攻擊機率=1)</div>
                             <div class="param-desc">使用次要攻擊的機率，0.2表示20%機率使用主要攻擊</div>
+                        </div>                        
                         <div class="config-param-card">
                             <div class="param-name">攻擊範圍X軸(像素) (ATTACK_RANGE_X)</div>
                             <div class="param-range">預設值：400(近戰建議~300、法師建議400~600、弓箭、鏢建議600~)</div>
