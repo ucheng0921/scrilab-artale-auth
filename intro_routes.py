@@ -835,7 +835,7 @@ INTRO_TEMPLATE = r"""
                 <div class="emoji">🌟</div>
             </div>
             <h1 class="hero-title">歡迎來到 Artale Script 的世界！</h1>
-            <p class="hero-subtitle">🎮 專業級遊戲技術服務，讓你的角色擁有AI級別的智能！</p>
+            <p class="hero-subtitle">🎮 自動化遊戲技術服務，讓你的角色24小時不間斷！</p>
             <p class="hero-description">
                 台灣製造，專為 MapleStory Worlds - Artale 打造的專業技術服務。<br>
                 採用最先進的電腦視覺技術，提供安全、穩定、高效的遊戲體驗！ ✨
@@ -908,11 +908,12 @@ INTRO_TEMPLATE = r"""
                     </div>
                     <h3 class="feature-title">廣泛地圖支援</h3>
                     <p class="feature-description">
-                        理論上支援全部地圖，實際上完美適配平坦及多層簡易架構地圖，<br>
-                        足夠您從新手村練到滿級都不會無聊。
+                        理論上支援全部地圖，實際上最適合平坦或多層簡易架構的地圖。
+                        目前的熱門練功圖片都基本適配，
+                        但說實話，光是現有支援的地圖就夠您舒服練等了！
                     </p>
                     <div class="feature-highlight">
-                        🗺️ 支援地圖：200+ 個主流練功地點
+                        🗺️ 支援地圖超級多、端看您怎麼用！
                     </div>
                 </div>
 
@@ -1012,7 +1013,7 @@ INTRO_TEMPLATE = r"""
                     <ul class="comparison-list">
                         <li class="comparison-item negative">
                             <i class="fas fa-times"></i>
-                            <span>上班時間角色在城裡發呆</span>
+                            <span>上班時間角色在發呆</span>
                         </li>
                         <li class="comparison-item negative">
                             <i class="fas fa-times"></i>
@@ -1057,7 +1058,7 @@ INTRO_TEMPLATE = r"""
                         </li>
                         <li class="comparison-item positive">
                             <i class="fas fa-check"></i>
-                            <span>成為全服的傳說玩家</span>
+                            <span>輕鬆享受遊戲</span>
                         </li>
                     </ul>
                 </div>
@@ -1148,8 +1149,8 @@ INTRO_TEMPLATE = r"""
                 </div>
                 <div class="faq-answer">
                     理論上支援全部地圖，實際上最適合平坦或多層簡易架構的地圖。
-                    像是各種蘑菇地圖、史萊姆系列地圖都很完美。複雜的迷宮型地圖可能會讓角色迷路，
-                    但說實話，光是現有支援的地圖就夠您從新手練到滿級了！
+                    目前的熱門練功圖片都基本適配，
+                    但說實話，光是現有支援的地圖就夠您舒服練等了！
                 </div>
             </div>
 
@@ -1161,7 +1162,7 @@ INTRO_TEMPLATE = r"""
                 <div class="faq-answer">
                     是的，由於我們使用螢幕截圖技術進行分析，遊戲視窗必須保持可見且不被遮蔽。
                     同時需要設定為 1280x720 視窗模式。這確實是個限制，
-                    但也是我們採用非侵入式技術必須付出的代價。建議您準備一台專門的電腦來跑腳本。
+                    但也是我們採用非侵入式技術必須付出的代價。如果想後台執行建議您可以使用虛擬機等設備。
                 </div>
             </div>
 
@@ -1183,8 +1184,8 @@ INTRO_TEMPLATE = r"""
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    以台灣的消費水準來說，我們的定價相當實惠。想想看：一頓便當的錢換來一週的自動練功，
-                    一杯手搖飲的錢換來一個月的解放雙手時間，這個投資報酬率其實很不錯！
+                    以台灣的消費水準來說，我們的定價相當實惠。想想看：以時薪200元計算不到3個小時
+                    的錢換來一個月的解放雙手時間，這個投資報酬率其實很不錯！
                     況且我們是台灣製造，提供完整的中文客服支援。
                 </div>
             </div>
