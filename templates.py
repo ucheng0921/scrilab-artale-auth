@@ -30,7 +30,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             --accent-purple: #8b5cf6;
             --accent-green: #10b981;
             --accent-orange: #f59e0b;
-            --accent-crypto: #f7931a;
             
             --border-color: #333333;
             --border-hover: #555555;
@@ -39,13 +38,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             --gradient-accent: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%);
             --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
             --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            --gradient-crypto: linear-gradient(135deg, #f7931a 0%, #d97706 100%);
             
             --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.15);
             --shadow-md: 0 8px 25px rgba(0, 0, 0, 0.25);
             --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
             --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.3);
-            --shadow-crypto: 0 0 30px rgba(247, 147, 26, 0.3);
             
             --border-radius: 16px;
             --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -60,7 +57,25 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             position: relative;
         }
 
-        /* 背景動效 */
+        /* 恢復打字機代碼背景特效 CSS */
+        @keyframes typewriter {
+            0% { width: 0; }
+            90% { width: 100%; }
+            100% { width: 100%; }
+        }
+
+        @keyframes blink-cursor {
+            0%, 50% { border-right: 2px solid #00d4ff; }
+            51%, 100% { border-right: 2px solid transparent; }
+        }
+
+        @keyframes fade-out {
+            0% { opacity: 0.15; }
+            70% { opacity: 0.15; }
+            100% { opacity: 0; }
+        }
+
+        /* 增強版背景動效 */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -81,15 +96,33 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             background: 
                 radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(247, 147, 26, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
                 linear-gradient(45deg, transparent 30%, rgba(0, 212, 255, 0.02) 50%, transparent 70%);
             animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                conic-gradient(from 0deg at 70% 30%, transparent, rgba(139, 92, 246, 0.03), transparent),
+                conic-gradient(from 180deg at 30% 70%, transparent, rgba(0, 212, 255, 0.02), transparent);
+            animation: rotate 30s linear infinite;
         }
 
         @keyframes float {
             0%, 100% { transform: translate(0, 0) rotate(0deg); }
             33% { transform: translate(30px, -30px) rotate(1deg); }
             66% { transform: translate(-20px, 20px) rotate(-1deg); }
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @keyframes slideInUp {
@@ -188,9 +221,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            background: rgba(247, 147, 26, 0.1);
-            border: 1px solid rgba(247, 147, 26, 0.2);
-            color: var(--accent-crypto);
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: var(--accent-blue);
             padding: 0.5rem 1rem;
             border-radius: 50px;
             font-size: 0.85rem;
@@ -208,7 +241,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .hero .highlight {
-            background: var(--gradient-crypto);
+            background: var(--gradient-accent);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -231,7 +264,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .btn-primary {
-            background: var(--gradient-crypto);
+            background: var(--gradient-accent);
             color: white;
             padding: 1rem 2rem;
             border-radius: 12px;
@@ -248,7 +281,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: var(--shadow-crypto);
+            box-shadow: var(--shadow-glow);
         }
 
         .btn-secondary {
@@ -267,8 +300,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .btn-secondary:hover {
-            border-color: var(--accent-crypto);
-            color: var(--accent-crypto);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
             transform: translateY(-3px);
         }
 
@@ -335,7 +368,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .game-card.active:hover {
             transform: translateY(-5px);
-            border-color: var(--accent-crypto);
+            border-color: var(--accent-blue);
             box-shadow: var(--shadow-lg);
         }
 
@@ -382,7 +415,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .game-overlay i {
             font-size: 2.5rem;
-            color: var(--accent-crypto);
+            color: var(--accent-blue);
         }
 
         .game-info {
@@ -397,7 +430,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .game-subtitle {
-            color: var(--accent-crypto);
+            color: var(--accent-blue);
             font-size: 0.9rem;
             margin-bottom: 1rem;
         }
@@ -437,7 +470,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .manual-btn {
-            background: var(--gradient-crypto);
+            background: var(--gradient-accent);
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 8px;
@@ -452,7 +485,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .manual-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(247, 147, 26, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
         }
 
         /* Services Section */
@@ -494,7 +527,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             position: absolute;
             top: -12px;
             right: 2rem;
-            background: var(--gradient-crypto);
+            background: var(--gradient-accent);
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 20px;
@@ -517,29 +550,31 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .service-price {
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .price-twd {
-            font-size: 2.2rem;
+            font-size: 2.8rem;
             font-weight: 800;
             color: var(--text-primary);
+            margin-bottom: 0.5rem;
         }
 
-        .price-crypto {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: var(--accent-crypto);
-            font-family: 'Courier New', monospace;
+        .service-price .currency {
+            font-size: 1.2rem;
+            vertical-align: top;
         }
 
-        .price-period {
+        .service-price .period {
             font-size: 1rem;
             color: var(--text-secondary);
             font-weight: 400;
+        }
+
+        .crypto-info {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            color: var(--accent-blue);
         }
 
         .service-body {
@@ -575,7 +610,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         .service-button {
             width: 100%;
             padding: 1rem;
-            background: var(--gradient-crypto);
+            background: var(--gradient-accent);
             color: white;
             border: none;
             border-radius: 12px;
@@ -591,7 +626,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .service-button:hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-crypto);
+            box-shadow: var(--shadow-glow);
         }
 
         /* Footer */
@@ -637,10 +672,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .email-link:hover {
-            color: var(--accent-crypto);
-            border-color: var(--accent-crypto);
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(247, 147, 26, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
         }
 
         /* Purchase Modal */
@@ -706,13 +741,13 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .crypto-notice {
-            background: rgba(247, 147, 26, 0.1);
-            border: 1px solid rgba(247, 147, 26, 0.3);
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
             border-radius: 8px;
             padding: 1rem;
             margin: 1rem 0;
             font-size: 0.9rem;
-            color: var(--accent-crypto);
+            color: var(--accent-blue);
         }
 
         .form-group {
@@ -740,8 +775,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .form-input:focus {
             outline: none;
-            border-color: var(--accent-crypto);
-            box-shadow: 0 0 0 3px rgba(247, 147, 26, 0.1);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
         }
 
         .modal-buttons {
@@ -809,11 +844,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 flex-direction: column;
                 gap: 1.5rem;
             }
-
-            .service-price {
-                flex-direction: column;
-                gap: 0.2rem;
-            }
         }
     </style>
 </head>
@@ -872,12 +902,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             <div class="games-grid">
                 <!-- MapleStory Worlds - Artale -->
                 <div class="game-card active" onclick="showGamePlans('artale')">
-                    <div class="game-image">
-                        <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale Script" style="width: 100%; height: 100%; object-fit: cover;">
-                        <div class="game-overlay">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </div>
                     <div class="game-info">
                         <h3>MapleStory Worlds - Artale</h3>
                         <p class="game-subtitle">繁體中文版 | 支援加密貨幣</p>
@@ -939,9 +963,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">體驗服務</div>
                         <div class="service-subtitle">適合新手玩家體驗</div>
                         <div class="service-price">
-                            <div class="price-twd">NT$ 5</div>
-                            <div class="price-crypto">≈ 0.16 USDT</div>
-                            <div class="price-period">/ 7天</div>
+                            <span class="currency">NT$</span>5
+                            <span class="period">/7天</span>
+                        </div>
+                        <div class="crypto-info">
+                            <i class="fab fa-bitcoin"></i>
+                            <span>約 0.16 USDT | 支援多種加密貨幣</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -985,9 +1012,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">標準服務</div>
                         <div class="service-subtitle">最佳性價比選擇</div>
                         <div class="service-price">
-                            <div class="price-twd">NT$ 599</div>
-                            <div class="price-crypto">≈ 19.17 USDT</div>
-                            <div class="price-period">/ 30天</div>
+                            <span class="currency">NT$</span>599
+                            <span class="period">/30天</span>
+                        </div>
+                        <div class="crypto-info">
+                            <i class="fab fa-bitcoin"></i>
+                            <span>約 19.17 USDT | 支援多種加密貨幣</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1030,9 +1060,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">季度服務</div>
                         <div class="service-subtitle">長期使用最划算</div>
                         <div class="service-price">
-                            <div class="price-twd">NT$ 1,499</div>
-                            <div class="price-crypto">≈ 47.97 USDT</div>
-                            <div class="price-period">/ 90天</div>
+                            <span class="currency">NT$</span>1,499
+                            <span class="period">/90天</span>
+                        </div>
+                        <div class="crypto-info">
+                            <i class="fab fa-bitcoin"></i>
+                            <span>約 47.97 USDT | 支援多種加密貨幣</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1091,7 +1124,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             </div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 2rem; text-align: center; color: var(--text-muted);">
                 <p style="margin-bottom: 1rem;">
-                    <a href="/disclaimer" style="color: var(--text-muted); text-decoration: none; margin-right: 2rem; transition: color 0.3s ease;" onmouseover="this.style.color='var(--accent-crypto)'" onmouseout="this.style.color='var(--text-muted)'">免責聲明</a>
+                    <a href="/disclaimer" style="color: var(--text-muted); text-decoration: none; margin-right: 2rem; transition: color 0.3s ease;" onmouseover="this.style.color='var(--accent-blue)'" onmouseout="this.style.color='var(--text-muted)'">免責聲明</a>
                 </p>
                 <p>&copy; 2025 Scrilab. All rights reserved. Powered by OxaPay.</p>
             </div>
@@ -1124,9 +1157,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             </div>
             <div class="form-group" style="text-align: left;">
                 <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
-                    <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-crypto);">
+                    <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
                     <span style="font-size: 0.95rem; line-height: 1.5;">
-                        我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-crypto); text-decoration: none;">免責聲明與服務條款</a>，
+                        我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-blue); text-decoration: none;">免責聲明與服務條款</a>，
                         理解使用本服務的風險，並自願承擔相關責任。
                     </span>
                 </label>
@@ -1198,7 +1231,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <div style="font-size: 1.3rem; font-weight: bold; color: var(--text-primary);">
                         NT$ ${plan.price.toLocaleString()}
                     </div>
-                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-crypto); font-family: 'Courier New', monospace;">
+                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-blue); font-family: 'Courier New', monospace;">
                         ≈ ${plan.crypto_price}
                     </div>
                 </div>
@@ -1323,40 +1356,192 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             }
         });
 
-        // 動態更新加密貨幣價格（可選）
-        function updateCryptoPrices() {
-            fetch('/api/exchange-rate?from=TWD&to=USDT')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const rate = data.rate;
-                    // 更新價格顯示
-                    Object.keys(servicePlans).forEach(planId => {
-                        const plan = servicePlans[planId];
-                        const cryptoPrice = (plan.price * rate).toFixed(2);
-                        plan.crypto_price = `${cryptoPrice} USDT`;
-                        
-                        // 更新 DOM 中的價格顯示
-                        const priceElements = document.querySelectorAll('.price-crypto');
-                        priceElements.forEach((element, index) => {
-                            if (index < Object.keys(servicePlans).length) {
-                                element.textContent = `≈ ${cryptoPrice} USDT`;
-                            }
-                        });
-                    });
-                }
-            })
-            .catch(error => {
-                console.log('無法獲取最新匯率，使用預設值');
-            });
+        // =============================================
+        // 恢復打字機代碼背景特效
+        // =============================================
+
+        // 創建打字機效果的代碼背景
+        function createCodeBackground() {
+            const codeContainer = document.createElement('div');
+            codeContainer.id = 'code-background';
+            codeContainer.style.cssText = `
+                position: fixed; 
+                top: 10%; 
+                left: 5%; 
+                width: 90%; 
+                height: 80%; 
+                pointer-events: none; 
+                z-index: 1; 
+                opacity: 1; 
+                font-family: 'Courier New', monospace; 
+                color: #00d4ff;
+                overflow: hidden; 
+                font-size: 14px; 
+                font-weight: 400;
+                line-height: 1.6;
+            `;
+            
+            document.body.appendChild(codeContainer);
+            console.log('Code background container created');
+            
+            // 開始第一個打字循環
+            startTypingCycle();
         }
 
-        // 頁面載入時更新價格
+        function startTypingCycle() {
+            const container = document.getElementById('code-background');
+            if (!container) return;
+            
+            const codeSnippets = [
+                'import cv2',
+                'import numpy as np', 
+                'import threading',
+                'import time',
+                'import random',
+                'from selenium import webdriver',
+                'from PIL import Image',
+                '',
+                'def optimize_game():',
+                '    while True:',
+                '        screenshot = cv2.imread("game.png")',
+                '        if detect_target(screenshot):',
+                '            execute_action()',
+                '        time.sleep(random.uniform(0.1, 0.3))',
+                '',
+                'class GameBot:',
+                '    def __init__(self):',
+                '        self.running = True',
+                '        self.thread_pool = []',
+                '        self.config = load_config()',
+                '',
+                '    async def process_frame(self):',
+                '        frame = await self.capture_screen()',
+                '        result = self.analyze_frame(frame)',
+                '        return result',
+                '',
+                '    def detect_enemy(self, frame):',
+                '        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)',
+                '        mask = cv2.inRange(hsv, lower_red, upper_red)',
+                '        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)',
+                '        return len(contours) > 0',
+                '',
+                'def main():',
+                '    bot = GameBot()',
+                '    try:',
+                '        bot.start()',
+                '    except KeyboardInterrupt:',
+                '        bot.stop()',
+                '        print("Bot stopped safely")',
+                '',
+                'if __name__ == "__main__":',
+                '    main()'
+            ];
+            
+            let currentLine = 0;
+            let lineHeight = 22; // 行高
+            
+            function typeLine() {
+                if (currentLine >= codeSnippets.length) {
+                    // 清空容器，重新開始
+                    setTimeout(() => {
+                        container.innerHTML = '';
+                        currentLine = 0;
+                        typeLine();
+                    }, 3000);
+                    return;
+                }
+                
+                const line = codeSnippets[currentLine];
+                const lineElement = document.createElement('div');
+                
+                lineElement.style.cssText = `
+                    position: absolute;
+                    left: 0;
+                    top: ${currentLine * lineHeight}px;
+                    white-space: pre;
+                    overflow: hidden;
+                    opacity: 0.12;
+                    width: 0;
+                    animation: 
+                        typewriter ${1.5 + (line.length * 0.05)}s steps(${Math.max(line.length, 1)}) 1 forwards,
+                        blink-cursor 1s step-end infinite,
+                        fade-out ${6 + Math.random() * 2}s ease-in-out ${2 + Math.random()}s forwards;
+                `;
+                
+                lineElement.textContent = line;
+                container.appendChild(lineElement);
+                
+                currentLine++;
+                
+                // 下一行的延遲
+                setTimeout(typeLine, 400 + Math.random() * 600);
+            }
+            
+            typeLine();
+        }
+
+        // 添加浮動粒子效果
+        function createFloatingParticles() {
+            const particlesContainer = document.createElement('div');
+            particlesContainer.style.cssText = `
+                position: fixed; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                height: 100%; 
+                pointer-events: none; 
+                z-index: -1;
+            `;
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute; 
+                    width: 2px; 
+                    height: 2px; 
+                    background: var(--accent-blue); 
+                    border-radius: 50%; 
+                    opacity: 0.3; 
+                    animation: float-particle ${10 + Math.random() * 10}s linear infinite; 
+                    left: ${Math.random() * 100}%; 
+                    top: ${Math.random() * 100}%; 
+                    animation-delay: ${Math.random() * 10}s;
+                `;
+                particlesContainer.appendChild(particle);
+            }
+            
+            document.body.appendChild(particlesContainer);
+        }
+
+        // 添加粒子動畫 CSS
+        const particleStyle = document.createElement('style');
+        particleStyle.textContent = `
+            @keyframes float-particle { 
+                0% { transform: translateY(0) translateX(0); opacity: 0; } 
+                10% { opacity: 0.3; } 
+                90% { opacity: 0.3; } 
+                100% { transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px); opacity: 0; } 
+            }
+        `;
+        document.head.appendChild(particleStyle);
+
+        // 初始化增強背景效果
         document.addEventListener('DOMContentLoaded', function() {
-            updateCryptoPrices();
-            // 每5分鐘更新一次價格
-            setInterval(updateCryptoPrices, 5 * 60 * 1000);
+            console.log('DOM loaded, initializing background effects');
+            createCodeBackground();
+            createFloatingParticles();
         });
+
+        // 如果 DOMContentLoaded 已經觸發，立即執行
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                createCodeBackground();
+                createFloatingParticles();
+            });
+        } else {
+            createCodeBackground();
+            createFloatingParticles();
+        }
     </script>
 </body>
 </html>
