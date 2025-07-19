@@ -1053,10 +1053,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                                 <span>24/7技術支援</span>
                             </li>
                         </ul>
-                        <button class="service-button" onclick="selectPlan('monthly_30')">
-                            <i class="fab fa-bitcoin"></i>
-                            <span>加密貨幣付款</span>
-                        </button>
+                        <div class="payment-options">
+                            <button class="service-button" onclick="selectPaymentMethod('monthly_30', 'smart_pay')" style="margin-bottom: 0.5rem;">
+                                <i class="fas fa-credit-card"></i>
+                                <span>智能付款（推薦）</span>
+                            </button>
+                            <button class="service-button" onclick="selectPaymentMethod('monthly_30', 'direct_crypto')" style="background: rgba(0, 212, 255, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue);">
+                                <i class="fab fa-bitcoin"></i>
+                                <span>直接加密貨幣</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1101,10 +1107,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                                 <span>24/7技術支援</span>
                             </li>
                         </ul>
-                        <button class="service-button" onclick="selectPlan('quarterly_90')">
-                            <i class="fab fa-bitcoin"></i>
-                            <span>加密貨幣付款</span>
-                        </button>
+                        <div class="payment-options">
+                            <button class="service-button" onclick="selectPaymentMethod('quarterly_90', 'smart_pay')" style="margin-bottom: 0.5rem;">
+                                <i class="fas fa-credit-card"></i>
+                                <span>智能付款（推薦）</span>
+                            </button>
+                            <button class="service-button" onclick="selectPaymentMethod('quarterly_90', 'direct_crypto')" style="background: rgba(0, 212, 255, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue);">
+                                <i class="fab fa-bitcoin"></i>
+                                <span>直接加密貨幣</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1247,6 +1259,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             `;
             
             document.getElementById('purchase-modal').style.display = 'flex';
+        }
+
+        function selectPaymentMethod(planId, paymentType) {
+            if (paymentType === 'smart_pay') {
+                // 跳轉到自定義付款頁面（信用卡界面）
+                window.location.href = `/payment/custom/page?plan_id=${planId}`;
+            } else if (paymentType === 'direct_crypto') {
+                // 使用原有的直接加密貨幣付款
+                selectPlan(planId);
+            }
         }
 
         function closeModal() {
@@ -1907,17 +1929,6 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
     </div>
 
     <script>
-
-        function selectPaymentMethod(planId, paymentType) {
-            if (paymentType === 'smart_pay') {
-                // 跳轉到自定義付款頁面（信用卡界面）
-                window.location.href = `/payment/custom/page?plan_id=${planId}`;
-            } else if (paymentType === 'direct_crypto') {
-                // 使用原有的直接加密貨幣付款
-                selectPlan(planId);
-            }
-        }    
-        
         function copyUUID() {
             const uuid = "{{ user_uuid if user_uuid else '' }}";
             if (uuid) {
