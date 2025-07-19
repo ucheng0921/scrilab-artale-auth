@@ -1,4 +1,4 @@
-# simpleswap_service.py - 修正 API 端點版本
+# simpleswap_service.py - 完整修正版本，修復 API 端點和錯誤處理
 import requests
 import os
 import logging
@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart
 logger = logging.getLogger(__name__)
 
 class SimpleSwapService:
-    """SimpleSwap Fiat-to-Crypto 服務 - 修正 API 端點"""
+    """SimpleSwap Fiat-to-Crypto 服務 - 完整修正版本"""
     
     def __init__(self, db):
         self.db = db
@@ -49,6 +49,9 @@ class SimpleSwapService:
             elif test_response.status_code == 401:
                 logger.error("❌ API Key 無效或未授權")
                 return False, None
+            elif test_response.status_code == 404:
+                logger.error("❌ API 端點不存在，可能需要更新 API Key 或端點")
+                return False, None
             else:
                 logger.error(f"❌ API 連接失敗: {test_response.status_code} - {test_response.text}")
                 return False, None
@@ -57,8 +60,26 @@ class SimpleSwapService:
             logger.error(f"❌ API 連接測試異常: {str(e)}")
             return False, None
     
+    def get_supported_currencies(self):
+        """獲取支援的貨幣列表"""
+        try:
+            response = requests.get(
+                f"{self.api_base_url}/get_all_currencies",
+                params={'api_key': self.api_key},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"獲取貨幣列表失敗: {response.status_code}")
+                return None
+        except Exception as e:
+            logger.error(f"獲取貨幣列表錯誤: {str(e)}")
+            return None
+    
     def create_fiat_to_crypto_exchange(self, plan_info: Dict, user_info: Dict) -> Optional[Dict]:
-        """創建 Fiat-to-Crypto 交換（信用卡 → USDT）- 修正版"""
+        """創建 Fiat-to-Crypto 交換（信用卡 → USDT）- 完整修正版"""
         try:
             # 生成唯一的訂單ID
             order_id = f"fiat_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
@@ -137,8 +158,11 @@ class SimpleSwapService:
                     elif estimate_response.status_code == 422:
                         logger.info(f"貨幣對 {from_currency}/{to_currency} 不支援")
                         continue
+                    elif estimate_response.status_code == 404:
+                        logger.warning(f"API 端點錯誤 - 估算API: {estimate_response.status_code}")
+                        continue
                     else:
-                        logger.warning(f"估算請求失敗: {estimate_response.status_code}")
+                        logger.warning(f"估算請求失敗: {estimate_response.status_code} - {estimate_response.text}")
                         continue
                     
                 except Exception as e:
@@ -257,7 +281,181 @@ class SimpleSwapService:
             logger.error(f"創建 Fiat-to-Crypto 交換失敗: {str(e)}", exc_info=True)
             return self.create_mercuryo_mock_payment(plan_info, user_info, f"mock_{datetime.now().strftime('%Y%m%d%H%M%S')}")
     
-    # 其他方法保持不變...
+    def get_exchange_status(self, exchange_id: str) -> Optional[Dict]:
+        """獲取交換狀態"""
+        try:
+            response = requests.get(
+                f"{self.api_base_url}/get_exchange",
+                params={
+                    'api_key': self.api_key,
+                    'id': exchange_id
+                },
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                logger.info(f"交換狀態查詢: {result}")
+                return result
+            else:
+                logger.error(f"獲取交換狀態失敗: {response.status_code} - {response.text}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"獲取交換狀態錯誤: {str(e)}")
+            return None
+    
+    def handle_webhook(self, webhook_data: Dict) -> Tuple[bool, Optional[str]]:
+        """處理 SimpleSwap/Mercuryo Webhook"""
+        try:
+            logger.info(f"收到 Fiat-to-Crypto Webhook: {webhook_data}")
+            
+            exchange_id = webhook_data.get('id')
+            status = webhook_data.get('status')
+            
+            if not exchange_id:
+                logger.error("Webhook 中缺少 exchange_id")
+                return False, None
+            
+            # 獲取交換記錄
+            exchange_record = self.get_exchange_record(exchange_id)
+            if not exchange_record:
+                logger.error(f"找不到交換記錄: {exchange_id}")
+                return False, None
+            
+            # 更新交換狀態
+            if status == 'finished' or status == 'completed':
+                return self.process_successful_fiat_exchange(exchange_id, webhook_data)
+            elif status in ['confirming', 'processing', 'paid']:
+                self.update_exchange_status(exchange_id, 'processing')
+                return True, None
+            elif status == 'failed':
+                self.update_exchange_status(exchange_id, 'failed')
+                return True, None
+            else:
+                logger.info(f"Fiat 交換狀態更新: {exchange_id} -> {status}")
+                self.update_exchange_status(exchange_id, status)
+                return True, None
+                
+        except Exception as e:
+            logger.error(f"處理 Fiat Webhook 失敗: {str(e)}")
+            return False, None
+    
+    def process_successful_fiat_exchange(self, exchange_id: str, webhook_data: Dict) -> Tuple[bool, Optional[str]]:
+        """處理成功的 Fiat-to-Crypto 交換"""
+        try:
+            # 更新交換狀態
+            self.update_exchange_status(exchange_id, 'completed')
+            
+            # 生成用戶帳號
+            user_uuid = self.create_user_account(exchange_id)
+            
+            if user_uuid:
+                # 發送 Email
+                exchange_record = self.get_exchange_record(exchange_id)
+                if exchange_record:
+                    self.send_license_email(
+                        exchange_record['user_email'],
+                        exchange_record['user_name'],
+                        user_uuid,
+                        exchange_record['plan_name'],
+                        exchange_record['plan_period']
+                    )
+                
+                logger.info(f"✅ Fiat-to-Crypto 交換處理完成: {exchange_id}, 用戶序號: {user_uuid}")
+                return True, user_uuid
+            else:
+                logger.error(f"❌ 創建用戶帳號失敗: {exchange_id}")
+                return False, None
+                
+        except Exception as e:
+            logger.error(f"處理成功 Fiat 交換失敗: {str(e)}")
+            return False, None
+    
+    def save_exchange_record(self, exchange_id: str, exchange_data: Dict):
+        """保存交換記錄"""
+        try:
+            self.db.collection('fiat_crypto_exchanges').document(exchange_id).set(exchange_data)
+            logger.info(f"Fiat-to-Crypto 交換記錄已保存: {exchange_id}")
+        except Exception as e:
+            logger.error(f"保存交換記錄失敗: {str(e)}")
+    
+    def update_exchange_status(self, exchange_id: str, status: str):
+        """更新交換狀態"""
+        try:
+            self.db.collection('fiat_crypto_exchanges').document(exchange_id).update({
+                'status': status,
+                'updated_at': datetime.now()
+            })
+            logger.info(f"Fiat-to-Crypto 交換狀態已更新: {exchange_id} -> {status}")
+        except Exception as e:
+            logger.error(f"更新交換狀態失敗: {str(e)}")
+    
+    def get_exchange_record(self, exchange_id: str) -> Optional[Dict]:
+        """獲取交換記錄"""
+        try:
+            doc = self.db.collection('fiat_crypto_exchanges').document(exchange_id).get()
+            return doc.to_dict() if doc.exists else None
+        except Exception as e:
+            logger.error(f"獲取交換記錄失敗: {str(e)}")
+            return None
+    
+    def create_user_account(self, exchange_id: str) -> Optional[str]:
+        """根據交換記錄創建用戶帳號"""
+        try:
+            exchange_record = self.get_exchange_record(exchange_id)
+            if not exchange_record:
+                return None
+            
+            # 生成唯一的 UUID
+            user_uuid = f"artale_fiat_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d')}"
+            uuid_hash = hashlib.sha256(user_uuid.encode()).hexdigest()
+            
+            # 確定有效期
+            plan_periods = {
+                'trial_7': 7,
+                'monthly_30': 30,
+                'quarterly_90': 90
+            }
+            
+            days = plan_periods.get(exchange_record['plan_id'], 30)
+            expires_at = (datetime.now() + timedelta(days=days)).isoformat()
+            
+            # 創建用戶
+            user_data = {
+                "original_uuid": user_uuid,
+                "display_name": exchange_record['user_name'],
+                "permissions": {
+                    "script_access": True,
+                    "config_modify": True
+                },
+                "active": True,
+                "created_at": datetime.now(),
+                "created_by": "fiat_to_crypto_exchange",
+                "login_count": 0,
+                "expires_at": expires_at,
+                "exchange_id": exchange_id,
+                "payment_method": "credit_card_to_crypto",
+                "payment_status": "completed",
+                "notes": f"信用卡付款創建 - {exchange_record['plan_name']} (Fiat-to-Crypto)"
+            }
+            
+            self.db.collection('authorized_users').document(uuid_hash).set(user_data)
+            
+            # 更新交換記錄
+            self.db.collection('fiat_crypto_exchanges').document(exchange_id).update({
+                'user_uuid': user_uuid,
+                'user_created': True,
+                'user_created_at': datetime.now()
+            })
+            
+            logger.info(f"Fiat-to-Crypto 用戶帳號已創建: {user_uuid}")
+            return user_uuid
+            
+        except Exception as e:
+            logger.error(f"創建用戶帳號失敗: {str(e)}")
+            return None
+    
     def create_mercuryo_mock_payment(self, plan_info: Dict, user_info: Dict, order_id: str) -> Dict:
         """創建模擬的 Mercuryo 付款（當 API 不可用時）"""
         try:
@@ -319,19 +517,74 @@ class SimpleSwapService:
             logger.error(f"創建模擬 Mercuryo 付款失敗: {str(e)}")
             return {'success': False, 'error': '創建模擬付款失敗'}
     
-    def save_exchange_record(self, exchange_id: str, exchange_data: Dict):
-        """保存交換記錄"""
+    def send_license_email(self, email: str, name: str, uuid: str, plan_name: str, plan_period: str) -> bool:
+        """發送序號 Email"""
         try:
-            self.db.collection('fiat_crypto_exchanges').document(exchange_id).set(exchange_data)
-            logger.info(f"Fiat-to-Crypto 交換記錄已保存: {exchange_id}")
+            smtp_server = os.environ.get('SMTP_SERVER')
+            smtp_port = int(os.environ.get('SMTP_PORT', 587))
+            email_user = os.environ.get('EMAIL_USER')
+            email_password = os.environ.get('EMAIL_PASSWORD')
+            
+            if not all([smtp_server, email_user, email_password]):
+                logger.error("Email 設定不完整")
+                return False
+            
+            msg = MIMEMultipart()
+            
+            # 設置顯示名稱
+            from_display_name = "Scrilab"
+            msg['From'] = f"{from_display_name} <{email_user}>"
+            msg['To'] = email
+            msg['Subject'] = f"Scrilab Artale 服務序號 - {plan_name}"
+            
+            # 設置回覆地址
+            support_email = os.environ.get('SUPPORT_EMAIL', email_user)
+            msg['Reply-To'] = f"Scrilab Support <{support_email}>"
+            
+            body = f"""
+親愛的 {name}，
+
+感謝您使用信用卡購買 Scrilab Artale 遊戲技術服務！
+
+您的服務詳情：
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎮 服務方案：{plan_name}
+⏰ 服務期限：{plan_period}
+🔑 專屬序號：{uuid}
+💳 付款方式：信用卡自動轉換加密貨幣 (SimpleSwap + Mercuryo)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 如何使用：
+1. 下載 Scrilab Artale 客戶端
+2. 在登入界面輸入您的專屬序號
+3. 開始享受專業的遊戲技術服務
+
+📞 技術支援：
+- Discord：https://discord.gg/HPzNrQmN
+- Email：scrilabstaff@gmail.com
+
+⚠️ 重要提醒：
+- 請妥善保管您的序號，避免外洩
+- 序號僅供個人使用，請勿分享給他人
+- 您的信用卡付款已自動轉換為加密貨幣並安全處理
+
+再次感謝您選擇信用卡付款方式！
+
+Scrilab 技術團隊
+{datetime.now().strftime('%Y年%m月%d日')}
+            """
+            
+            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+            
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(email_user, email_password)
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info(f"Fiat-to-Crypto 序號 Email 已發送至: {email}")
+            return True
+            
         except Exception as e:
-            logger.error(f"保存交換記錄失敗: {str(e)}")
-    
-    def get_exchange_record(self, exchange_id: str) -> Optional[Dict]:
-        """獲取交換記錄"""
-        try:
-            doc = self.db.collection('fiat_crypto_exchanges').document(exchange_id).get()
-            return doc.to_dict() if doc.exists else None
-        except Exception as e:
-            logger.error(f"獲取交換記錄失敗: {str(e)}")
-            return None
+            logger.error(f"發送 Email 失敗: {str(e)}")
+            return False
