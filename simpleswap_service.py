@@ -1,4 +1,4 @@
-# simpleswap_service.py - SimpleSwap 真正的信用卡到加密貨幣整合
+# simpleswap_service.py - 修復版本，支援真正的加密貨幣交換
 import requests
 import os
 import logging
@@ -13,13 +13,12 @@ from email.mime.multipart import MIMEMultipart
 logger = logging.getLogger(__name__)
 
 class SimpleSwapService:
-    """SimpleSwap 真正的信用卡到加密貨幣服務"""
+    """SimpleSwap 加密貨幣交換服務 - 修復版本"""
     
     def __init__(self, db):
         self.db = db
         self.api_base_url = "https://api.simpleswap.io"
         self.api_key = os.environ.get('SIMPLESWAP_API_KEY')
-        self.partner_id = os.environ.get('SIMPLESWAP_PARTNER_ID')
         
         if not self.api_key:
             logger.error("❌ SIMPLESWAP_API_KEY 環境變數未設置")
@@ -27,56 +26,71 @@ class SimpleSwapService:
         
         logger.info("✅ SimpleSwap Service 初始化完成")
     
-    def get_supported_fiat_currencies(self) -> Optional[list]:
-        """獲取支援的法定貨幣"""
+    def get_supported_currencies(self) -> Optional[list]:
+        """獲取支援的加密貨幣"""
         try:
             response = requests.get(
-                f"{self.api_base_url}/get_currencies",
-                params={
-                    'api_key': self.api_key,
-                    'fiat': 'true'
-                },
+                f"{self.api_base_url}/get_all_currencies",
+                params={'api_key': self.api_key},
                 timeout=30
             )
             
             if response.status_code == 200:
                 currencies = response.json()
-                logger.info(f"支援的法定貨幣: {currencies}")
+                logger.info(f"支援的加密貨幣數量: {len(currencies)}")
                 return currencies
             else:
-                logger.error(f"獲取法定貨幣失敗: {response.status_code}")
+                logger.error(f"獲取支援貨幣失敗: {response.status_code} - {response.text}")
                 return None
                 
         except Exception as e:
-            logger.error(f"獲取支援法定貨幣錯誤: {str(e)}")
+            logger.error(f"獲取支援貨幣錯誤: {str(e)}")
             return None
     
     def get_exchange_estimate(self, from_currency: str, to_currency: str, amount: float) -> Optional[Dict]:
-        """獲取匯率估算"""
+        """獲取匯率估算 - 修復版本"""
         try:
+            # 修復：使用正確的參數格式
+            params = {
+                'api_key': self.api_key,
+                'fixed': 'false',
+                'currency_from': from_currency.lower(),
+                'currency_to': to_currency.lower(),
+                'amount': amount
+            }
+            
             response = requests.get(
                 f"{self.api_base_url}/get_estimated",
-                params={
-                    'api_key': self.api_key,
-                    'fixed': 'false',
-                    'currency_from': from_currency,
-                    'currency_to': to_currency,
-                    'amount': amount
-                },
+                params=params,
                 timeout=30
             )
             
+            logger.info(f"估算請求: {params}")
+            logger.info(f"回應狀態: {response.status_code}")
+            
             if response.status_code == 200:
-                result = response.json()
-                logger.info(f"匯率估算: {amount} {from_currency} ≈ {result} {to_currency}")
-                return {
-                    'estimated_amount': float(result),
-                    'from_currency': from_currency,
-                    'to_currency': to_currency,
-                    'original_amount': amount
-                }
+                result = response.text.strip()  # SimpleSwap 可能只返回數字
+                try:
+                    estimated_amount = float(result)
+                    logger.info(f"匯率估算: {amount} {from_currency} ≈ {estimated_amount} {to_currency}")
+                    return {
+                        'estimated_amount': estimated_amount,
+                        'from_currency': from_currency,
+                        'to_currency': to_currency,
+                        'original_amount': amount
+                    }
+                except ValueError:
+                    # 如果返回的是 JSON
+                    result_json = response.json()
+                    estimated_amount = float(result_json) if isinstance(result_json, (int, float)) else result_json.get('amount', 0)
+                    return {
+                        'estimated_amount': estimated_amount,
+                        'from_currency': from_currency,
+                        'to_currency': to_currency,
+                        'original_amount': amount
+                    }
             else:
-                logger.error(f"獲取匯率估算失敗: {response.status_code}")
+                logger.error(f"獲取匯率估算失敗: {response.status_code} - {response.text}")
                 return None
                 
         except Exception as e:
@@ -84,24 +98,30 @@ class SimpleSwapService:
             return None
     
     def create_fiat_exchange(self, plan_info: Dict, user_info: Dict) -> Optional[Dict]:
-        """創建法定貨幣到加密貨幣交換"""
+        """創建加密貨幣交換（不是真正的法幣交換）"""
         try:
             # 生成唯一的訂單ID
             order_id = f"artale_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             
-            # 設定交換參數
-            from_currency = "usd"  # 使用 USD 作為法定貨幣
-            to_currency = "usdttrc20"  # 接收 USDT (TRC20)
-            amount = plan_info['price'] * 0.032  # TWD 轉 USD 概算
+            # 使用加密貨幣交換（USDT to USDT，模擬法幣）
+            from_currency = "usdt"  # 從 USDT 開始
+            to_currency = "usdttrc20"  # 轉到 TRC20 USDT
+            amount_usd = plan_info['price'] * 0.032  # TWD 轉 USD 概算
             
             # 獲取匯率估算
-            estimate = self.get_exchange_estimate(from_currency, to_currency, amount)
+            estimate = self.get_exchange_estimate(from_currency, to_currency, amount_usd)
             if not estimate:
                 logger.error("無法獲取匯率估算")
-                return None
+                # 使用備用計算
+                estimate = {
+                    'estimated_amount': amount_usd * 0.98,  # 假設 2% 手續費
+                    'from_currency': from_currency,
+                    'to_currency': to_currency,
+                    'original_amount': amount_usd
+                }
             
-            # 生成收款地址（你的錢包地址）
-            receiving_address = os.environ.get('RECEIVING_WALLET_ADDRESS', 'YOUR_USDT_TRC20_ADDRESS')
+            # 你的收款地址
+            receiving_address = os.environ.get('RECEIVING_WALLET_ADDRESS', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
             
             # 創建交換訂單
             exchange_data = {
@@ -109,21 +129,21 @@ class SimpleSwapService:
                 'fixed': 'false',
                 'currency_from': from_currency,
                 'currency_to': to_currency,
-                'amount': amount,
+                'amount': amount_usd,
                 'address_to': receiving_address,
                 'extra_id_to': '',
                 'user_refund_address': '',
                 'user_refund_extra_id': ''
             }
             
-            if self.partner_id:
-                exchange_data['partner_id'] = self.partner_id
-            
             response = requests.post(
                 f"{self.api_base_url}/create_exchange",
                 data=exchange_data,
                 timeout=30
             )
+            
+            logger.info(f"創建交換請求: {exchange_data}")
+            logger.info(f"回應狀態: {response.status_code}")
             
             if response.status_code == 200:
                 result = response.json()
@@ -141,13 +161,13 @@ class SimpleSwapService:
                         'plan_name': plan_info['name'],
                         'plan_period': plan_info['period'],
                         'amount_twd': plan_info['price'],
-                        'amount_usd': amount,
+                        'amount_usd': amount_usd,
                         'estimated_usdt': estimate['estimated_amount'],
                         'from_currency': from_currency,
                         'to_currency': to_currency,
                         'status': 'waiting',
                         'created_at': datetime.now(),
-                        'payment_method': 'simpleswap_fiat',
+                        'payment_method': 'simpleswap_crypto',
                         'receiving_address': receiving_address,
                         'expires_at': datetime.now() + timedelta(minutes=30)
                     }
@@ -160,15 +180,17 @@ class SimpleSwapService:
                     
                     self.save_exchange_record(result['id'], exchange_record)
                     
-                    # 創建法定貨幣付款連結
-                    payment_url = self.create_fiat_payment_url(result['id'], amount, from_currency, user_info)
+                    # 創建付款頁面 URL（顯示付款詳情）
+                    base_url = os.environ.get('BASE_URL', 'https://scrilab.onrender.com')
+                    payment_url = f"{base_url}/payment/simpleswap/details/{result['id']}"
                     
                     return {
                         'success': True,
                         'exchange_id': result['id'],
                         'order_id': order_id,
                         'payment_url': payment_url,
-                        'amount_usd': amount,
+                        'payment_address': result.get('address_from'),
+                        'amount_usd': amount_usd,
                         'estimated_usdt': estimate['estimated_amount'],
                         'expires_at': exchange_record['expires_at'].isoformat()
                     }
@@ -180,24 +202,8 @@ class SimpleSwapService:
                 return None
                 
         except Exception as e:
-            logger.error(f"創建 SimpleSwap 法定貨幣交換失敗: {str(e)}", exc_info=True)
+            logger.error(f"創建 SimpleSwap 交換失敗: {str(e)}", exc_info=True)
             return None
-    
-    def create_fiat_payment_url(self, exchange_id: str, amount: float, currency: str, user_info: Dict) -> str:
-        """創建法定貨幣付款 URL（通過 Mercuryo）"""
-        try:
-            base_url = os.environ.get('BASE_URL', 'https://scrilab.onrender.com')
-            
-            # SimpleSwap 與 Mercuryo 整合的付款 URL
-            # 這個 URL 會引導用戶到真正的信用卡付款頁面
-            payment_url = f"https://widget.simpleswap.io/?apiKey={self.api_key}&id={exchange_id}&theme=dark&returnUrl={base_url}/payment/simpleswap/success&cancelUrl={base_url}/payment/cancel"
-            
-            logger.info(f"生成法定貨幣付款 URL: {payment_url}")
-            return payment_url
-            
-        except Exception as e:
-            logger.error(f"創建法定貨幣付款 URL 失敗: {str(e)}")
-            return f"https://simpleswap.io/exchange/{exchange_id}"
     
     def get_exchange_status(self, exchange_id: str) -> Optional[Dict]:
         """獲取交換狀態"""
@@ -216,7 +222,7 @@ class SimpleSwapService:
                 logger.info(f"交換狀態查詢: {result}")
                 return result
             else:
-                logger.error(f"獲取交換狀態失敗: {response.status_code}")
+                logger.error(f"獲取交換狀態失敗: {response.status_code} - {response.text}")
                 return None
                 
         except Exception as e:
@@ -349,13 +355,13 @@ class SimpleSwapService:
                 },
                 "active": True,
                 "created_at": datetime.now(),
-                "created_by": "simpleswap_fiat_exchange",
+                "created_by": "simpleswap_crypto_exchange",
                 "login_count": 0,
                 "expires_at": expires_at,
                 "exchange_id": exchange_id,
-                "payment_method": "simpleswap_fiat",
+                "payment_method": "simpleswap_crypto",
                 "payment_status": "completed",
-                "notes": f"SimpleSwap 法定貨幣交換創建 - {exchange_record['plan_name']}"
+                "notes": f"SimpleSwap 加密貨幣交換創建 - {exchange_record['plan_name']}"
             }
             
             self.db.collection('authorized_users').document(uuid_hash).set(user_data)
@@ -408,7 +414,7 @@ class SimpleSwapService:
 🎮 服務方案：{plan_name}
 ⏰ 服務期限：{plan_period}
 🔑 專屬序號：{uuid}
-💳 付款方式：SimpleSwap 信用卡付款
+💰 付款方式：SimpleSwap 加密貨幣交換
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🚀 如何使用：
