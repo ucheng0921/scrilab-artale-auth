@@ -22,7 +22,7 @@ from session_manager import session_manager, init_session_manager
 from route_handlers import RouteHandlers
 from oxapay_service import OxaPayService  # 新增 OxaPay 服務
 from oxapay_routes import OxaPayRoutes    # 新增 OxaPay 路由
-from templates import PROFESSIONAL_PRODUCTS_TEMPLATE_OXAPAY, PAYMENT_CANCEL_TEMPLATE
+from templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
 from intro_routes import intro_bp
 
 # 設置日誌
@@ -461,7 +461,7 @@ def get_exchange_rate():
 @app.route('/products', methods=['GET'])
 def products_page():
     """軟體服務展示頁面（支援 OxaPay）"""
-    return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE_OXAPAY)
+    return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
 
 # ===== 應用初始化 =====
 
