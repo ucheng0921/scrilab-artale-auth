@@ -1,5 +1,5 @@
 """
-app.py - 簡化版本，只使用 SimpleSwap 信用卡付款
+app.py - 完整版本，包含 SimpleSwap 信用卡付款支援
 """
 from flask import Flask, redirect, request, jsonify, render_template_string
 from flask_cors import CORS
@@ -426,6 +426,14 @@ def simpleswap_success():
     
     return simpleswap_routes.payment_success()
 
+@app.route('/payment/simpleswap/details/<exchange_id>', methods=['GET'])
+def simpleswap_payment_details(exchange_id):
+    """SimpleSwap 付款詳情頁面"""
+    if not simpleswap_routes:
+        return redirect('/products?error=service_unavailable')
+    
+    return simpleswap_routes.payment_details(exchange_id)
+
 @app.route('/payment/success', methods=['GET'])
 def payment_success():
     """付款成功頁面"""
@@ -460,6 +468,17 @@ def check_simpleswap_payment_status():
         }), 503
     
     return simpleswap_routes.check_payment_status()
+
+@app.route('/api/debug-simpleswap-currencies', methods=['GET'])
+def debug_simpleswap_currencies():
+    """調試 SimpleSwap 支援的貨幣列表"""
+    if not simpleswap_routes:
+        return jsonify({
+            'success': False,
+            'error': 'SimpleSwap 服務未初始化'
+        }), 503
+    
+    return simpleswap_routes.debug_currencies()
 
 @app.route('/products', methods=['GET'])
 def products_page():
