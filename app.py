@@ -24,6 +24,7 @@ from oxapay_service import OxaPayService  # 新增 OxaPay 服務
 from oxapay_routes import OxaPayRoutes    # 新增 OxaPay 路由
 from templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
 from intro_routes import intro_bp
+from custom_payment_routes import custom_payment_bp, init_custom_payment_handler
 
 # 設置日誌
 logging.basicConfig(
@@ -47,6 +48,7 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(manual_bp)
 app.register_blueprint(disclaimer_bp)
 app.register_blueprint(intro_bp)
+app.register_blueprint(custom_payment_bp)  # 新增這行
 
 # 全局變數
 db = None
@@ -185,6 +187,15 @@ def init_services():
         # 初始化路由處理器
         route_handlers = RouteHandlers(db, session_manager, oxapay_service)
         logger.info("✅ Route Handlers 已初始化")
+
+        init_session_manager(db)
+        oxapay_service = OxaPayService(db)
+        oxapay_routes = OxaPayRoutes(oxapay_service)
+        route_handlers = RouteHandlers(db, session_manager, oxapay_service)
+        
+        # 新增：初始化自定義付款處理器
+        init_custom_payment_handler(oxapay_service, db)
+        logger.info("✅ Custom Payment Handler 已初始化")
         
         # 啟動後台清理任務
         start_background_tasks()
