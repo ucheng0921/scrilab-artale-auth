@@ -50,9 +50,15 @@ class SimpleSwapService:
     def get_exchange_estimate(self, from_currency: str, to_currency: str, amount: float) -> Optional[Dict]:
         """獲取匯率估算 - 修復版本"""
         try:
-            # 使用更具體的貨幣代碼
-            from_currency = from_currency.lower().replace("usdt", "usdt_erc20")
-            to_currency = to_currency.lower().replace("usdttrc20", "usdt_trc20")
+            # 修正貨幣代碼，避免重複替換
+            from_currency = from_currency.lower()
+            to_currency = to_currency.lower()
+            
+            # 僅在必要時替換貨幣代碼
+            if from_currency == "usdt":
+                from_currency = "usdt_erc20"
+            if to_currency == "usdttrc20":
+                to_currency = "usdt_trc20"
             
             # 檢查支援的貨幣
             supported_currencies = self.get_supported_currencies()
