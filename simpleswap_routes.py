@@ -12,6 +12,43 @@ class SimpleSwapRoutes:
     def __init__(self, simpleswap_service):
         self.simpleswap_service = simpleswap_service
     
+
+    def show_mercuryo_mock_payment(self, exchange_id):
+        """顯示模擬的 Mercuryo 信用卡付款頁面"""
+        try:
+            exchange_record = self.simpleswap_service.get_exchange_record(exchange_id)
+            if not exchange_record:
+                return redirect('/products?error=exchange_not_found')
+            
+            return render_template_string(
+                MERCURYO_MOCK_PAYMENT_TEMPLATE,
+                exchange_record=exchange_record,
+                exchange_id=exchange_id
+            )
+        except Exception as e:
+            logger.error(f"顯示模擬付款頁面錯誤: {str(e)}")
+            return redirect('/products?error=system_error')
+
+    def process_mock_payment(self, exchange_id):
+        """處理模擬付款"""
+        try:
+            success, user_uuid = self.simpleswap_service.process_successful_fiat_exchange(exchange_id, {
+                'status': 'completed',
+                'transaction_id': f"mock_tx_{exchange_id}"
+            })
+            
+            if success:
+                return jsonify({
+                    'success': True,
+                    'user_uuid': user_uuid,
+                    'redirect_url': f'/payment/simpleswap/success?id={exchange_id}'
+                })
+            else:
+                return jsonify({'success': False, 'error': '模擬付款處理失敗'}), 500
+        except Exception as e:
+            logger.error(f"處理模擬付款錯誤: {str(e)}")
+            return jsonify({'success': False, 'error': '系統錯誤'}), 500
+
     def create_payment(self):
         """創建 SimpleSwap 信用卡付款"""
         try:
@@ -62,8 +99,7 @@ class SimpleSwapRoutes:
                 }), 400
             
             # 創建 SimpleSwap 交換
-            exchange_result = self.simpleswap_service.create_fiat_exchange(plan_info, user_info)
-            
+            exchange_result = self.simpleswap_service.create_fiat_to_crypto_exchange(plan_info, user_info)
             if exchange_result and exchange_result['success']:
                 return jsonify({
                     'success': True,
@@ -71,8 +107,10 @@ class SimpleSwapRoutes:
                     'exchange_id': exchange_result['exchange_id'],
                     'order_id': exchange_result['order_id'],
                     'amount_usd': exchange_result['amount_usd'],
+                    'amount_twd': exchange_result['amount_twd'],
                     'estimated_usdt': exchange_result['estimated_usdt'],
-                    'expires_at': exchange_result['expires_at']
+                    'expires_at': exchange_result['expires_at'],
+                    'payment_method': 'credit_card_to_crypto'
                 })
             else:
                 return jsonify({
@@ -140,7 +178,7 @@ class SimpleSwapRoutes:
                 exchange_info = self.simpleswap_service.get_exchange_status(exchange_id)
                 if exchange_info and exchange_info.get('status') == 'finished':
                     # 處理成功交換
-                    success, user_uuid = self.simpleswap_service.process_successful_exchange(exchange_id, exchange_info)
+                    success, user_uuid = self.simpleswap_service.process_successful_fiat_exchange(exchange_id, exchange_info)
                     if success:
                         exchange_record['user_uuid'] = user_uuid
                         exchange_record['status'] = 'completed'
@@ -1034,6 +1072,108 @@ SIMPLESWAP_PAYMENT_DETAILS_TEMPLATE = r"""
         setInterval(() => {
             checkPaymentStatus();
         }, 30000); // 每30秒檢查一次
+    </script>
+</body>
+</html>
+"""
+
+# 在文件最後添加這個模板
+MERCURYO_MOCK_PAYMENT_TEMPLATE = r"""
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>信用卡付款 - Mercuryo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+        .payment-container { background: white; border-radius: 16px; max-width: 500px; width: 100%; padding: 2.5rem; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); }
+        .mercuryo-logo { text-align: center; margin-bottom: 2rem; }
+        .mercuryo-logo h1 { font-size: 1.8rem; font-weight: 700; color: #667eea; margin-bottom: 0.5rem; }
+        .payment-info { background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 0.8rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-input { width: 100%; padding: 12px 16px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; }
+        .form-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+        .pay-button { width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; padding: 16px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .loading { display: none; text-align: center; padding: 2rem; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <div class="mercuryo-logo">
+            <h1><i class="fas fa-shield-alt"></i> Mercuryo</h1>
+            <p>安全的加密貨幣付款處理</p>
+        </div>
+
+        <div class="payment-info">
+            <div class="info-row"><span>商家</span><span>Scrilab</span></div>
+            <div class="info-row"><span>服務</span><span>{{ exchange_record.plan_name }}</span></div>
+            <div class="info-row"><span>付款金額</span><span>${{ "%.2f"|format(exchange_record.amount_usd) }} USD</span></div>
+            <div class="info-row"><span>將獲得</span><span>{{ "%.4f"|format(exchange_record.estimated_usdt) }} USDT</span></div>
+        </div>
+
+        <form id="payment-form">
+            <div class="form-group">
+                <label>信用卡號</label>
+                <input type="text" class="form-input" placeholder="1234 5678 9012 3456" maxlength="19" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>有效期限</label>
+                    <input type="text" class="form-input" placeholder="MM/YY" maxlength="5" required>
+                </div>
+                <div class="form-group">
+                    <label>CVV</label>
+                    <input type="text" class="form-input" placeholder="123" maxlength="4" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>持卡人姓名</label>
+                <input type="text" class="form-input" placeholder="CARDHOLDER NAME" required>
+            </div>
+            <button type="submit" class="pay-button">
+                <i class="fas fa-lock"></i> 安全付款 ${{ "%.2f"|format(exchange_record.amount_usd) }} USD
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在處理您的付款...</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">信用卡付款將自動轉換為加密貨幣</p>
+        </div>
+    </div>
+
+    <script>
+        const exchangeId = "{{ exchange_id }}";
+        document.getElementById('payment-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            document.querySelector('.payment-container > :not(.loading)').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            
+            setTimeout(async () => {
+                try {
+                    const response = await fetch(`/payment/mercuryo/mock/${exchangeId}/process`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ card_number: 'mock_card', amount: {{ exchange_record.amount_usd if exchange_record else 0 }} })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        alert('付款失敗: ' + data.error);
+                        location.reload();
+                    }
+                } catch (error) {
+                    alert('付款處理錯誤: ' + error.message);
+                    location.reload();
+                }
+            }, 3000);
+        });
     </script>
 </body>
 </html>

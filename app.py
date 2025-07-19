@@ -20,8 +20,8 @@ from manual_routes import manual_bp
 from disclaimer_routes import disclaimer_bp
 from session_manager import session_manager, init_session_manager
 from route_handlers import RouteHandlers
-from simpleswap_service import SimpleSwapService  # SimpleSwap 服務
-from simpleswap_routes import SimpleSwapRoutes    # SimpleSwap 路由
+from simpleswap_service import SimpleSwapService  # SimpleSwap Fiat-to-Crypto 服務
+from simpleswap_routes import SimpleSwapRoutes    # SimpleSwap Fiat-to-Crypto 路由
 from templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
 from intro_routes import intro_bp
 from custom_payment_routes import custom_payment_bp, init_custom_payment_handler
@@ -178,7 +178,7 @@ def init_services():
         
         # 初始化 SimpleSwap 服務
         simpleswap_service = SimpleSwapService(db)
-        logger.info("✅ SimpleSwap Service 已初始化")
+        logger.info("✅ SimpleSwap Fiat-to-Crypto Service 已初始化")
         
         # 初始化 SimpleSwap 路由
         simpleswap_routes = SimpleSwapRoutes(simpleswap_service)
@@ -397,7 +397,7 @@ def manual_cleanup_sessions():
 
 @app.route('/api/create-simpleswap-payment', methods=['POST'])
 def create_simpleswap_payment():
-    """創建 SimpleSwap 信用卡付款"""
+    """創建 SimpleSwap Fiat-to-Crypto 付款（信用卡 → USDT）"""
     if not simpleswap_routes:
         return jsonify({
             'success': False,
@@ -409,7 +409,7 @@ def create_simpleswap_payment():
 
 @app.route('/payment/simpleswap/webhook', methods=['POST'])
 def simpleswap_webhook():
-    """SimpleSwap Webhook 處理"""
+    """SimpleSwap/Mercuryo Webhook 處理"""
     if not simpleswap_routes:
         return jsonify({
             'status': 'error',
@@ -420,19 +420,30 @@ def simpleswap_webhook():
 
 @app.route('/payment/simpleswap/success', methods=['GET'])
 def simpleswap_success():
-    """SimpleSwap 付款成功頁面"""
+    """SimpleSwap Fiat-to-Crypto 付款成功頁面"""
     if not simpleswap_routes:
         return redirect('/products?error=service_unavailable')
     
     return simpleswap_routes.payment_success()
 
-@app.route('/payment/simpleswap/details/<exchange_id>', methods=['GET'])
-def simpleswap_payment_details(exchange_id):
-    """SimpleSwap 付款詳情頁面"""
+@app.route('/payment/mercuryo/mock/<exchange_id>', methods=['GET'])
+def mercuryo_mock_payment(exchange_id):
+    """顯示模擬的 Mercuryo 信用卡付款頁面"""
     if not simpleswap_routes:
         return redirect('/products?error=service_unavailable')
     
-    return simpleswap_routes.payment_details(exchange_id)
+    return simpleswap_routes.show_mercuryo_mock_payment(exchange_id)
+
+@app.route('/payment/mercuryo/mock/<exchange_id>/process', methods=['POST'])
+def process_mercuryo_mock_payment(exchange_id):
+    """處理模擬的 Mercuryo 信用卡付款"""
+    if not simpleswap_routes:
+        return jsonify({
+            'success': False,
+            'error': 'Service not available'
+        }), 503
+    
+    return simpleswap_routes.process_mock_payment(exchange_id)
 
 @app.route('/payment/success', methods=['GET'])
 def payment_success():
@@ -460,7 +471,7 @@ def payment_cancel():
 
 @app.route('/api/check-simpleswap-payment-status', methods=['POST'])
 def check_simpleswap_payment_status():
-    """檢查 SimpleSwap 付款狀態 API"""
+    """檢查 SimpleSwap Fiat-to-Crypto 付款狀態 API"""
     if not simpleswap_routes:
         return jsonify({
             'success': False,
@@ -468,17 +479,6 @@ def check_simpleswap_payment_status():
         }), 503
     
     return simpleswap_routes.check_payment_status()
-
-@app.route('/api/debug-simpleswap-currencies', methods=['GET'])
-def debug_simpleswap_currencies():
-    """調試 SimpleSwap 支援的貨幣列表"""
-    if not simpleswap_routes:
-        return jsonify({
-            'success': False,
-            'error': 'SimpleSwap 服務未初始化'
-        }), 503
-    
-    return simpleswap_routes.debug_currencies()
 
 @app.route('/products', methods=['GET'])
 def products_page():
