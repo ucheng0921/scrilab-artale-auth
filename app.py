@@ -1,5 +1,5 @@
 """
-app.py - 更新版本，整合 OxaPay 加密貨幣支付
+app.py - 簡化版本，只使用 SimpleSwap 信用卡付款
 """
 from flask import Flask, redirect, request, jsonify, render_template_string
 from flask_cors import CORS
@@ -20,8 +20,8 @@ from manual_routes import manual_bp
 from disclaimer_routes import disclaimer_bp
 from session_manager import session_manager, init_session_manager
 from route_handlers import RouteHandlers
-from oxapay_service import OxaPayService  # 新增 OxaPay 服務
-from oxapay_routes import OxaPayRoutes    # 新增 OxaPay 路由
+from simpleswap_service import SimpleSwapService  # SimpleSwap 服務
+from simpleswap_routes import SimpleSwapRoutes    # SimpleSwap 路由
 from templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
 from intro_routes import intro_bp
 from custom_payment_routes import custom_payment_bp, init_custom_payment_handler
@@ -48,19 +48,19 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(manual_bp)
 app.register_blueprint(disclaimer_bp)
 app.register_blueprint(intro_bp)
-app.register_blueprint(custom_payment_bp)  # 新增這行
+app.register_blueprint(custom_payment_bp)
 
 # 全局變數
 db = None
 firebase_initialized = False
-oxapay_service = None  # 新增 OxaPay 服務
-oxapay_routes = None   # 新增 OxaPay 路由
+simpleswap_service = None
+simpleswap_routes = None
 route_handlers = None
 initialization_in_progress = False
 
 def check_environment_variables():
     """檢查必要的環境變數"""
-    required_vars = ['FIREBASE_CREDENTIALS_BASE64', 'OXAPAY_MERCHANT_KEY']
+    required_vars = ['FIREBASE_CREDENTIALS_BASE64', 'SIMPLESWAP_API_KEY']
     missing_vars = [var for var in required_vars if not os.environ.get(var)]
     
     if missing_vars:
@@ -169,32 +169,27 @@ def init_firebase_with_retry(max_retries=3):
 
 def init_services():
     """初始化相關服務"""
-    global oxapay_service, oxapay_routes, route_handlers
+    global simpleswap_service, simpleswap_routes, route_handlers
     
     try:
         # 初始化 Session Manager
         init_session_manager(db)
         logger.info("✅ Session Manager 已初始化")
         
-        # 初始化 OxaPay 服務
-        oxapay_service = OxaPayService(db)
-        logger.info("✅ OxaPay Service 已初始化")
+        # 初始化 SimpleSwap 服務
+        simpleswap_service = SimpleSwapService(db)
+        logger.info("✅ SimpleSwap Service 已初始化")
         
-        # 初始化 OxaPay 路由
-        oxapay_routes = OxaPayRoutes(oxapay_service)
-        logger.info("✅ OxaPay Routes 已初始化")
+        # 初始化 SimpleSwap 路由
+        simpleswap_routes = SimpleSwapRoutes(simpleswap_service)
+        logger.info("✅ SimpleSwap Routes 已初始化")
         
         # 初始化路由處理器
-        route_handlers = RouteHandlers(db, session_manager, oxapay_service)
+        route_handlers = RouteHandlers(db, session_manager, simpleswap_service)
         logger.info("✅ Route Handlers 已初始化")
-
-        init_session_manager(db)
-        oxapay_service = OxaPayService(db)
-        oxapay_routes = OxaPayRoutes(oxapay_service)
-        route_handlers = RouteHandlers(db, session_manager, oxapay_service)
         
-        # 新增：初始化自定義付款處理器
-        init_custom_payment_handler(oxapay_service, db)
+        # 初始化自定義付款處理器
+        init_custom_payment_handler(simpleswap_service, db)
         logger.info("✅ Custom Payment Handler 已初始化")
         
         # 啟動後台清理任務
@@ -270,7 +265,7 @@ def root():
             'service': 'Scrilab Artale Authentication Service',
             'status': 'initializing',
             'firebase_initialized': firebase_initialized,
-            'oxapay_available': oxapay_service is not None,
+            'simpleswap_available': simpleswap_service is not None,
             'message': 'Service is starting up, please wait...'
         })
 
@@ -281,7 +276,7 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'service': 'artale-auth-service',
-        'version': '2.3.0',  # 版本號更新
+        'version': '3.0.0-simpleswap',
         'checks': {}
     }
     
@@ -299,11 +294,11 @@ def health_check():
         health_status['checks']['firebase'] = 'not_initialized'
         health_status['status'] = 'degraded'
     
-    # 檢查 OxaPay 服務
-    if oxapay_service:
-        health_status['checks']['oxapay_service'] = 'healthy'
+    # 檢查 SimpleSwap 服務
+    if simpleswap_service:
+        health_status['checks']['simpleswap_service'] = 'healthy'
     else:
-        health_status['checks']['oxapay_service'] = 'not_initialized'
+        health_status['checks']['simpleswap_service'] = 'not_initialized'
         health_status['status'] = 'degraded'
     
     # 檢查路由處理器
@@ -398,44 +393,52 @@ def manual_cleanup_sessions():
     
     return route_handlers.manual_cleanup_sessions()
 
-# ===== OxaPay 付款相關路由 =====
+# ===== SimpleSwap 付款相關路由 =====
 
-@app.route('/api/create-oxapay-payment', methods=['POST'])
-def create_oxapay_payment():
-    """創建 OxaPay 付款"""
-    if not oxapay_routes:
+@app.route('/api/create-simpleswap-payment', methods=['POST'])
+def create_simpleswap_payment():
+    """創建 SimpleSwap 信用卡付款"""
+    if not simpleswap_routes:
         return jsonify({
             'success': False,
-            'error': 'OxaPay 服務未初始化',
-            'code': 'OXAPAY_SERVICE_UNAVAILABLE'
+            'error': 'SimpleSwap 服務未初始化',
+            'code': 'SIMPLESWAP_SERVICE_UNAVAILABLE'
         }), 503
     
-    return oxapay_routes.create_payment()
+    return simpleswap_routes.create_payment()
 
-@app.route('/payment/oxapay/callback', methods=['POST'])
-def oxapay_callback():
-    """OxaPay 付款回調"""
-    if not oxapay_routes:
+@app.route('/payment/simpleswap/webhook', methods=['POST'])
+def simpleswap_webhook():
+    """SimpleSwap Webhook 處理"""
+    if not simpleswap_routes:
         return jsonify({
             'status': 'error',
-            'message': 'OxaPay service not available'
+            'message': 'SimpleSwap service not available'
         }), 503
     
-    return oxapay_routes.payment_callback()
+    return simpleswap_routes.webhook_handler()
+
+@app.route('/payment/simpleswap/success', methods=['GET'])
+def simpleswap_success():
+    """SimpleSwap 付款成功頁面"""
+    if not simpleswap_routes:
+        return redirect('/products?error=service_unavailable')
+    
+    return simpleswap_routes.payment_success()
 
 @app.route('/payment/success', methods=['GET'])
 def payment_success():
-    """付款成功頁面（支援多種付款方式）"""
+    """付款成功頁面"""
     try:
-        provider = request.args.get('provider')
+        provider = request.args.get('provider', 'simpleswap')
         
-        if provider == 'oxapay':
-            # OxaPay 付款成功處理
-            if not oxapay_routes:
+        if provider == 'simpleswap' or not provider:
+            # SimpleSwap 付款成功處理
+            if not simpleswap_routes:
                 return redirect('/products?error=service_unavailable')
-            return oxapay_routes.payment_success()
+            return simpleswap_routes.payment_success()
         else:
-            # 其他付款方式或無效 provider
+            # 其他付款方式重定向到 SimpleSwap
             return redirect('/products?error=invalid_provider')
             
     except Exception as e:
@@ -447,31 +450,20 @@ def payment_cancel():
     """付款取消回調"""
     return render_template_string(PAYMENT_CANCEL_TEMPLATE)
 
-@app.route('/api/check-payment-status', methods=['POST'])
-def check_payment_status():
-    """檢查付款狀態 API"""
-    if not oxapay_routes:
+@app.route('/api/check-simpleswap-payment-status', methods=['POST'])
+def check_simpleswap_payment_status():
+    """檢查 SimpleSwap 付款狀態 API"""
+    if not simpleswap_routes:
         return jsonify({
             'success': False,
-            'error': 'OxaPay 服務未初始化'
+            'error': 'SimpleSwap 服務未初始化'
         }), 503
     
-    return oxapay_routes.check_payment_status()
-
-@app.route('/api/exchange-rate', methods=['GET'])
-def get_exchange_rate():
-    """獲取匯率 API"""
-    if not oxapay_routes:
-        return jsonify({
-            'success': False,
-            'error': 'OxaPay 服務未初始化'
-        }), 503
-    
-    return oxapay_routes.get_exchange_rate()
+    return simpleswap_routes.check_payment_status()
 
 @app.route('/products', methods=['GET'])
 def products_page():
-    """軟體服務展示頁面（支援 OxaPay）"""
+    """軟體服務展示頁面（支援 SimpleSwap）"""
     return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
 
 # ===== 應用初始化 =====
@@ -481,7 +473,7 @@ logger.info("🚀 開始初始化應用...")
 try:
     success = init_firebase_with_retry()
     if success:
-        logger.info(f"✅ 應用初始化成功，OxaPay 服務: {'已啟用' if oxapay_service else '未啟用'}")
+        logger.info(f"✅ 應用初始化成功，SimpleSwap 服務: {'已啟用' if simpleswap_service else '未啟用'}")
     else:
         logger.error(f"❌ 應用初始化失敗")
 except Exception as e:
@@ -493,7 +485,7 @@ if __name__ == '__main__':
     if not firebase_initialized:
         logger.warning("⚠️ Firebase 未初始化，應用可能無法正常工作")
     
-    if not oxapay_service:
-        logger.warning("⚠️ OxaPay 服務未初始化，加密貨幣付款功能不可用")
+    if not simpleswap_service:
+        logger.warning("⚠️ SimpleSwap 服務未初始化，信用卡付款功能不可用")
     
     app.run(debug=True, host='0.0.0.0', port=5000)

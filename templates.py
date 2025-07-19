@@ -999,13 +999,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                         </ul>
                         <div class="payment-options">
-                            <button class="service-button" onclick="selectPaymentMethod('trial_7', 'smart_pay')" style="margin-bottom: 0.5rem;">
+                            <button class="service-button" onclick="selectPlan('monthly_30')">
                                 <i class="fas fa-credit-card"></i>
-                                <span>智能付款（推薦）</span>
-                            </button>
-                            <button class="service-button" onclick="selectPaymentMethod('trial_7', 'direct_crypto')" style="background: rgba(0, 212, 255, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue);">
-                                <i class="fab fa-bitcoin"></i>
-                                <span>直接加密貨幣</span>
+                                <span>信用卡付款</span>
                             </button>
                         </div>                       
                     </div>
@@ -1054,13 +1050,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                         </ul>
                         <div class="payment-options">
-                            <button class="service-button" onclick="selectPaymentMethod('monthly_30', 'smart_pay')" style="margin-bottom: 0.5rem;">
+                            <button class="service-button" onclick="selectPlan('monthly_30')">
                                 <i class="fas fa-credit-card"></i>
-                                <span>智能付款（推薦）</span>
-                            </button>
-                            <button class="service-button" onclick="selectPaymentMethod('monthly_30', 'direct_crypto')" style="background: rgba(0, 212, 255, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue);">
-                                <i class="fab fa-bitcoin"></i>
-                                <span>直接加密貨幣</span>
+                                <span>信用卡付款</span>
                             </button>
                         </div>
                     </div>
@@ -1108,13 +1100,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                         </ul>
                         <div class="payment-options">
-                            <button class="service-button" onclick="selectPaymentMethod('quarterly_90', 'smart_pay')" style="margin-bottom: 0.5rem;">
+                            <button class="service-button" onclick="selectPlan('monthly_30')">
                                 <i class="fas fa-credit-card"></i>
-                                <span>智能付款（推薦）</span>
-                            </button>
-                            <button class="service-button" onclick="selectPaymentMethod('quarterly_90', 'direct_crypto')" style="background: rgba(0, 212, 255, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue);">
-                                <i class="fab fa-bitcoin"></i>
-                                <span>直接加密貨幣</span>
+                                <span>信用卡付款</span>
                             </button>
                         </div>
                     </div>
@@ -1262,11 +1250,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         function selectPaymentMethod(planId, paymentType) {
-            if (paymentType === 'smart_pay') {
-                // 跳轉到自定義付款頁面（信用卡界面）
-                window.location.href = `/payment/custom/page?plan_id=${planId}`;
+            if (paymentType === 'smart_pay' || paymentType === 'credit_card') {
+                // 統一使用 SimpleSwap 信用卡付款
+                selectPlan(planId);
             } else if (paymentType === 'direct_crypto') {
-                // 使用原有的直接加密貨幣付款
+                // 如果你想保留直接加密貨幣選項，也使用 SimpleSwap
                 selectPlan(planId);
             }
         }
@@ -1304,39 +1292,48 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 return;
             }
             
-            // Show loading
+            // 顯示載入狀態
             document.getElementById('payment-btn-text').style.display = 'none';
             document.getElementById('payment-loading').style.display = 'inline-block';
             
-            // 創建 OxaPay 付款
-            fetch('/api/create-oxapay-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    plan_id: selectedPlan,
-                    user_info: {
-                        name: userName,
-                        email: contactEmail,
-                        phone: contactPhone
-                    }
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
+            // 直接使用 SimpleSwap 信用卡付款
+            submitSimpleSwapPayment(userName, contactEmail, contactPhone);
+        }
+
+        // SimpleSwap 信用卡付款提交
+        async function submitSimpleSwapPayment(userName, contactEmail, contactPhone) {
+            try {
+                const response = await fetch('/api/create-simpleswap-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plan_id: selectedPlan,
+                        user_info: {
+                            name: userName,
+                            email: contactEmail,
+                            phone: contactPhone
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                
                 if (data.success) {
-                    // 重定向到 OxaPay 付款頁面
+                    // 重定向到 SimpleSwap 付款頁面
                     window.location.href = data.payment_url;
                 } else {
                     alert('付款創建失敗: ' + data.error);
-                    document.getElementById('payment-btn-text').style.display = 'inline-flex';
-                    document.getElementById('payment-loading').style.display = 'none';
+                    resetPaymentButton();
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 alert('系統錯誤: ' + error.message);
-                document.getElementById('payment-btn-text').style.display = 'inline-flex';
-                document.getElementById('payment-loading').style.display = 'none';
-            });
+                resetPaymentButton();
+            }
+        }
+
+        function resetPaymentButton() {
+            document.getElementById('payment-btn-text').style.display = 'inline-flex';
+            document.getElementById('payment-loading').style.display = 'none';
         }
 
         function validateEmail(email) {
