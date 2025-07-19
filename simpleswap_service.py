@@ -120,7 +120,7 @@ class SimpleSwapService:
             order_id = f"artale_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             
             # 使用明確的貨幣代碼
-            from_currency = "usdt_erc20"  # ERC-20 USDT
+            from_currency = "usdc"  # ERC-20 USDT
             to_currency = "usdt_trc20"    # TRC-20 USDT
             amount_usd = plan_info['price'] * 0.032  # TWD 轉 USD 概算
             
