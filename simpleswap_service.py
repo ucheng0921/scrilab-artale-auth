@@ -78,8 +78,9 @@ class SimpleSwapService:
             logger.error(f"獲取貨幣列表錯誤: {str(e)}")
             return None
     
+    # 替換 simpleswap_service.py 中的估算邏輯
     def create_fiat_to_crypto_exchange(self, plan_info: Dict, user_info: Dict) -> Optional[Dict]:
-        """創建 Fiat-to-Crypto 交換（信用卡 → USDT）- 完整修正版"""
+        """創建 Fiat-to-Crypto 交換（信用卡 → USDT）- 修正估算 API"""
         try:
             # 生成唯一的訂單ID
             order_id = f"fiat_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
@@ -99,72 +100,108 @@ class SimpleSwapService:
             
             # 查找可用的 USDT 貨幣
             usdt_currencies = []
+            btc_currencies = []
             if currencies:
                 usdt_currencies = [c for c in currencies if 'usdt' in c.get('symbol', '').lower()]
+                btc_currencies = [c for c in currencies if c.get('symbol', '').lower() == 'btc']
                 logger.info(f"找到 USDT 相關貨幣: {[c.get('symbol') for c in usdt_currencies[:5]]}")
+                logger.info(f"找到 BTC 貨幣: {[c.get('symbol') for c in btc_currencies[:2]]}")
             
-            # 嘗試不同的貨幣組合（基於實際可用貨幣）
-            currency_pairs = [
-                ('eur', 'usdt'),  # EUR to USDT
-                ('usd', 'usdt'),   # USD to USDT
+            # 嘗試不同的貨幣組合 - 優先嘗試常見的
+            currency_pairs = []
+            
+            # 基本貨幣對
+            basic_pairs = [
+                ('btc', 'usdt'),    # BTC to USDT (通常最穩定)
+                ('eth', 'usdt'),    # ETH to USDT  
+                ('btc', 'usd'),     # BTC to USD
+                ('eth', 'usd'),     # ETH to USD
             ]
             
-            # 如果找到了具體的 USDT 變體，添加到測試列表
+            # 如果有找到具體的 USDT 變體，添加它們
             if usdt_currencies:
                 for usdt_currency in usdt_currencies[:3]:
                     symbol = usdt_currency.get('symbol', '').lower()
-                    currency_pairs.extend([
-                        ('eur', symbol),
-                        ('usd', symbol)
+                    basic_pairs.extend([
+                        ('btc', symbol),
+                        ('eth', symbol)
                     ])
+            
+            currency_pairs = basic_pairs
             
             successful_pair = None
             estimated_crypto = amount_usd  # 默認值
             
             for from_currency, to_currency in currency_pairs:
                 try:
-                    # 調整金額（如果是 EUR，轉換匯率）
-                    if from_currency == 'eur':
-                        fiat_amount = amount_usd * 0.85  # USD to EUR 大概匯率
+                    # 根據 from_currency 調整金額
+                    if from_currency == 'btc':
+                        # 假設 BTC 價格約 $30,000，計算需要的 BTC 數量
+                        btc_amount = amount_usd / 30000  # 大概的 BTC 數量
+                        test_amount = max(btc_amount, 0.001)  # 最小 0.001 BTC
+                    elif from_currency == 'eth':
+                        # 假設 ETH 價格約 $2,000，計算需要的 ETH 數量  
+                        eth_amount = amount_usd / 2000
+                        test_amount = max(eth_amount, 0.01)  # 最小 0.01 ETH
                     else:
-                        fiat_amount = amount_usd
+                        test_amount = amount_usd
                     
-                    # 獲取估算 - 使用正確的端點
+                    # 嘗試新的估算 API 格式
                     estimate_params = {
                         'api_key': self.api_key,
                         'fixed': 'false',
                         'currency_from': from_currency,
                         'currency_to': to_currency,
-                        'amount': fiat_amount
+                        'amount': test_amount
                     }
                     
-                    estimate_response = requests.get(
+                    # 嘗試不同的端點
+                    estimate_endpoints = [
                         f"{self.api_base_url}/get_estimated",
-                        params=estimate_params,
-                        timeout=30
-                    )
+                        f"{self.api_base_url}/v1/get_estimated",
+                        f"{self.api_base_url}/api/v1/get_estimated"
+                    ]
                     
-                    logger.info(f"測試貨幣對 {from_currency}/{to_currency}: {estimate_response.status_code}")
-                    
-                    if estimate_response.status_code == 200:
+                    for endpoint in estimate_endpoints:
                         try:
-                            estimated_crypto = float(estimate_response.text.strip())
-                            successful_pair = (from_currency, to_currency, fiat_amount)
-                            logger.info(f"✅ 找到可用貨幣對: {from_currency}/{to_currency}, 估算: {estimated_crypto}")
-                            break
-                        except ValueError as e:
-                            logger.warning(f"無法解析估算結果: {estimate_response.text}")
+                            estimate_response = requests.get(
+                                endpoint,
+                                params=estimate_params,
+                                timeout=15
+                            )
+                            
+                            logger.info(f"測試端點 {endpoint} 貨幣對 {from_currency}/{to_currency}: {estimate_response.status_code}")
+                            
+                            if estimate_response.status_code == 200:
+                                try:
+                                    response_text = estimate_response.text.strip()
+                                    if response_text and response_text != "null":
+                                        estimated_crypto = float(response_text)
+                                        successful_pair = (from_currency, to_currency, test_amount)
+                                        logger.info(f"✅ 找到可用貨幣對: {from_currency}/{to_currency}, 估算: {estimated_crypto}")
+                                        break
+                                    else:
+                                        logger.warning(f"估算回應為空或 null: {response_text}")
+                                        continue
+                                except ValueError as e:
+                                    logger.warning(f"無法解析估算結果: {response_text}")
+                                    continue
+                            elif estimate_response.status_code == 422:
+                                logger.info(f"貨幣對 {from_currency}/{to_currency} 不支援 (422)")
+                                break  # 422 表示貨幣對不支援，不需要嘗試其他端點
+                            elif estimate_response.status_code == 404:
+                                logger.info(f"端點 {endpoint} 不存在 (404)")
+                                continue  # 嘗試下一個端點
+                            else:
+                                logger.warning(f"估算請求失敗: {estimate_response.status_code} - {estimate_response.text}")
+                                break
+                        except Exception as endpoint_error:
+                            logger.warning(f"測試端點 {endpoint} 失敗: {endpoint_error}")
                             continue
-                    elif estimate_response.status_code == 422:
-                        logger.info(f"貨幣對 {from_currency}/{to_currency} 不支援")
-                        continue
-                    elif estimate_response.status_code == 404:
-                        logger.warning(f"API 端點錯誤 - 估算API: {estimate_response.status_code}")
-                        continue
-                    else:
-                        logger.warning(f"估算請求失敗: {estimate_response.status_code} - {estimate_response.text}")
-                        continue
                     
+                    if successful_pair:
+                        break
+                        
                 except Exception as e:
                     logger.warning(f"測試貨幣對 {from_currency}/{to_currency} 失敗: {e}")
                     continue
@@ -173,10 +210,10 @@ class SimpleSwapService:
                 logger.warning("所有貨幣對都不可用，使用模擬付款")
                 return self.create_mercuryo_mock_payment(plan_info, user_info, order_id)
             
-            from_currency, to_currency, fiat_amount = successful_pair
+            from_currency, to_currency, crypto_amount = successful_pair
             
             # 你的收款地址（根據幣種選擇）
-            if 'btc' in to_currency.lower():
+            if 'btc' in to_currency.lower() or from_currency == 'btc':
                 receiving_address = os.environ.get('BTC_WALLET_ADDRESS', 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh')
             else:
                 receiving_address = os.environ.get('RECEIVING_WALLET_ADDRESS', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
@@ -185,7 +222,7 @@ class SimpleSwapService:
             exchange_data = {
                 'currency_from': from_currency,
                 'currency_to': to_currency,
-                'amount': fiat_amount,
+                'amount': crypto_amount,
                 'address_to': receiving_address,
                 'fixed': False,
                 'extra_id_to': '',
@@ -222,7 +259,8 @@ class SimpleSwapService:
                         'plan_period': plan_info['period'],
                         'amount_twd': amount_twd,
                         'amount_usd': amount_usd,
-                        'amount_fiat': fiat_amount,
+                        'amount_btc': crypto_amount if from_currency == 'btc' else None,
+                        'amount_fiat': crypto_amount,
                         'fiat_currency': from_currency.upper(),
                         'estimated_crypto': estimated_crypto,
                         'crypto_currency': to_currency.upper(),
@@ -230,10 +268,10 @@ class SimpleSwapService:
                         'currency_to': to_currency,
                         'status': 'waiting_payment',
                         'created_at': datetime.now(),
-                        'payment_method': 'fiat_to_crypto',
+                        'payment_method': 'crypto_to_crypto',  # 實際上是加密貨幣交換
                         'receiving_address': receiving_address,
                         'expires_at': datetime.now() + timedelta(hours=2),
-                        'payment_type': 'credit_card'
+                        'payment_type': 'crypto'
                     }
                     
                     # 如果 API 返回了付款地址或 URL
@@ -249,11 +287,11 @@ class SimpleSwapService:
                     
                     if 'payment_url' in result:
                         payment_url = result['payment_url']
-                    elif from_currency in ['eur', 'usd']:
-                        # Fiat 付款，重定向到 Mercuryo
-                        payment_url = f"https://widget.mercuryo.io/?type=buy&currency={to_currency.upper()}&amount={estimated_crypto}&address={receiving_address}&theme=dark"
-                    else:
+                    elif 'address_from' in result:
                         # 加密貨幣付款，使用我們的詳情頁面
+                        payment_url = f"{base_url}/payment/simpleswap/details/{exchange_id}"
+                    else:
+                        # 使用詳情頁面
                         payment_url = f"{base_url}/payment/simpleswap/details/{exchange_id}"
                     
                     return {
@@ -263,12 +301,12 @@ class SimpleSwapService:
                         'payment_url': payment_url,
                         'amount_usd': amount_usd,
                         'amount_twd': amount_twd,
-                        'amount_fiat': fiat_amount,
+                        'amount_fiat': crypto_amount,
                         'fiat_currency': from_currency.upper(),
                         'estimated_crypto': estimated_crypto,
                         'crypto_currency': to_currency.upper(),
                         'expires_at': exchange_record['expires_at'].isoformat(),
-                        'payment_method': 'credit_card_to_crypto'
+                        'payment_method': 'crypto_to_crypto'
                     }
                 else:
                     logger.error(f"SimpleSwap 回應中沒有 exchange ID: {result}")
@@ -280,7 +318,6 @@ class SimpleSwapService:
         except Exception as e:
             logger.error(f"創建 Fiat-to-Crypto 交換失敗: {str(e)}", exc_info=True)
             return self.create_mercuryo_mock_payment(plan_info, user_info, f"mock_{datetime.now().strftime('%Y%m%d%H%M%S')}")
-    
     def get_exchange_status(self, exchange_id: str) -> Optional[Dict]:
         """獲取交換狀態"""
         try:
