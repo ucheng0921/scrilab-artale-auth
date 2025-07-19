@@ -1,3 +1,4 @@
+# oxapay_service.py - 修復 API 參數問題
 import requests
 import os
 import logging
@@ -36,30 +37,43 @@ class OxaPayService:
             twd_amount = plan_info['price']
             usdt_amount = round(twd_amount * 0.032, 2)  # 台幣轉 USDT 匯率
             
-            # OxaPay 創建發票 API
+            # 獲取回調和返回 URL
+            base_url = os.environ.get('BASE_URL', 'https://scrilab.onrender.com')
+            callback_url = f"{base_url}/payment/oxapay/callback"
+            return_url = f"{base_url}/payment/success?provider=oxapay"
+            
+            # OxaPay 創建發票 API - 修正參數
             payment_data = {
                 "merchant": self.merchant_key,
                 "amount": usdt_amount,
                 "currency": "USDT",
                 "lifeTime": 1800,  # 30分鐘過期
                 "feePaidByPayer": 0,  # 手續費由商家承擔
-                "underPaidCover": 95,  # 允許95%的付款
-                "callbackUrl": f"{os.environ.get('BASE_URL', 'http://localhost:5000')}/payment/oxapay/callback",
-                "returnUrl": f"{os.environ.get('BASE_URL', 'http://localhost:5000')}/payment/success?provider=oxapay",
+                "underPaidCover": 5,   # 允許少付 5%（推薦設定）
+                "callbackUrl": callback_url,
+                "returnUrl": return_url,
                 "description": f"Artale {plan_info['name']} - {plan_info['period']}",
                 "orderId": order_id
             }
             
             logger.info(f"創建 OxaPay 付款請求: {order_id}")
+            logger.info(f"付款參數: amount={usdt_amount}, underPaidCover=50")
             
             response = requests.post(
                 f"{self.api_base_url}/merchants/request",
                 json=payment_data,
-                timeout=30
+                timeout=30,
+                headers={
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Scrilab/1.0'
+                }
             )
+            
+            logger.info(f"OxaPay API 響應狀態: {response.status_code}")
             
             if response.status_code == 200:
                 result = response.json()
+                logger.info(f"OxaPay API 響應: {result}")
                 
                 if result.get('result') == 100:  # 成功
                     # 保存付款記錄
@@ -94,14 +108,21 @@ class OxaPayService:
                         'expires_at': payment_record['expires_at'].isoformat()
                     }
                 else:
-                    logger.error(f"OxaPay API 錯誤: {result.get('message', 'Unknown error')}")
+                    error_msg = result.get('message', 'Unknown error')
+                    logger.error(f"OxaPay API 錯誤: {error_msg}")
+                    logger.error(f"完整響應: {result}")
                     return None
             else:
-                logger.error(f"OxaPay API 請求失敗: {response.status_code} - {response.text}")
+                logger.error(f"OxaPay API 請求失敗: {response.status_code}")
+                try:
+                    error_response = response.json()
+                    logger.error(f"錯誤響應: {error_response}")
+                except:
+                    logger.error(f"響應文本: {response.text}")
                 return None
                 
         except Exception as e:
-            logger.error(f"創建 OxaPay 付款失敗: {str(e)}")
+            logger.error(f"創建 OxaPay 付款失敗: {str(e)}", exc_info=True)
             return None
     
     def handle_callback(self, callback_data: Dict) -> Tuple[bool, Optional[str]]:
@@ -184,22 +205,35 @@ class OxaPayService:
     def get_payment_info(self, track_id: str) -> Optional[Dict]:
         """查詢付款資訊"""
         try:
+            query_data = {
+                "merchant": self.merchant_key,
+                "trackId": track_id
+            }
+            
+            logger.info(f"查詢付款資訊: {track_id}")
+            
             response = requests.post(
                 f"{self.api_base_url}/merchants/inquiry",
-                json={
-                    "merchant": self.merchant_key,
-                    "trackId": track_id
-                },
-                timeout=30
+                json=query_data,
+                timeout=30,
+                headers={
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Scrilab/1.0'
+                }
             )
             
             if response.status_code == 200:
                 result = response.json()
+                logger.info(f"查詢響應: {result}")
+                
                 if result.get('result') == 100:
                     return result
-            
-            logger.error(f"查詢付款資訊失敗: {track_id}")
-            return None
+                else:
+                    logger.error(f"查詢失敗: {result.get('message', 'Unknown error')}")
+                    return None
+            else:
+                logger.error(f"查詢請求失敗: {response.status_code} - {response.text}")
+                return None
             
         except Exception as e:
             logger.error(f"查詢付款資訊錯誤: {str(e)}")
