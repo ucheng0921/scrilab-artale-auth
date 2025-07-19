@@ -8,3 +8,4 @@ uuid==1.30
 schedule==1.2.0
 paypalrestsdk==1.13.3
 flask-mail==0.9.1
+requests==2.31.0

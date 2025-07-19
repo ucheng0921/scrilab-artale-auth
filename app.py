@@ -1,5 +1,5 @@
 """
-app.py - 修復版本，加強錯誤處理和重試機制
+app.py - 更新版本，整合 OxaPay 加密貨幣支付
 """
 from flask import Flask, redirect, request, jsonify, render_template_string
 from flask_cors import CORS
@@ -20,8 +20,9 @@ from manual_routes import manual_bp
 from disclaimer_routes import disclaimer_bp
 from session_manager import session_manager, init_session_manager
 from route_handlers import RouteHandlers
-from payment_service import PaymentService
-from templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_SUCCESS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
+from oxapay_service import OxaPayService  # 新增 OxaPay 服務
+from oxapay_routes import OxaPayRoutes    # 新增 OxaPay 路由
+from templates import PROFESSIONAL_PRODUCTS_TEMPLATE_OXAPAY, PAYMENT_CANCEL_TEMPLATE
 from intro_routes import intro_bp
 
 # 設置日誌
@@ -50,13 +51,14 @@ app.register_blueprint(intro_bp)
 # 全局變數
 db = None
 firebase_initialized = False
-payment_service = None
+oxapay_service = None  # 新增 OxaPay 服務
+oxapay_routes = None   # 新增 OxaPay 路由
 route_handlers = None
 initialization_in_progress = False
 
 def check_environment_variables():
     """檢查必要的環境變數"""
-    required_vars = ['FIREBASE_CREDENTIALS_BASE64']
+    required_vars = ['FIREBASE_CREDENTIALS_BASE64', 'OXAPAY_MERCHANT_KEY']
     missing_vars = [var for var in required_vars if not os.environ.get(var)]
     
     if missing_vars:
@@ -114,7 +116,7 @@ def init_firebase_with_retry(max_retries=3):
                 db = firestore.client()
                 logger.info("Firestore 客戶端創建成功")
                 
-                # 測試連接（加上超時處理）
+                # 測試連接
                 try:
                     test_collection = db.collection('connection_test')
                     test_doc_ref = test_collection.document('test_connection')
@@ -165,19 +167,23 @@ def init_firebase_with_retry(max_retries=3):
 
 def init_services():
     """初始化相關服務"""
-    global payment_service, route_handlers
+    global oxapay_service, oxapay_routes, route_handlers
     
     try:
         # 初始化 Session Manager
         init_session_manager(db)
         logger.info("✅ Session Manager 已初始化")
         
-        # 初始化付款服務
-        payment_service = PaymentService(db)
-        logger.info("✅ Payment Service 已初始化")
+        # 初始化 OxaPay 服務
+        oxapay_service = OxaPayService(db)
+        logger.info("✅ OxaPay Service 已初始化")
+        
+        # 初始化 OxaPay 路由
+        oxapay_routes = OxaPayRoutes(oxapay_service)
+        logger.info("✅ OxaPay Routes 已初始化")
         
         # 初始化路由處理器
-        route_handlers = RouteHandlers(db, session_manager, payment_service)
+        route_handlers = RouteHandlers(db, session_manager, oxapay_service)
         logger.info("✅ Route Handlers 已初始化")
         
         # 啟動後台清理任務
@@ -253,6 +259,7 @@ def root():
             'service': 'Scrilab Artale Authentication Service',
             'status': 'initializing',
             'firebase_initialized': firebase_initialized,
+            'oxapay_available': oxapay_service is not None,
             'message': 'Service is starting up, please wait...'
         })
 
@@ -263,7 +270,7 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'service': 'artale-auth-service',
-        'version': '2.2.0',
+        'version': '2.3.0',  # 版本號更新
         'checks': {}
     }
     
@@ -279,6 +286,13 @@ def health_check():
             health_status['status'] = 'unhealthy'
     else:
         health_status['checks']['firebase'] = 'not_initialized'
+        health_status['status'] = 'degraded'
+    
+    # 檢查 OxaPay 服務
+    if oxapay_service:
+        health_status['checks']['oxapay_service'] = 'healthy'
+    else:
+        health_status['checks']['oxapay_service'] = 'not_initialized'
         health_status['status'] = 'degraded'
     
     # 檢查路由處理器
@@ -302,10 +316,11 @@ def health_check():
     status_code = 200 if health_status['status'] in ['healthy', 'degraded'] else 503
     return jsonify(health_status), status_code
 
+# ===== 用戶認證路由 =====
+
 @app.route('/auth/login', methods=['POST'])
 def login():
     """用戶登入端點"""
-    # 確保服務已初始化
     if not firebase_initialized:
         logger.warning("Firebase 未初始化，嘗試重新初始化...")
         if not init_firebase_with_retry():
@@ -372,103 +387,45 @@ def manual_cleanup_sessions():
     
     return route_handlers.manual_cleanup_sessions()
 
-# ===== 付款相關路由 =====
+# ===== OxaPay 付款相關路由 =====
 
-@app.route('/api/create-payment', methods=['POST'])
-def create_payment():
-    """創建 PayPal 付款"""
-    if not payment_service:
+@app.route('/api/create-oxapay-payment', methods=['POST'])
+def create_oxapay_payment():
+    """創建 OxaPay 付款"""
+    if not oxapay_routes:
         return jsonify({
             'success': False,
-            'error': '付款服務未初始化',
-            'code': 'PAYMENT_SERVICE_UNAVAILABLE'
+            'error': 'OxaPay 服務未初始化',
+            'code': 'OXAPAY_SERVICE_UNAVAILABLE'
         }), 503
     
-    try:
-        from route_handlers import rate_limit
-        
-        # 應用速率限制
-        @rate_limit(max_requests=10, time_window=300)
-        def _create_payment():
-            data = request.get_json()
-            plan_id = data.get('plan_id')
-            user_info = data.get('user_info')
-            
-            # 驗證資料
-            if not plan_id or not user_info:
-                return jsonify({'success': False, 'error': '缺少必要資料'}), 400
-            
-            if not user_info.get('name') or not user_info.get('email'):
-                return jsonify({'success': False, 'error': '請填寫姓名和信箱'}), 400
-            
-            # 方案資料
-            plans = {
-                'trial_7': {'id': 'trial_7', 'name': '體驗服務', 'price': 299, 'period': '7天'},
-                'monthly_30': {'id': 'monthly_30', 'name': '標準服務', 'price': 549, 'period': '30天'},
-                'quarterly_90': {'id': 'quarterly_90', 'name': '季度服務', 'price': 1499, 'period': '90天'}
-            }
-            
-            plan_info = plans.get(plan_id)
-            if not plan_info:
-                return jsonify({'success': False, 'error': '無效的方案'}), 400
-            
-            # 創建付款
-            payment = payment_service.create_payment(plan_info, user_info)
-            
-            if payment:
-                # 找到 approval_url
-                approval_url = None
-                for link in payment.links:
-                    if link.rel == "approval_url":
-                        approval_url = link.href
-                        break
-                
-                return jsonify({
-                    'success': True,
-                    'payment_id': payment.id,
-                    'approval_url': approval_url
-                })
-            else:
-                return jsonify({'success': False, 'error': '付款創建失敗'}), 500
-        
-        return _create_payment()
-        
-    except Exception as e:
-        logger.error(f"創建付款錯誤: {str(e)}")
-        return jsonify({'success': False, 'error': '系統錯誤'}), 500
+    return oxapay_routes.create_payment()
+
+@app.route('/payment/oxapay/callback', methods=['POST'])
+def oxapay_callback():
+    """OxaPay 付款回調"""
+    if not oxapay_routes:
+        return jsonify({
+            'status': 'error',
+            'message': 'OxaPay service not available'
+        }), 503
+    
+    return oxapay_routes.payment_callback()
 
 @app.route('/payment/success', methods=['GET'])
 def payment_success():
-    """PayPal 付款成功回調"""
+    """付款成功頁面（支援多種付款方式）"""
     try:
-        logger.info(f"收到付款成功回調: {request.args}")
-        payment_id = request.args.get('paymentId')
-        payer_id = request.args.get('PayerID')
+        provider = request.args.get('provider')
         
-        if not payment_id or not payer_id:
-            logger.error("缺少必要參數")
-            return redirect('/products?error=invalid_payment')
-        
-        if payment_service is None:
-            logger.error("payment_service 未初始化")
-            return redirect('/products?error=service_unavailable')
-        
-        # 執行付款
-        success, user_uuid = payment_service.execute_payment(payment_id, payer_id)
-        
-        if success and user_uuid:
-            # 獲取付款記錄詳情
-            payment_record = payment_service.get_payment_record(payment_id)
-            
-            return render_template_string(
-                PAYMENT_SUCCESS_TEMPLATE,
-                success=True,
-                user_uuid=user_uuid,
-                payment_record=payment_record
-            )
+        if provider == 'oxapay':
+            # OxaPay 付款成功處理
+            if not oxapay_routes:
+                return redirect('/products?error=service_unavailable')
+            return oxapay_routes.payment_success()
         else:
-            logger.error("付款執行失敗")
-            return redirect('/products?error=payment_failed')
+            # 其他付款方式或無效 provider
+            return redirect('/products?error=invalid_provider')
             
     except Exception as e:
         logger.error(f"付款成功處理錯誤: {str(e)}", exc_info=True)
@@ -476,13 +433,35 @@ def payment_success():
 
 @app.route('/payment/cancel', methods=['GET'])
 def payment_cancel():
-    """PayPal 付款取消回調"""
+    """付款取消回調"""
     return render_template_string(PAYMENT_CANCEL_TEMPLATE)
+
+@app.route('/api/check-payment-status', methods=['POST'])
+def check_payment_status():
+    """檢查付款狀態 API"""
+    if not oxapay_routes:
+        return jsonify({
+            'success': False,
+            'error': 'OxaPay 服務未初始化'
+        }), 503
+    
+    return oxapay_routes.check_payment_status()
+
+@app.route('/api/exchange-rate', methods=['GET'])
+def get_exchange_rate():
+    """獲取匯率 API"""
+    if not oxapay_routes:
+        return jsonify({
+            'success': False,
+            'error': 'OxaPay 服務未初始化'
+        }), 503
+    
+    return oxapay_routes.get_exchange_rate()
 
 @app.route('/products', methods=['GET'])
 def products_page():
-    """軟體服務展示頁面"""
-    return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
+    """軟體服務展示頁面（支援 OxaPay）"""
+    return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE_OXAPAY)
 
 # ===== 應用初始化 =====
 
@@ -491,7 +470,7 @@ logger.info("🚀 開始初始化應用...")
 try:
     success = init_firebase_with_retry()
     if success:
-        logger.info(f"✅ 應用初始化成功")
+        logger.info(f"✅ 應用初始化成功，OxaPay 服務: {'已啟用' if oxapay_service else '未啟用'}")
     else:
         logger.error(f"❌ 應用初始化失敗")
 except Exception as e:
@@ -502,5 +481,8 @@ if __name__ == '__main__':
     # 開發環境下的額外檢查
     if not firebase_initialized:
         logger.warning("⚠️ Firebase 未初始化，應用可能無法正常工作")
+    
+    if not oxapay_service:
+        logger.warning("⚠️ OxaPay 服務未初始化，加密貨幣付款功能不可用")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
