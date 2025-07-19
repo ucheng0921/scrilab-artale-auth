@@ -119,9 +119,9 @@ class SimpleSwapService:
             # 生成唯一的訂單ID
             order_id = f"artale_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             
-            # 使用明確的貨幣代碼
-            from_currency = "usdc"  # ERC-20 USDT
-            to_currency = "usdt_trc20"    # TRC-20 USDT
+            # 使用 SimpleSwap 支援的貨幣代碼
+            from_currency = "btc"  # Bitcoin - 更常見的交換對
+            to_currency = "usdttrc20"    # USDT TRC-20，根據 SimpleSwap 的格式
             amount_usd = plan_info['price'] * 0.032  # TWD 轉 USD 概算
             
             # 獲取匯率估算
