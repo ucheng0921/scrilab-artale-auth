@@ -50,12 +50,23 @@ class SimpleSwapService:
     def get_exchange_estimate(self, from_currency: str, to_currency: str, amount: float) -> Optional[Dict]:
         """獲取匯率估算 - 修復版本"""
         try:
-            # 修復：使用正確的參數格式
+            # 使用更具體的貨幣代碼
+            from_currency = from_currency.lower().replace("usdt", "usdt_erc20")
+            to_currency = to_currency.lower().replace("usdttrc20", "usdt_trc20")
+            
+            # 檢查支援的貨幣
+            supported_currencies = self.get_supported_currencies()
+            if supported_currencies:
+                supported_symbols = [currency['symbol'].lower() for currency in supported_currencies]
+                if from_currency not in supported_symbols or to_currency not in supported_symbols:
+                    logger.error(f"貨幣對 {from_currency} -> {to_currency} 不受支援")
+                    return None
+            
             params = {
                 'api_key': self.api_key,
                 'fixed': 'false',
-                'currency_from': from_currency.lower(),
-                'currency_to': to_currency.lower(),
+                'currency_from': from_currency,
+                'currency_to': to_currency,
                 'amount': amount
             }
             
@@ -69,7 +80,7 @@ class SimpleSwapService:
             logger.info(f"回應狀態: {response.status_code}")
             
             if response.status_code == 200:
-                result = response.text.strip()  # SimpleSwap 可能只返回數字
+                result = response.text.strip()
                 try:
                     estimated_amount = float(result)
                     logger.info(f"匯率估算: {amount} {from_currency} ≈ {estimated_amount} {to_currency}")
@@ -80,7 +91,6 @@ class SimpleSwapService:
                         'original_amount': amount
                     }
                 except ValueError:
-                    # 如果返回的是 JSON
                     result_json = response.json()
                     estimated_amount = float(result_json) if isinstance(result_json, (int, float)) else result_json.get('amount', 0)
                     return {
@@ -103,29 +113,22 @@ class SimpleSwapService:
             # 生成唯一的訂單ID
             order_id = f"artale_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             
-            # 使用加密貨幣交換（USDT to USDT，模擬法幣）
-            from_currency = "usdt"  # 從 USDT 開始
-            to_currency = "usdttrc20"  # 轉到 TRC20 USDT
+            # 使用明確的貨幣代碼
+            from_currency = "usdt_erc20"  # ERC-20 USDT
+            to_currency = "usdt_trc20"    # TRC-20 USDT
             amount_usd = plan_info['price'] * 0.032  # TWD 轉 USD 概算
             
             # 獲取匯率估算
             estimate = self.get_exchange_estimate(from_currency, to_currency, amount_usd)
             if not estimate:
                 logger.error("無法獲取匯率估算")
-                # 使用備用計算
-                estimate = {
-                    'estimated_amount': amount_usd * 0.98,  # 假設 2% 手續費
-                    'from_currency': from_currency,
-                    'to_currency': to_currency,
-                    'original_amount': amount_usd
-                }
+                return {'success': False, 'error': '無法獲取匯率估算，可能貨幣對不受支援'}
             
             # 你的收款地址
             receiving_address = os.environ.get('RECEIVING_WALLET_ADDRESS', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
             
             # 創建交換訂單
             exchange_data = {
-                'api_key': self.api_key,
                 'fixed': 'false',
                 'currency_from': from_currency,
                 'currency_to': to_currency,
@@ -136,9 +139,11 @@ class SimpleSwapService:
                 'user_refund_extra_id': ''
             }
             
+            # 使用 params 傳遞 api_key
             response = requests.post(
                 f"{self.api_base_url}/create_exchange",
-                data=exchange_data,
+                params={'api_key': self.api_key},
+                json=exchange_data,  # 使用 json 替代 data，確保格式正確
                 timeout=30
             )
             
@@ -149,7 +154,6 @@ class SimpleSwapService:
                 result = response.json()
                 logger.info(f"SimpleSwap 交換創建成功: {result}")
                 
-                # 檢查是否成功
                 if 'id' in result:
                     # 保存交換記錄
                     exchange_record = {
@@ -172,7 +176,6 @@ class SimpleSwapService:
                         'expires_at': datetime.now() + timedelta(minutes=30)
                     }
                     
-                    # 添加 SimpleSwap 返回的重要信息
                     if 'address_from' in result:
                         exchange_record['payment_address'] = result['address_from']
                     if 'amount_to' in result:
@@ -180,7 +183,7 @@ class SimpleSwapService:
                     
                     self.save_exchange_record(result['id'], exchange_record)
                     
-                    # 創建付款頁面 URL（顯示付款詳情）
+                    # 創建付款頁面 URL
                     base_url = os.environ.get('BASE_URL', 'https://scrilab.onrender.com')
                     payment_url = f"{base_url}/payment/simpleswap/details/{result['id']}"
                     
@@ -196,14 +199,18 @@ class SimpleSwapService:
                     }
                 else:
                     logger.error(f"SimpleSwap 交換創建失敗: {result}")
-                    return None
+                    return {'success': False, 'error': 'SimpleSwap 交換創建失敗'}
             else:
                 logger.error(f"SimpleSwap API 請求失敗: {response.status_code} - {response.text}")
-                return None
+                if response.status_code == 401:
+                    return {'success': False, 'error': 'API 金鑰無效，請檢查 SIMPLESWAP_API_KEY'}
+                elif response.status_code == 404:
+                    return {'success': False, 'error': '貨幣對不可用，請檢查支援的貨幣對'}
+                return {'success': False, 'error': f"API 請求失敗: {response.status_code}"}
                 
         except Exception as e:
             logger.error(f"創建 SimpleSwap 交換失敗: {str(e)}", exc_info=True)
-            return None
+            return {'success': False, 'error': '創建交換失敗，請稍後再試'}
     
     def get_exchange_status(self, exchange_id: str) -> Optional[Dict]:
         """獲取交換狀態"""
