@@ -1,4 +1,424 @@
-# simpleswap_routes.py - 完整的 SimpleSwap 路由處理器
+# SimpleSwap 付款詳情頁面模板
+SIMPLESWAP_PAYMENT_DETAILS_TEMPLATE = r"""
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>完成付款 - Scrilab</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --text-muted: #808080;
+            --accent-blue: #00d4ff;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --border-color: #333333;
+            --gradient-brand: linear-gradient(135deg, #8b5cf6 0%, #00d4ff 100%);
+            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
+            --border-radius: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .payment-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            max-width: 600px;
+            width: 100%;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            border: 2px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .step.active {
+            background: var(--gradient-brand);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .step.completed {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .payment-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .payment-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .payment-info {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .crypto-address {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            margin: 1rem 0;
+            color: var(--accent-green);
+        }
+
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: var(--accent-orange);
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            border: none;
+            margin: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-brand);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .status-pending {
+            color: var(--accent-orange);
+        }
+
+        .status-completed {
+            color: var(--accent-green);
+        }
+
+        @media (max-width: 600px) {
+            .payment-container {
+                padding: 2rem;
+            }
+            
+            .payment-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <div class="step-indicator">
+            <div class="step completed">1</div>
+            <div style="width: 2rem; height: 2px; background: var(--accent-green);"></div>
+            <div class="step active">2</div>
+            <div style="width: 2rem; height: 2px; background: var(--border-color);"></div>
+            <div class="step">3</div>
+        </div>
+        
+        <h1 class="payment-title">完成您的付款</h1>
+        <p class="payment-subtitle">請按照以下說明完成加密貨幣付款</p>
+        
+        <div class="payment-info">
+            <div class="info-row">
+                <span>服務方案</span>
+                <span>{{ exchange_record.plan_name }}</span>
+            </div>
+            <div class="info-row">
+                <span>付款金額</span>
+                <span>{{ "%.2f"|format(exchange_record.amount_fiat if exchange_record.amount_fiat else exchange_record.amount_usd) }} {{ exchange_record.fiat_currency if exchange_record.fiat_currency else 'USD' }}</span>
+            </div>
+            <div class="info-row">
+                <span>預計收到</span>
+                <span>{{ "%.4f"|format(exchange_record.estimated_crypto) }} {{ exchange_record.crypto_currency if exchange_record.crypto_currency else 'USDT' }}</span>
+            </div>
+            <div class="info-row">
+                <span>付款狀態</span>
+                <span class="status-pending">
+                    <i class="fas fa-clock"></i>
+                    等待付款
+                </span>
+            </div>
+        </div>
+        
+        <div class="payment-instructions">
+            <h3 style="margin-bottom: 1rem; color: var(--accent-blue);">
+                <i class="fab fa-bitcoin"></i>
+                付款說明
+            </h3>
+            
+            {% if exchange_record.payment_address %}
+            <p style="margin-bottom: 1rem;">請發送 <strong>{{ "%.6f"|format(exchange_record.amount_btc if exchange_record.amount_btc else 0.001) }} {{ exchange_record.currency_from.upper() }}</strong> 到以下地址：</p>
+            
+            <div class="crypto-address">
+                {{ exchange_record.payment_address }}
+                <button onclick="copyAddress()" style="margin-left: 1rem; padding: 0.5rem; background: var(--accent-blue); border: none; border-radius: 4px; color: white; cursor: pointer;">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            {% endif %}
+            
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>重要提醒：</strong>
+                <ul style="margin-top: 0.5rem; text-align: left;">
+                    <li>請確保發送正確的金額和貨幣類型</li>
+                    <li>付款後通常需要 10-30 分鐘確認</li>
+                    <li>確認後您將收到序號郵件</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <button class="btn btn-primary" onclick="checkPaymentStatus()">
+                <i class="fas fa-refresh"></i>
+                <span>檢查付款狀態</span>
+            </button>
+            <a href="/products" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                <span>返回首頁</span>
+            </a>
+        </div>
+        
+        <div style="margin-top: 2rem; font-size: 0.9rem; color: var(--text-muted);">
+            <p>付款將通過 SimpleSwap 安全處理，支持多種加密貨幣。</p>
+        </div>
+    </div>
+
+    <script>
+        const exchangeId = "{{ exchange_id }}";
+        
+        function copyAddress() {
+            const address = "{{ exchange_record.payment_address }}";
+            navigator.clipboard.writeText(address).then(() => {
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+        
+        async function checkPaymentStatus() {
+            try {
+                const response = await fetch('/api/check-simpleswap-payment-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ exchange_id: exchangeId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.status === 'completed' && data.user_uuid) {
+                        window.location.href = `/payment/simpleswap/success?id=${exchangeId}`;
+                    } else if (data.status === 'processing') {
+                        alert('付款正在處理中，請稍候...');
+                    } else {
+                        alert('尚未收到付款，請確認是否已完成轉帳');
+                    }
+                } else {
+                    alert('查詢付款狀態失敗');
+                }
+            } catch (error) {
+                alert('查詢失敗，請稍後再試');
+            }
+        }
+        
+        // 自動輪詢付款狀態
+        setInterval(() => {
+            checkPaymentStatus();
+        }, 30000); // 每30秒檢查一次
+    </script>
+</body>
+</html>
+"""
+
+# 在文件最後添加這個模板
+MERCURYO_MOCK_PAYMENT_TEMPLATE = r"""
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>信用卡付款 - Mercuryo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+        .payment-container { background: white; border-radius: 16px; max-width: 500px; width: 100%; padding: 2.5rem; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); }
+        .mercuryo-logo { text-align: center; margin-bottom: 2rem; }
+        .mercuryo-logo h1 { font-size: 1.8rem; font-weight: 700; color: #667eea; margin-bottom: 0.5rem; }
+        .payment-info { background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 0.8rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-input { width: 100%; padding: 12px 16px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; }
+        .form-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+        .pay-button { width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; padding: 16px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .loading { display: none; text-align: center; padding: 2rem; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <div class="mercuryo-logo">
+            <h1><i class="fas fa-shield-alt"></i> Mercuryo</h1>
+            <p>安全的加密貨幣付款處理</p>
+        </div>
+
+        <div class="payment-info">
+            <div class="info-row"><span>商家</span><span>Scrilab</span></div>
+            <div class="info-row"><span>服務</span><span>{{ exchange_record.plan_name }}</span></div>
+            <div class="info-row"><span>付款金額</span><span>{{ "%.2f"|format(exchange_record.amount_fiat if exchange_record.amount_fiat else exchange_record.amount_usd) }} {{ exchange_record.fiat_currency if exchange_record.fiat_currency else 'USD' }}</span></div>
+            <div class="info-row"><span>將獲得</span><span>{{ "%.4f"|format(exchange_record.estimated_crypto) }} {{ exchange_record.crypto_currency if exchange_record.crypto_currency else 'USDT' }}</span></div>
+        </div>
+
+        <form id="payment-form">
+            <div class="form-group">
+                <label>信用卡號</label>
+                <input type="text" class="form-input" placeholder="1234 5678 9012 3456" maxlength="19" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>有效期限</label>
+                    <input type="text" class="form-input" placeholder="MM/YY" maxlength="5" required>
+                </div>
+                <div class="form-group">
+                    <label>CVV</label>
+                    <input type="text" class="form-input" placeholder="123" maxlength="4" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>持卡人姓名</label>
+                <input type="text" class="form-input" placeholder="CARDHOLDER NAME" required>
+            </div>
+            <button type="submit" class="pay-button">
+                <i class="fas fa-lock"></i> 安全付款 {{ "%.2f"|format(exchange_record.amount_fiat if exchange_record.amount_fiat else exchange_record.amount_usd) }} {{ exchange_record.fiat_currency if exchange_record.fiat_currency else 'USD' }}
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在處理您的付款...</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">信用卡付款將自動轉換為加密貨幣</p>
+        </div>
+    </div>
+
+    <script>
+        const exchangeId = "{{ exchange_id }}";
+        document.getElementById('payment-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            document.querySelector('.payment-container > :not(.loading)').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            
+            setTimeout(async () => {
+                try {
+                    const response = await fetch(`/payment/mercuryo/mock/${exchangeId}/process`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ card_number: 'mock_card', amount: {{ exchange_record.amount_fiat if exchange_record.amount_fiat else exchange_record.amount_usd if exchange_record else 0 }} })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        alert('付款失敗: ' + data.error);
+                        location.reload();
+                    }
+                } catch (error) {
+                    alert('付款處理錯誤: ' + error.message);
+                    location.reload();
+                }
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
+"""
+# simpleswap_routes.py - 修復版本，統一使用新的欄位名稱
 from flask import request, jsonify, render_template_string, redirect
 import logging
 import json
@@ -108,7 +528,10 @@ class SimpleSwapRoutes:
                     'order_id': exchange_result['order_id'],
                     'amount_usd': exchange_result['amount_usd'],
                     'amount_twd': exchange_result['amount_twd'],
-                    'estimated_usdt': exchange_result['estimated_usdt'],
+                    'amount_fiat': exchange_result.get('amount_fiat', exchange_result['amount_usd']),
+                    'fiat_currency': exchange_result.get('fiat_currency', 'USD'),
+                    'estimated_crypto': exchange_result.get('estimated_crypto', exchange_result['amount_usd']),
+                    'crypto_currency': exchange_result.get('crypto_currency', 'USDT'),
                     'expires_at': exchange_result['expires_at'],
                     'payment_method': 'credit_card_to_crypto'
                 })
@@ -619,7 +1042,8 @@ SIMPLESWAP_SUCCESS_TEMPLATE = r"""
             <div class="info-row">
                 <span class="info-label">付款金額</span>
                 <span class="info-value">
-                    ${{ "%.2f"|format(exchange_record.amount_usd) if exchange_record else 'N/A' }} USD
+                    {{ "%.2f"|format(exchange_record.amount_fiat) if exchange_record.amount_fiat else "%.2f"|format(exchange_record.amount_usd) }} 
+                    {{ exchange_record.fiat_currency if exchange_record.fiat_currency else 'USD' }}
                     <small style="color: var(--text-muted); margin-left: 0.5rem;">
                         (≈ NT$ {{ exchange_record.amount_twd if exchange_record else 'N/A' }})
                     </small>
@@ -629,7 +1053,8 @@ SIMPLESWAP_SUCCESS_TEMPLATE = r"""
                 <span class="info-label">收到金額</span>
                 <span class="info-value">
                     <span style="color: var(--accent-green); font-family: 'Courier New', monospace;">
-                        {{ "%.4f"|format(exchange_record.estimated_usdt) if exchange_record else 'N/A' }} USDT
+                        {{ "%.4f"|format(exchange_record.estimated_crypto) if exchange_record else 'N/A' }} 
+                        {{ exchange_record.crypto_currency if exchange_record.crypto_currency else 'USDT' }}
                     </span>
                 </span>
             </div>
@@ -719,16 +1144,33 @@ SIMPLESWAP_SUCCESS_TEMPLATE = r"""
             const uuid = "{{ user_uuid if user_uuid else '' }}";
             const planName = "{{ exchange_record.plan_name if exchange_record else 'N/A' }}";
             const planPeriod = "{{ exchange_record.plan_period if exchange_record else 'N/A' }}";
-            const amountUsd = "{{ '%.2f'|format(exchange_record.amount_usd) if exchange_record else 'N/A' }}";
+            const amountFiat = "{{ '%.2f'|format(exchange_record.amount_fiat) if exchange_record and exchange_record.amount_fiat else '%.2f'|format(exchange_record.amount_usd) if exchange_record else 'N/A' }}";
+            const fiatCurrency = "{{ exchange_record.fiat_currency if exchange_record and exchange_record.fiat_currency else 'USD' }}";
             const amountTwd = "{{ exchange_record.amount_twd if exchange_record else 'N/A' }}";
-            const estimatedUsdt = "{{ '%.4f'|format(exchange_record.estimated_usdt) if exchange_record else 'N/A' }}";
+            const estimatedCrypto = "{{ '%.4f'|format(exchange_record.estimated_crypto) if exchange_record else 'N/A' }}";
+            const cryptoCurrency = "{{ exchange_record.crypto_currency if exchange_record and exchange_record.crypto_currency else 'USDT' }}";
             
             const content = `Scrilab Artale 服務購買成功
 
 服務方案：${planName}
 服務期限：${planPeriod}
-付款金額：${amountUsd} USD (≈ NT$ ${amountTwd})
-收到金額：${estimatedUsdt} USDT
+付款金額：${amountFiat} ${fiatCurrency} (≈ NT$ ${amountTwd})
+收到金額：${estimatedCrypto} ${cryptoCurrency}
+付款方式：SimpleSwap 信用卡自動轉換
+專屬序號：${uuid}
+
+請妥善保管您的序號，避免外洩給他人使用。
+
+操作手冊：請訪問 /manual 查看詳細使用說明
+
+技術支援：
+- Discord：https://discord.gg/
+const content = `Scrilab Artale 服務購買成功
+
+服務方案：${planName}
+服務期限：${planPeriod}
+付款金額：${amountFiat} ${fiatCurrency} (≈ NT$ ${amountTwd})
+收到金額：${estimatedCrypto} ${cryptoCurrency}
 付款方式：SimpleSwap 信用卡自動轉換
 專屬序號：${uuid}
 
@@ -753,427 +1195,6 @@ ${new Date().toLocaleDateString('zh-TW')}`;
             a.click();
             URL.revokeObjectURL(url);
         }
-    </script>
-</body>
-</html>
-"""
-
-# SimpleSwap 付款詳情頁面模板
-SIMPLESWAP_PAYMENT_DETAILS_TEMPLATE = r"""
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>完成付款 - Scrilab</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #1a1a1a;
-            --bg-card: #1e1e1e;
-            --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --text-muted: #808080;
-            --accent-blue: #00d4ff;
-            --accent-green: #10b981;
-            --accent-orange: #f59e0b;
-            --border-color: #333333;
-            --gradient-brand: linear-gradient(135deg, #8b5cf6 0%, #00d4ff 100%);
-            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
-            --border-radius: 16px;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-
-        .payment-container {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            max-width: 600px;
-            width: 100%;
-            padding: 3rem;
-            text-align: center;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .step {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            border: 2px solid var(--border-color);
-            color: var(--text-muted);
-        }
-
-        .step.active {
-            background: var(--gradient-brand);
-            border-color: var(--accent-blue);
-            color: white;
-        }
-
-        .step.completed {
-            background: var(--accent-green);
-            border-color: var(--accent-green);
-            color: white;
-        }
-
-        .payment-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .payment-subtitle {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-        }
-
-        .payment-info {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.8rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .crypto-address {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'Courier New', monospace;
-            word-break: break-all;
-            margin: 1rem 0;
-            color: var(--accent-green);
-        }
-
-        .warning-box {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem 0;
-            color: var(--accent-orange);
-        }
-
-        .btn {
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1rem;
-            border: none;
-            margin: 0.5rem;
-        }
-
-        .btn-primary {
-            background: var(--gradient-brand);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-        }
-
-        .status-pending {
-            color: var(--accent-orange);
-        }
-
-        .status-completed {
-            color: var(--accent-green);
-        }
-
-        @media (max-width: 600px) {
-            .payment-container {
-                padding: 2rem;
-            }
-            
-            .payment-title {
-                font-size: 1.5rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="payment-container">
-        <div class="step-indicator">
-            <div class="step completed">1</div>
-            <div style="width: 2rem; height: 2px; background: var(--accent-green);"></div>
-            <div class="step active">2</div>
-            <div style="width: 2rem; height: 2px; background: var(--border-color);"></div>
-            <div class="step">3</div>
-        </div>
-        
-        <h1 class="payment-title">完成您的付款</h1>
-        <p class="payment-subtitle">請按照以下說明完成加密貨幣付款</p>
-        
-        <div class="payment-info">
-            <div class="info-row">
-                <span>服務方案</span>
-                <span>{{ exchange_record.plan_name }}</span>
-            </div>
-            <div class="info-row">
-                <span>付款金額</span>
-                <span>${{ "%.2f"|format(exchange_record.amount_usd) }} USD</span>
-            </div>
-            <div class="info-row">
-                <span>預計收到</span>
-                <span>{{ "%.4f"|format(exchange_record.estimated_usdt) }} USDT</span>
-            </div>
-            <div class="info-row">
-                <span>付款狀態</span>
-                <span class="status-pending">
-                    <i class="fas fa-clock"></i>
-                    等待付款
-                </span>
-            </div>
-        </div>
-        
-        <div class="payment-instructions">
-            <h3 style="margin-bottom: 1rem; color: var(--accent-blue);">
-                <i class="fab fa-bitcoin"></i>
-                付款說明
-            </h3>
-            
-            {% if exchange_record.payment_address %}
-            <p style="margin-bottom: 1rem;">請發送 <strong>{{ "%.6f"|format(exchange_record.amount_btc if exchange_record.amount_btc else 0.001) }} {{ exchange_record.from_currency.upper() }}</strong> 到以下地址：</p>
-            
-            <div class="crypto-address">
-                {{ exchange_record.payment_address }}
-                <button onclick="copyAddress()" style="margin-left: 1rem; padding: 0.5rem; background: var(--accent-blue); border: none; border-radius: 4px; color: white; cursor: pointer;">
-                    <i class="fas fa-copy"></i>
-                </button>
-            </div>
-            {% endif %}
-            
-            <div class="warning-box">
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>重要提醒：</strong>
-                <ul style="margin-top: 0.5rem; text-align: left;">
-                    <li>請確保發送正確的金額和貨幣類型</li>
-                    <li>付款後通常需要 10-30 分鐘確認</li>
-                    <li>確認後您將收到序號郵件</li>
-                </ul>
-            </div>
-        </div>
-        
-        <div style="margin-top: 2rem;">
-            <button class="btn btn-primary" onclick="checkPaymentStatus()">
-                <i class="fas fa-refresh"></i>
-                <span>檢查付款狀態</span>
-            </button>
-            <a href="/products" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i>
-                <span>返回首頁</span>
-            </a>
-        </div>
-        
-        <div style="margin-top: 2rem; font-size: 0.9rem; color: var(--text-muted);">
-            <p>付款將通過 SimpleSwap 安全處理，支持多種加密貨幣。</p>
-        </div>
-    </div>
-
-    <script>
-        const exchangeId = "{{ exchange_id }}";
-        
-        function copyAddress() {
-            const address = "{{ exchange_record.payment_address }}";
-            navigator.clipboard.writeText(address).then(() => {
-                const btn = event.target;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check"></i>';
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                }, 2000);
-            });
-        }
-        
-        async function checkPaymentStatus() {
-            try {
-                const response = await fetch('/api/check-simpleswap-payment-status', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ exchange_id: exchangeId })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    if (data.status === 'completed' && data.user_uuid) {
-                        window.location.href = `/payment/simpleswap/success?id=${exchangeId}`;
-                    } else if (data.status === 'processing') {
-                        alert('付款正在處理中，請稍候...');
-                    } else {
-                        alert('尚未收到付款，請確認是否已完成轉帳');
-                    }
-                } else {
-                    alert('查詢付款狀態失敗');
-                }
-            } catch (error) {
-                alert('查詢失敗，請稍後再試');
-            }
-        }
-        
-        // 自動輪詢付款狀態
-        setInterval(() => {
-            checkPaymentStatus();
-        }, 30000); // 每30秒檢查一次
-    </script>
-</body>
-</html>
-"""
-
-# 在文件最後添加這個模板
-MERCURYO_MOCK_PAYMENT_TEMPLATE = r"""
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>信用卡付款 - Mercuryo</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-        .payment-container { background: white; border-radius: 16px; max-width: 500px; width: 100%; padding: 2.5rem; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); }
-        .mercuryo-logo { text-align: center; margin-bottom: 2rem; }
-        .mercuryo-logo h1 { font-size: 1.8rem; font-weight: 700; color: #667eea; margin-bottom: 0.5rem; }
-        .payment-info { background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 0.8rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-input { width: 100%; padding: 12px 16px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; }
-        .form-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
-        .pay-button { width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; padding: 16px; font-size: 1rem; font-weight: 600; cursor: pointer; }
-        .loading { display: none; text-align: center; padding: 2rem; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-</head>
-<body>
-    <div class="payment-container">
-        <div class="mercuryo-logo">
-            <h1><i class="fas fa-shield-alt"></i> Mercuryo</h1>
-            <p>安全的加密貨幣付款處理</p>
-        </div>
-
-        <div class="payment-info">
-            <div class="info-row"><span>商家</span><span>Scrilab</span></div>
-            <div class="info-row"><span>服務</span><span>{{ exchange_record.plan_name }}</span></div>
-            <div class="info-row"><span>付款金額</span><span>${{ "%.2f"|format(exchange_record.amount_usd) }} USD</span></div>
-            <div class="info-row"><span>將獲得</span><span>{{ "%.4f"|format(exchange_record.estimated_usdt) }} USDT</span></div>
-        </div>
-
-        <form id="payment-form">
-            <div class="form-group">
-                <label>信用卡號</label>
-                <input type="text" class="form-input" placeholder="1234 5678 9012 3456" maxlength="19" required>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>有效期限</label>
-                    <input type="text" class="form-input" placeholder="MM/YY" maxlength="5" required>
-                </div>
-                <div class="form-group">
-                    <label>CVV</label>
-                    <input type="text" class="form-input" placeholder="123" maxlength="4" required>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>持卡人姓名</label>
-                <input type="text" class="form-input" placeholder="CARDHOLDER NAME" required>
-            </div>
-            <button type="submit" class="pay-button">
-                <i class="fas fa-lock"></i> 安全付款 ${{ "%.2f"|format(exchange_record.amount_usd) }} USD
-            </button>
-        </form>
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>正在處理您的付款...</p>
-            <p style="font-size: 0.8rem; margin-top: 0.5rem;">信用卡付款將自動轉換為加密貨幣</p>
-        </div>
-    </div>
-
-    <script>
-        const exchangeId = "{{ exchange_id }}";
-        document.getElementById('payment-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            document.querySelector('.payment-container > :not(.loading)').style.display = 'none';
-            document.getElementById('loading').style.display = 'block';
-            
-            setTimeout(async () => {
-                try {
-                    const response = await fetch(`/payment/mercuryo/mock/${exchangeId}/process`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ card_number: 'mock_card', amount: {{ exchange_record.amount_usd if exchange_record else 0 }} })
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        window.location.href = data.redirect_url;
-                    } else {
-                        alert('付款失敗: ' + data.error);
-                        location.reload();
-                    }
-                } catch (error) {
-                    alert('付款處理錯誤: ' + error.message);
-                    location.reload();
-                }
-            }, 3000);
-        });
     </script>
 </body>
 </html>
