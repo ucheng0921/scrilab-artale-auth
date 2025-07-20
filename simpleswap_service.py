@@ -52,7 +52,7 @@ class SimpleSwapService:
         return address
 
     def create_fiat_to_crypto_exchange(self, plan_info: Dict, user_info: Dict) -> Optional[Dict]:
-        """創建法幣到加密貨幣交換 - 使用 Widget 方法"""
+        """創建法幣到加密貨幣交換 - 使用 Widget 頁面"""
         try:
             order_id = f"fiat_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             amount_twd = plan_info['price']
@@ -60,21 +60,8 @@ class SimpleSwapService:
             
             logger.info(f"開始創建 SimpleSwap Fiat-to-Crypto 交換 - Plan: {plan_info['name']}, USD: {amount_usd}")
             
-            # 如果 API 不支援 fiat，我們可以直接構建 widget URL
-            # 這是一個備選方案
+            # 生成內部交換 ID
             exchange_id = f"fiat_widget_{uuid_lib.uuid4().hex[:12]}"
-            
-            # SimpleSwap widget URL 格式
-            widget_params = {
-                'from': 'usd',
-                'to': 'usdt',
-                'amount': amount_usd,
-                'api_key': self.api_key
-            }
-            
-            # 構建 widget URL
-            widget_url = f"https://simpleswap.io/widget?" + "&".join([f"{k}={v}" for k, v in widget_params.items()])
-            
             estimated_crypto = amount_usd * 0.996  # 扣除 0.4% 手續費
             
             # 保存交換記錄
@@ -99,20 +86,23 @@ class SimpleSwapService:
                 'payment_method': 'fiat_to_crypto_widget',
                 'expires_at': datetime.now() + timedelta(hours=24),
                 'payment_type': 'credit_card',
-                'is_fiat_exchange': True,
-                'widget_url': widget_url
+                'is_fiat_exchange': True
             }
             
             self.save_exchange_record(exchange_id, exchange_record)
             
-            logger.info(f"✅ 使用 Widget 方法創建 Fiat 交換: {exchange_id}")
-            logger.info(f"Widget URL: {widget_url}")
+            # 使用我們的 widget 頁面 URL
+            base_url = os.environ.get('BASE_URL', 'https://scrilab.onrender.com')
+            payment_url = f"{base_url}/payment/simpleswap/widget/{exchange_id}"
+            
+            logger.info(f"✅ Widget 付款頁面創建成功: {exchange_id}")
+            logger.info(f"Payment URL: {payment_url}")
             
             return {
                 'success': True,
                 'exchange_id': exchange_id,
                 'order_id': order_id,
-                'payment_url': widget_url,
+                'payment_url': payment_url,
                 'amount_usd': amount_usd,
                 'amount_twd': amount_twd,
                 'amount_fiat': amount_usd,
@@ -123,8 +113,7 @@ class SimpleSwapService:
                 'payment_method': 'credit_card',
                 'is_fiat_exchange': True,
                 'fee_info': '0.4% (SimpleSwap Fiat 固定費率)',
-                'provider': 'SimpleSwap Widget',
-                'note': '使用 SimpleSwap Widget 進行 Fiat 交換'
+                'provider': 'SimpleSwap Widget'
             }
             
         except Exception as e:
