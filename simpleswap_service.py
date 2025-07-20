@@ -386,7 +386,7 @@ class SimpleSwapService:
                 'status': 'waiting_payment',
                 'created_at': datetime.now(),
                 'payment_method': 'fiat_to_crypto_mock',
-                'receiving_address': 'TQXf7bBjJzCMCCJP4uxNhLjXVc8YBxo9yL',
+                'receiving_address': 'TCya5BXaScPp3zGWTgkQT4ajGGUH3chsj4',
                 'expires_at': datetime.now() + timedelta(hours=2),
                 'payment_type': 'credit_card',
                 'is_fiat_exchange': True,
