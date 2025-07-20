@@ -75,7 +75,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             100% { opacity: 0; }
         }
 
-        /* 增強版背景動效 */
+        /* 增強版背景動效 - 新增淡淡漸層特效 */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -110,8 +110,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             height: 100%;
             background: 
                 conic-gradient(from 0deg at 70% 30%, transparent, rgba(139, 92, 246, 0.03), transparent),
-                conic-gradient(from 180deg at 30% 70%, transparent, rgba(0, 212, 255, 0.02), transparent);
-            animation: rotate 30s linear infinite;
+                conic-gradient(from 180deg at 30% 70%, transparent, rgba(0, 212, 255, 0.02), transparent),
+                linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(139, 92, 246, 0.05) 50%, transparent 100%);
+            animation: gradient-flow 25s ease-in-out infinite;
         }
 
         @keyframes float {
@@ -123,6 +124,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         @keyframes rotate {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        @keyframes gradient-flow {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+            50% { transform: translate(-20px, 20px) scale(1.05); opacity: 1; }
+            100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
         }
 
         @keyframes slideInUp {
