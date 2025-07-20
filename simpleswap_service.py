@@ -199,11 +199,18 @@ class SimpleSwapService:
             
             from_currency, to_currency, crypto_amount = successful_pair
             
-            # 你的收款地址（根據幣種選擇）
-            if 'btc' in to_currency.lower() or from_currency == 'btc':
+            # 修正後（正確的）：
+            if 'btc' in to_currency.lower():
+                # 如果我們收到的是 BTC，使用 BTC 地址
                 receiving_address = os.environ.get('BTC_WALLET_ADDRESS', 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh')
+            elif 'usdt' in to_currency.lower():
+                # 如果我們收到的是 USDT（包括 usdtpoly, usdtarb 等），使用 USDT 地址
+                receiving_address = os.environ.get('USDT_WALLET_ADDRESS', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
             else:
+                # 其他情況使用默認地址
                 receiving_address = os.environ.get('RECEIVING_WALLET_ADDRESS', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
+
+            logger.info(f"選擇收款地址: {receiving_address} (for {to_currency})")
             
             # 創建交換請求
             exchange_data = {
