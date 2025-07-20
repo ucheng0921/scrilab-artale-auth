@@ -1122,7 +1122,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <span>scrilabstaff@gmail.com</span>
                     </a>
                 </div>
-                <p style="color: var(--text-muted); font-size: 0.95rem;">現已支援加密貨幣付款，所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
             </div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 2rem; text-align: center; color: var(--text-muted);">
                 <p style="margin-bottom: 1rem;">
@@ -1137,13 +1137,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <div id="purchase-modal" class="modal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
-            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">加密貨幣付款</h3>
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">付款</h3>
             <div id="selected-plan-info" class="plan-info">
                 <!-- Plan info will be inserted here -->
-            </div>
-            <div class="crypto-notice">
-                <i class="fab fa-bitcoin"></i>
-                <span>我們透過 OxaPay 提供安全的加密貨幣付款服務，支援 USDT、Bitcoin 等多種加密貨幣</span>
             </div>
             <div class="form-group">
                 <label for="user-name">用戶名稱</label>
