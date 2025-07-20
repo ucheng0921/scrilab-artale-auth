@@ -199,18 +199,35 @@ class SimpleSwapService:
             
             from_currency, to_currency, crypto_amount = successful_pair
             
-            # 修正後（正確的）：
+            # 修正：根據不同的 USDT 網絡選擇正確的地址格式
             if 'btc' in to_currency.lower():
-                # 如果我們收到的是 BTC，使用 BTC 地址
+                # BTC 地址
                 receiving_address = os.environ.get('BTC_WALLET_ADDRESS', 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh')
-            elif 'usdt' in to_currency.lower():
-                # 如果我們收到的是 USDT（包括 usdtpoly, usdtarb 等），使用 USDT 地址
+            elif to_currency.lower() in ['usdtpoly', 'usdtarb', 'usdtop']:
+                # Polygon/Arbitrum/Optimism USDT - 需要 ETH 格式地址 (0x開頭)
+                receiving_address = os.environ.get('ETH_WALLET_ADDRESS', '0x742d35Cc6634C0532925a3b8D6D8d7c98f8F7a88')
+            elif to_currency.lower() in ['usdtbep20', 'usdtbsc']:
+                # BSC USDT - 需要 BSC 地址 (0x開頭)
+                receiving_address = os.environ.get('BSC_WALLET_ADDRESS', '0x742d35Cc6634C0532925a3b8D6D8d7c98f8F7a88')
+            elif to_currency.lower() in ['usdt', 'usdttrc20']:
+                # TRON USDT - 使用 TRON 地址
                 receiving_address = os.environ.get('USDT_WALLET_ADDRESS', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
             else:
-                # 其他情況使用默認地址
-                receiving_address = os.environ.get('RECEIVING_WALLET_ADDRESS', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
-
+                # 其他情況，根據常見格式判斷
+                if 'eth' in to_currency.lower() or 'erc' in to_currency.lower():
+                    receiving_address = os.environ.get('ETH_WALLET_ADDRESS', '0x742d35Cc6634C0532925a3b8D6D8d7c98f8F7a88')
+                else:
+                    # 默認使用 TRON 地址
+                    receiving_address = os.environ.get('RECEIVING_WALLET_ADDRESS', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
+            
             logger.info(f"選擇收款地址: {receiving_address} (for {to_currency})")
+            
+            # 確保地址格式正確性驗證
+            if to_currency.lower() in ['usdtpoly', 'usdtarb', 'usdtop'] and not receiving_address.startswith('0x'):
+                logger.error(f"警告: {to_currency} 需要 ETH 格式地址 (0x開頭)，但提供的是: {receiving_address}")
+                # 使用備用的 ETH 地址
+                receiving_address = '0x742d35Cc6634C0532925a3b8D6D8d7c98f8F7a88'
+                logger.info(f"使用備用 ETH 地址: {receiving_address}")
             
             # 創建交換請求
             exchange_data = {
