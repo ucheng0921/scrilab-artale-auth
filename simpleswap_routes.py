@@ -1,6 +1,8 @@
 # 在 simpleswap_routes.py 文件中
 
 # 首先，在文件頂部（其他模板定義之後）添加 SIMPLESWAP_WIDGET_TEMPLATE
+# 在 simpleswap_routes.py 中修復 SIMPLESWAP_WIDGET_TEMPLATE
+
 SIMPLESWAP_WIDGET_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -11,95 +13,19 @@ SIMPLESWAP_WIDGET_TEMPLATE = r"""
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #0a0a0a;
-            color: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
-            background: #1a1a1a;
-            padding: 1.5rem 2rem;
-            border-bottom: 1px solid #333;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #00d4ff;
-        }
-
-        .container {
-            flex: 1;
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .payment-info {
-            background: #1e1e1e;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.8rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .widget-container {
-            background: white;
-            border-radius: 16px;
-            padding: 2px;
-            min-height: 600px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
-        }
-
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 600px;
-            font-size: 1.2rem;
-            color: #666;
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #00d4ff;
-            text-decoration: none;
-            margin-top: 2rem;
-            padding: 0.8rem 1.5rem;
-            border: 1px solid #333;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-
-        .back-link:hover {
-            border-color: #00d4ff;
-            background: rgba(0, 212, 255, 0.1);
-        }
+        /* 保持原有樣式 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; }
+        .header { background: #1a1a1a; padding: 1.5rem 2rem; border-bottom: 1px solid #333; text-align: center; }
+        .header h1 { font-size: 1.5rem; font-weight: 600; color: #00d4ff; }
+        .container { flex: 1; max-width: 1200px; width: 100%; margin: 0 auto; padding: 2rem; }
+        .payment-info { background: #1e1e1e; border: 1px solid #333; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
+        .info-row { display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .info-row:last-child { border-bottom: none; }
+        .widget-container { background: white; border-radius: 16px; padding: 2px; min-height: 600px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35); }
+        .loading { display: flex; align-items: center; justify-content: center; height: 600px; font-size: 1.2rem; color: #666; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: #00d4ff; text-decoration: none; margin-top: 2rem; padding: 0.8rem 1.5rem; border: 1px solid #333; border-radius: 8px; transition: all 0.3s; }
+        .back-link:hover { border-color: #00d4ff; background: rgba(0, 212, 255, 0.1); }
     </style>
 </head>
 <body>
@@ -132,13 +58,15 @@ SIMPLESWAP_WIDGET_TEMPLATE = r"""
             <div class="loading" id="loading">
                 <i class="fas fa-spinner fa-spin"></i>&nbsp; 正在載入付款界面...
             </div> 
+            <!-- 修復後的正確 Widget URL -->
             <iframe 
                 id="simpleswap-widget"
-                src="https://widget.simpleswap.io?from=usd&to=usdt&amount={{ exchange_record.amount_fiat }}&variant=fiat&affiliateId={{ api_key }}"
+                src="https://simpleswap.io/widget?from=usd&to=usdt&amount={{ exchange_record.amount_fiat }}&variant=fiat&theme=dark&partner_id={{ api_key }}"
                 width="100%" 
                 height="600"
                 frameborder="0"
                 style="border-radius: 14px; display: none;"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
             ></iframe>
         </div>
 
@@ -155,36 +83,50 @@ SIMPLESWAP_WIDGET_TEMPLATE = r"""
             document.getElementById('simpleswap-widget').style.display = 'block';
         };
 
-        // 監聽來自 widget 的消息
-        window.addEventListener('message', function(event) {
-            // 安全檢查
-            if (!event.origin.includes('simpleswap.io')) return;
-            
-            console.log('Widget message:', event.data);
-            
-            // 處理交換完成事件
-            if (event.data.type === 'exchange-created' || event.data.exchangeId) {
-                // 保存交換 ID
-                const exchangeId = event.data.exchangeId || event.data.id;
-                console.log('Exchange created:', exchangeId);
-                
-                // 可以在這裡更新後端或重定向
-                if (exchangeId) {
-                    // 延遲重定向到成功頁面
-                    setTimeout(() => {
-                        window.location.href = `/payment/simpleswap/success?id={{ exchange_id }}&simpleswap_id=${exchangeId}`;
-                    }, 3000);
-                }
-            }
-        });
-
         // 設置超時檢查
         setTimeout(() => {
             const iframe = document.getElementById('simpleswap-widget');
+            const loading = document.getElementById('loading');
             if (iframe.style.display === 'none') {
-                document.getElementById('loading').innerHTML = '<i class="fas fa-exclamation-triangle"></i>&nbsp; 載入失敗，請重新整理頁面';
+                loading.innerHTML = `
+                    <div style="text-align: center;">
+                        <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <h3 style="color: #f59e0b; margin-bottom: 1rem;">Widget 載入超時</h3>
+                        <p style="margin-bottom: 2rem;">SimpleSwap Widget 可能暫時不可用</p>
+                        <a href="/payment/credit-card/{{ exchange_id }}" style="background: #00d4ff; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                            <i class="fas fa-credit-card"></i> 使用備用付款方式
+                        </a>
+                    </div>
+                `;
             }
-        }, 10000);
+        }, 15000);
+
+        // 監聽 Widget 消息
+        window.addEventListener('message', function(event) {
+            console.log('Widget message:', event.data);
+            
+            // 處理交換完成事件
+            if (event.data && (event.data.type === 'exchange-created' || event.data.exchangeId)) {
+                const exchangeId = event.data.exchangeId || event.data.id;
+                if (exchangeId) {
+                    // 通知後端交換已創建
+                    fetch('/payment/simpleswap/webhook', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: exchangeId,
+                            status: 'waiting',
+                            internal_id: '{{ exchange_id }}'
+                        })
+                    }).then(() => {
+                        // 延遲重定向到成功頁面
+                        setTimeout(() => {
+                            window.location.href = `/payment/simpleswap/success?id={{ exchange_id }}`;
+                        }, 2000);
+                    });
+                }
+            }
+        });
     </script>
 </body>
 </html>
