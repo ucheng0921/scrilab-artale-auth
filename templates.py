@@ -879,11 +879,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <section id="home" class="hero">
         <div class="hero-content">
             <div class="hero-badge">
-                <i class="fab fa-bitcoin"></i>
-                <span>支援加密貨幣付款</span>
+                <span>台灣團隊打造</span>
             </div>
-            <h1>自動化<span class="highlight">遊戲技術服務</span><br>與個人化解決方案</h1>
-            <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務，現已支援加密貨幣付款！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。我們專注於為客戶提供安全、穩定的遊戲體驗優化服務。</p>
+            <h1>自動化<span class="highlight">遊戲技術服務</span><br>與個人化方案</h1>
+            <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。我們專注於為客戶提供安全、穩定的遊戲體驗優化服務。</p>
             <div class="hero-buttons">
                 <a href="#games" class="btn-primary">
                     <i class="fas fa-gamepad"></i>
@@ -903,7 +902,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             <div class="section-header">
                 <div class="section-badge">遊戲服務</div>
                 <h2 class="section-title">選擇您的遊戲</h2>
-                <p class="section-description">選擇適合您的服務方案，享受最佳遊戲體驗，現已支援加密貨幣付款</p>
+                <p class="section-description">選擇適合您的服務方案，享受最佳遊戲體驗</p>
             </div>
             
             <div class="games-grid">
@@ -962,7 +961,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 </button>
                 <div class="section-badge">服務方案</div>
                 <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale 專屬方案</h2>
-                <p class="section-description">一次購買越久享受更優惠的價格，所有方案均提供完整的技術服務，現已支援加密貨幣付款</p>
+                <p class="section-description">一次購買越久享受更優惠的價格，所有方案均提供完整的技術服務</p>
             </div>
             
             <div class="services-grid">
@@ -974,11 +973,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-price">
                             <span class="currency">NT$</span>5
                             <span class="period">/7天</span>
-                        </div>
-                        <div class="crypto-info">
-                            <i class="fab fa-bitcoin"></i>
-                            <span>約 0.16 USDT | 支援多種加密貨幣</span>
-                        </div>
                     </div>
                     <div class="service-body">
                         <ul class="service-features">
@@ -1026,10 +1020,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             <span class="currency">NT$</span>599
                             <span class="period">/30天</span>
                         </div>
-                        <div class="crypto-info">
-                            <i class="fab fa-bitcoin"></i>
-                            <span>約 19.17 USDT | 支援多種加密貨幣</span>
-                        </div>
                     </div>
                     <div class="service-body">
                         <ul class="service-features">
@@ -1075,10 +1065,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-price">
                             <span class="currency">NT$</span>1,499
                             <span class="period">/90天</span>
-                        </div>
-                        <div class="crypto-info">
-                            <i class="fab fa-bitcoin"></i>
-                            <span>約 47.97 USDT | 支援多種加密貨幣</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1135,7 +1121,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <span>scrilabstaff@gmail.com</span>
                     </a>
                 </div>
-                <p style="color: var(--text-muted); font-size: 0.95rem;">現已支援加密貨幣付款，所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
             </div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 2rem; text-align: center; color: var(--text-muted);">
                 <p style="margin-bottom: 1rem;">
