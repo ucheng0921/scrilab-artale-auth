@@ -131,10 +131,10 @@ SIMPLESWAP_WIDGET_TEMPLATE = r"""
         <div class="widget-container">
             <div class="loading" id="loading">
                 <i class="fas fa-spinner fa-spin"></i>&nbsp; 正在載入付款界面...
-            </div>
+            </div> 
             <iframe 
                 id="simpleswap-widget"
-                src="https://widget.simpleswap.io?from=usd&to=usdt&amount={{ exchange_record.amount_fiat }}&variant=fiat&affiliateId={{ api_key }}"
+                src="https://simpleswap.io/widget?from=usd&to=usdt&amount={{ exchange_record.amount_fiat }}&api_key={{ api_key }}"
                 width="100%" 
                 height="600"
                 frameborder="0"
