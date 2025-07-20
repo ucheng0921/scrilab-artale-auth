@@ -30,7 +30,10 @@ class SimpleSwapService:
         """獲取指定貨幣的有效地址"""
         # 預設的有效地址映射
         default_addresses = {
-            'usdt': 'TCya5BXaScPp3zGWTgkQT4ajGGUH3chsj4',  # USDT TRC20 地址
+            'usdt': 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',  # 官方 USDT TRC20 合約地址
+            'usdttrc20': 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',  # 官方 USDT TRC20
+            'usdterc20': '0xdAC17F958D2ee523a2206206994597C13D831ec7',  # 官方 USDT ERC20 合約地址
+            # ...
         }
         
         # 從環境變數獲取自定義地址
