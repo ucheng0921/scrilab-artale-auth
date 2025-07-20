@@ -52,7 +52,7 @@ class SimpleSwapService:
         return address
 
     def create_fiat_to_crypto_exchange(self, plan_info: Dict, user_info: Dict) -> Optional[Dict]:
-        """創建法幣到加密貨幣交換 - 修復版本"""
+        """創建法幣到加密貨幣交換 - 實用方案"""
         try:
             order_id = f"fiat_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             amount_twd = plan_info['price']
@@ -60,79 +60,60 @@ class SimpleSwapService:
             
             logger.info(f"開始創建 SimpleSwap Fiat-to-Crypto 交換 - Plan: {plan_info['name']}, USD: {amount_usd}")
             
-            # 首先嘗試獲取支援的貨幣列表
-            currencies = self.get_supported_currencies()
+            # 直接重定向到我們的信用卡頁面，不調用 SimpleSwap API
+            # 因為 SimpleSwap 的 fiat-to-crypto 功能有限制
+            exchange_id = f"cc_{uuid_lib.uuid4().hex[:12]}"
+            estimated_crypto = amount_usd * 0.95  # 5% 手續費
             
-            # 選擇最佳的 USDT 貨幣
-            target_currency = self.select_best_usdt_currency(currencies)
-            receiving_address = self.get_valid_address_for_currency(target_currency)
+            exchange_record = {
+                'exchange_id': exchange_id,
+                'order_id': order_id,
+                'user_name': user_info['name'],
+                'user_email': user_info['email'],
+                'plan_id': plan_info['id'],
+                'plan_name': plan_info['name'],
+                'plan_period': plan_info['period'],
+                'amount_twd': amount_twd,
+                'amount_usd': amount_usd,
+                'amount_fiat': amount_usd,
+                'fiat_currency': 'USD',
+                'estimated_crypto': estimated_crypto,
+                'crypto_currency': 'USDT',
+                'status': 'waiting_payment',
+                'created_at': datetime.now(),
+                'payment_method': 'credit_card_direct',
+                'expires_at': datetime.now() + timedelta(hours=2),
+                'payment_type': 'credit_card',
+                'is_fiat_exchange': True
+            }
             
-            logger.info(f"選擇的目標貨幣: {target_currency}, 接收地址: {receiving_address}")
+            self.save_exchange_record(exchange_id, exchange_record)
             
-            # 嘗試不同的金額和貨幣組合
-            exchange_attempts = [
-                {'currency_from': 'usd', 'currency_to': target_currency, 'amount': amount_usd},
-                {'currency_from': 'eur', 'currency_to': target_currency, 'amount': amount_usd * 0.85},  # USD to EUR 近似
-                {'currency_from': 'usd', 'currency_to': 'usdt', 'amount': amount_usd},  # 純 USDT
-            ]
+            # 使用我們的信用卡頁面
+            base_url = os.environ.get('BASE_URL', 'https://scrilab.onrender.com')
+            payment_url = f"{base_url}/payment/credit-card/{exchange_id}"
             
-            for attempt in exchange_attempts:
-                try:
-                    # 先嘗試估算（如果支援的話）
-                    estimate_result = self.get_estimate(
-                        attempt['currency_from'], 
-                        attempt['currency_to'], 
-                        attempt['amount']
-                    )
-                    
-                    if estimate_result:
-                        logger.info(f"估算成功: {estimate_result}")
-                    
-                    # 創建交換
-                    exchange_data = {
-                        'currency_from': attempt['currency_from'],
-                        'currency_to': attempt['currency_to'],
-                        'amount': attempt['amount'],
-                        'address_to': receiving_address,
-                        'fixed': False,
-                        'extra_id_to': '',
-                        'user_refund_address': '',
-                        'user_refund_extra_id': ''
-                    }
-                    
-                    logger.info(f"嘗試創建交換: {exchange_data}")
-                    
-                    response = requests.post(
-                        f"{self.api_base_url}/create_exchange",
-                        params={'api_key': self.api_key},
-                        json=exchange_data,
-                        timeout=30
-                    )
-                    
-                    logger.info(f"API 回應: {response.status_code} - {response.text}")
-                    
-                    if response.status_code == 200:
-                        result = response.json()
-                        return self.process_successful_exchange_creation(
-                            result, order_id, plan_info, user_info, 
-                            amount_twd, attempt['amount'], attempt['currency_to']
-                        )
-                    
-                    elif response.status_code == 400:
-                        error_data = response.json() if response.content else {}
-                        logger.warning(f"嘗試失敗: {error_data.get('description', '未知錯誤')}")
-                        continue  # 嘗試下一個組合
-                        
-                except Exception as e:
-                    logger.warning(f"嘗試交換失敗: {str(e)}")
-                    continue
+            logger.info(f"✅ 信用卡交換創建成功: {exchange_id}")
             
-            # 如果所有嘗試都失敗，回退到模擬模式
-            logger.warning("所有 API 嘗試失敗，啟用模擬模式")
-            return self.create_mock_exchange(order_id, plan_info, user_info, amount_twd, amount_usd)
-                    
+            return {
+                'success': True,
+                'exchange_id': exchange_id,
+                'order_id': order_id,
+                'payment_url': payment_url,
+                'amount_usd': amount_usd,
+                'amount_twd': amount_twd,
+                'amount_fiat': amount_usd,
+                'fiat_currency': 'USD',
+                'estimated_crypto': estimated_crypto,
+                'crypto_currency': 'USDT',
+                'expires_at': exchange_record['expires_at'].isoformat(),
+                'payment_method': 'credit_card',
+                'is_fiat_exchange': True,
+                'fee_info': '5% processing fee'
+            }
+            
         except Exception as e:
-            logger.error(f"創建 Fiat-to-Crypto 交換失敗: {str(e)}", exc_info=True)
+            logger.error(f"創建信用卡交換失敗: {str(e)}", exc_info=True)
             return {'success': False, 'error': '系統錯誤，請稍後再試'}
 
     def select_best_usdt_currency(self, currencies) -> str:
