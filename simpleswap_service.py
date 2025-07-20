@@ -52,20 +52,13 @@ class SimpleSwapService:
         return address
 
     def create_fiat_to_crypto_exchange(self, plan_info: Dict, user_info: Dict) -> Optional[Dict]:
-        """創建法幣到加密貨幣交換 - 正確的 Fiat API 實現"""
+        """創建法幣到加密貨幣交換 - 使用有效地址佔位符"""
         try:
             order_id = f"fiat_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             amount_twd = plan_info['price']
             amount_usd = amount_twd * 0.032
             
-            # 確保金額符合最小要求（通常 fiat 交換需要至少 $50）
-            min_amount = 10.0
-            if amount_usd < min_amount:
-                logger.warning(f"金額 ${amount_usd} 低於建議最小值 ${min_amount}")
-                # 您可以選擇：
-                # 1. 返回錯誤
-                # return {'success': False, 'error': f'最小交換金額為 ${min_amount}'}
-                # 2. 或繼續嘗試
+            logger.info(f"開始創建 SimpleSwap Fiat-to-Crypto 交換 - Plan: {plan_info['name']}, USD: {amount_usd}")
             
             # Fiat API 不需要 address_to，因為用戶會被重定向到 Guardarian
             exchange_data = {
