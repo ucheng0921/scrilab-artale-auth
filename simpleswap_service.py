@@ -30,12 +30,7 @@ class SimpleSwapService:
         """獲取指定貨幣的有效地址"""
         # 預設的有效地址映射
         default_addresses = {
-            'usdt': 'TQXf7bBjJzCMCCJP4uxNhLjXVc8YBxo9yL',  # USDT TRC20 地址
-            'usdttrc20': 'TQXf7bBjJzCMCCJP4uxNhLjXVc8YBxo9yL',  # USDT TRC20
-            'usdterc20': '0x742d35Cc6635C0532925a3b8D0A4E5a8f3e0e5d8',  # USDT ERC20
-            'btc': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',  # Bitcoin 地址
-            'eth': '0x742d35Cc6635C0532925a3b8D0A4E5a8f3e0e5d8',  # Ethereum 地址
-            'trx': 'TQXf7bBjJzCMCCJP4uxNhLjXVc8YBxo9yL'  # TRON 地址
+            'usdt': 'TCya5BXaScPp3zGWTgkQT4ajGGUH3chsj4',  # USDT TRC20 地址
         }
         
         # 從環境變數獲取自定義地址
@@ -60,11 +55,14 @@ class SimpleSwapService:
             
             logger.info(f"開始創建 SimpleSwap Fiat-to-Crypto 交換 - Plan: {plan_info['name']}, USD: {amount_usd}")
             
-            # Fiat API 不需要 address_to，因為用戶會被重定向到 Guardarian
+            # 獲取接收地址
+            receiving_address = self.get_valid_address_for_currency('usdt')
+
             exchange_data = {
                 'currency_from': 'usd',
                 'currency_to': 'usdt',
                 'amount': amount_usd,
+                'address_to': receiving_address,
                 'fixed': False
             }
             
