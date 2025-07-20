@@ -973,6 +973,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-price">
                             <span class="currency">NT$</span>5
                             <span class="period">/7天</span>
+                        </div>
+                        <div class="crypto-info">
+                            <i class="fab fa-bitcoin"></i>
+                            <span>約 0.16 USDT | 支援多種加密貨幣</span>
+                        </div>
                     </div>
                     <div class="service-body">
                         <ul class="service-features">
@@ -1020,6 +1025,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             <span class="currency">NT$</span>599
                             <span class="period">/30天</span>
                         </div>
+                        <div class="crypto-info">
+                            <i class="fab fa-bitcoin"></i>
+                            <span>約 19.17 USDT | 支援多種加密貨幣</span>
+                        </div>
                     </div>
                     <div class="service-body">
                         <ul class="service-features">
@@ -1065,6 +1074,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-price">
                             <span class="currency">NT$</span>1,499
                             <span class="period">/90天</span>
+                        </div>
+                        <div class="crypto-info">
+                            <i class="fab fa-bitcoin"></i>
+                            <span>約 47.97 USDT | 支援多種加密貨幣</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1121,7 +1134,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <span>scrilabstaff@gmail.com</span>
                     </a>
                 </div>
-                <p style="color: var(--text-muted); font-size: 0.95rem;">所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">現已支援加密貨幣付款，所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
             </div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 2rem; text-align: center; color: var(--text-muted);">
                 <p style="margin-bottom: 1rem;">
