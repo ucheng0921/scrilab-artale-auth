@@ -27,7 +27,6 @@ from templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
 from intro_routes import intro_bp
 from custom_payment_routes import custom_payment_bp, init_custom_payment_handler
 from credit_card_routes import credit_card_bp
-
 # 設置日誌
 logging.basicConfig(
     level=logging.INFO,
@@ -397,14 +396,6 @@ def manual_cleanup_sessions():
     return route_handlers.manual_cleanup_sessions()
 
 # ===== SimpleSwap 付款相關路由 =====
-@app.route('/payment/simpleswap/widget/<exchange_id>')
-def simpleswap_widget_payment(exchange_id):
-    """顯示 SimpleSwap Widget 付款頁面"""
-    if not simpleswap_routes:
-        return redirect('/products?error=service_unavailable')
-    
-    return simpleswap_routes.show_widget_payment(exchange_id)
-
 
 @app.route('/api/create-simpleswap-payment', methods=['POST'])
 def create_simpleswap_payment():

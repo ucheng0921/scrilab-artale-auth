@@ -1,137 +1,3 @@
-# 在 simpleswap_routes.py 文件中
-
-# 首先，在文件頂部（其他模板定義之後）添加 SIMPLESWAP_WIDGET_TEMPLATE
-# 在 simpleswap_routes.py 中修復 SIMPLESWAP_WIDGET_TEMPLATE
-
-SIMPLESWAP_WIDGET_TEMPLATE = r"""
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>信用卡付款 - Scrilab</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        /* 保持原有樣式 */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; }
-        .header { background: #1a1a1a; padding: 1.5rem 2rem; border-bottom: 1px solid #333; text-align: center; }
-        .header h1 { font-size: 1.5rem; font-weight: 600; color: #00d4ff; }
-        .container { flex: 1; max-width: 1200px; width: 100%; margin: 0 auto; padding: 2rem; }
-        .payment-info { background: #1e1e1e; border: 1px solid #333; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
-        .info-row { display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-        .info-row:last-child { border-bottom: none; }
-        .widget-container { background: white; border-radius: 16px; padding: 2px; min-height: 600px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35); }
-        .loading { display: flex; align-items: center; justify-content: center; height: 600px; font-size: 1.2rem; color: #666; }
-        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: #00d4ff; text-decoration: none; margin-top: 2rem; padding: 0.8rem 1.5rem; border: 1px solid #333; border-radius: 8px; transition: all 0.3s; }
-        .back-link:hover { border-color: #00d4ff; background: rgba(0, 212, 255, 0.1); }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1><i class="fas fa-shield-alt"></i> Scrilab 安全付款</h1>
-    </div>
-
-    <div class="container">
-        <div class="payment-info">
-            <h2 style="margin-bottom: 1rem;">訂單詳情</h2>
-            <div class="info-row">
-                <span>服務方案</span>
-                <span>{{ exchange_record.plan_name }}</span>
-            </div>
-            <div class="info-row">
-                <span>服務期限</span>
-                <span>{{ exchange_record.plan_period }}</span>
-            </div>
-            <div class="info-row">
-                <span>付款金額</span>
-                <span>${{ "%.2f"|format(exchange_record.amount_fiat) }} USD (≈ NT$ {{ exchange_record.amount_twd }})</span>
-            </div>
-            <div class="info-row">
-                <span>預計獲得</span>
-                <span>{{ "%.4f"|format(exchange_record.estimated_crypto) }} USDT</span>
-            </div>
-        </div>
-
-        <div class="widget-container">
-            <div class="loading" id="loading">
-                <i class="fas fa-spinner fa-spin"></i>&nbsp; 正在載入付款界面...
-            </div> 
-            <!-- 修復後的正確 Widget URL -->
-            <iframe 
-                id="simpleswap-widget"
-                src="https://simpleswap.io/widget?from=usd&to=usdt&amount={{ exchange_record.amount_fiat }}&variant=fiat&theme=dark&partner_id={{ api_key }}"
-                width="100%" 
-                height="600"
-                frameborder="0"
-                style="border-radius: 14px; display: none;"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-            ></iframe>
-        </div>
-
-        <a href="/products" class="back-link">
-            <i class="fas fa-arrow-left"></i>
-            返回商品頁面
-        </a>
-    </div>
-
-    <script>
-        // 當 iframe 載入完成後
-        document.getElementById('simpleswap-widget').onload = function() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('simpleswap-widget').style.display = 'block';
-        };
-
-        // 設置超時檢查
-        setTimeout(() => {
-            const iframe = document.getElementById('simpleswap-widget');
-            const loading = document.getElementById('loading');
-            if (iframe.style.display === 'none') {
-                loading.innerHTML = `
-                    <div style="text-align: center;">
-                        <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 3rem; margin-bottom: 1rem;"></i>
-                        <h3 style="color: #f59e0b; margin-bottom: 1rem;">Widget 載入超時</h3>
-                        <p style="margin-bottom: 2rem;">SimpleSwap Widget 可能暫時不可用</p>
-                        <a href="/payment/credit-card/{{ exchange_id }}" style="background: #00d4ff; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                            <i class="fas fa-credit-card"></i> 使用備用付款方式
-                        </a>
-                    </div>
-                `;
-            }
-        }, 15000);
-
-        // 監聽 Widget 消息
-        window.addEventListener('message', function(event) {
-            console.log('Widget message:', event.data);
-            
-            // 處理交換完成事件
-            if (event.data && (event.data.type === 'exchange-created' || event.data.exchangeId)) {
-                const exchangeId = event.data.exchangeId || event.data.id;
-                if (exchangeId) {
-                    // 通知後端交換已創建
-                    fetch('/payment/simpleswap/webhook', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            id: exchangeId,
-                            status: 'waiting',
-                            internal_id: '{{ exchange_id }}'
-                        })
-                    }).then(() => {
-                        // 延遲重定向到成功頁面
-                        setTimeout(() => {
-                            window.location.href = `/payment/simpleswap/success?id={{ exchange_id }}`;
-                        }, 2000);
-                    });
-                }
-            }
-        });
-    </script>
-</body>
-</html>
-"""
-
 # SimpleSwap 付款詳情頁面模板
 SIMPLESWAP_PAYMENT_DETAILS_TEMPLATE = r"""
 <!DOCTYPE html>
@@ -553,7 +419,6 @@ MERCURYO_MOCK_PAYMENT_TEMPLATE = r"""
 </html>
 """
 # simpleswap_routes.py - 修復版本，統一使用新的欄位名稱
-import os
 from flask import request, jsonify, render_template_string, redirect
 import logging
 import json
@@ -860,25 +725,6 @@ class SimpleSwapRoutes:
             
         except Exception as e:
             logger.error(f"顯示付款詳情錯誤: {str(e)}")
-            return redirect('/products?error=system_error')
-
-    def show_widget_payment(self, exchange_id):
-        """顯示 SimpleSwap Widget 付款頁面"""
-        try:
-            exchange_record = self.simpleswap_service.get_exchange_record(exchange_id)
-            if not exchange_record:
-                return redirect('/products?error=exchange_not_found')
-            
-            api_key = os.environ.get('SIMPLESWAP_API_KEY')
-            
-            return render_template_string(
-                SIMPLESWAP_WIDGET_TEMPLATE,
-                exchange_record=exchange_record,
-                exchange_id=exchange_id,
-                api_key=api_key
-            )
-        except Exception as e:
-            logger.error(f"顯示 Widget 付款頁面錯誤: {str(e)}")
             return redirect('/products?error=system_error')
 
 # SimpleSwap 付款成功頁面模板
