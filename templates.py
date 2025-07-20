@@ -974,10 +974,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             <span class="currency">NT$</span>5
                             <span class="period">/7天</span>
                         </div>
-                        <div class="crypto-info">
-                            <i class="fab fa-bitcoin"></i>
-                            <span>約 0.16 USDT | 支援多種加密貨幣</span>
-                        </div>
                     </div>
                     <div class="service-body">
                         <ul class="service-features">
@@ -1025,10 +1021,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             <span class="currency">NT$</span>599
                             <span class="period">/30天</span>
                         </div>
-                        <div class="crypto-info">
-                            <i class="fab fa-bitcoin"></i>
-                            <span>約 19.17 USDT | 支援多種加密貨幣</span>
-                        </div>
                     </div>
                     <div class="service-body">
                         <ul class="service-features">
@@ -1074,10 +1066,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-price">
                             <span class="currency">NT$</span>1,499
                             <span class="period">/90天</span>
-                        </div>
-                        <div class="crypto-info">
-                            <i class="fab fa-bitcoin"></i>
-                            <span>約 47.97 USDT | 支援多種加密貨幣</span>
                         </div>
                     </div>
                     <div class="service-body">
