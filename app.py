@@ -26,6 +26,7 @@ from simpleswap_routes import SimpleSwapRoutes    # SimpleSwap Fiat-to-Crypto �
 from templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
 from intro_routes import intro_bp
 from custom_payment_routes import custom_payment_bp, init_custom_payment_handler
+from credit_card_routes import credit_card_bp
 
 # 設置日誌
 logging.basicConfig(
@@ -50,6 +51,7 @@ app.register_blueprint(manual_bp)
 app.register_blueprint(disclaimer_bp)
 app.register_blueprint(intro_bp)
 app.register_blueprint(custom_payment_bp)
+app.register_blueprint(credit_card_bp)
 
 # 全局變數
 db = None
