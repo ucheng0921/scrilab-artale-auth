@@ -78,9 +78,9 @@ class SimpleSwapService:
             logger.error(f"獲取貨幣列表錯誤: {str(e)}")
             return None
     
-    # 替換 simpleswap_service.py 中的估算邏輯
+    # 修正估算邏輯 - 解決解析和超時問題
     def create_fiat_to_crypto_exchange(self, plan_info: Dict, user_info: Dict) -> Optional[Dict]:
-        """創建 Fiat-to-Crypto 交換（信用卡 → USDT）- 修正估算 API"""
+        """創建 Fiat-to-Crypto 交換 - 最終修正版本"""
         try:
             # 生成唯一的訂單ID
             order_id = f"fiat_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
@@ -100,53 +100,44 @@ class SimpleSwapService:
             
             # 查找可用的 USDT 貨幣
             usdt_currencies = []
-            btc_currencies = []
             if currencies:
                 usdt_currencies = [c for c in currencies if 'usdt' in c.get('symbol', '').lower()]
-                btc_currencies = [c for c in currencies if c.get('symbol', '').lower() == 'btc']
                 logger.info(f"找到 USDT 相關貨幣: {[c.get('symbol') for c in usdt_currencies[:5]]}")
-                logger.info(f"找到 BTC 貨幣: {[c.get('symbol') for c in btc_currencies[:2]]}")
             
-            # 嘗試不同的貨幣組合 - 優先嘗試常見的
-            currency_pairs = []
-            
-            # 基本貨幣對
-            basic_pairs = [
-                ('btc', 'usdt'),    # BTC to USDT (通常最穩定)
-                ('eth', 'usdt'),    # ETH to USDT  
-                ('btc', 'usd'),     # BTC to USD
-                ('eth', 'usd'),     # ETH to USD
+            # 簡化的貨幣對測試 - 只測試最有可能成功的
+            priority_pairs = [
+                ('btc', 'usdtpoly'),  # 從日誌看這個有回應
+                ('eth', 'usdtpoly'),  # 這個也有回應
+                ('btc', 'usdtarb'),   # 這個也有回應
+                ('btc', 'usdt'),      # 基本 USDT
+                ('eth', 'usdt'),      # 基本 USDT
             ]
             
-            # 如果有找到具體的 USDT 變體，添加它們
+            # 如果找到了其他 USDT 變體，添加前2個
             if usdt_currencies:
-                for usdt_currency in usdt_currencies[:3]:
+                for usdt_currency in usdt_currencies[:2]:
                     symbol = usdt_currency.get('symbol', '').lower()
-                    basic_pairs.extend([
-                        ('btc', symbol),
-                        ('eth', symbol)
-                    ])
-            
-            currency_pairs = basic_pairs
+                    if symbol not in ['usdtpoly', 'usdtarb']:  # 避免重複
+                        priority_pairs.append(('btc', symbol))
             
             successful_pair = None
             estimated_crypto = amount_usd  # 默認值
             
-            for from_currency, to_currency in currency_pairs:
+            # 只使用主要端點，避免超時
+            main_endpoint = f"{self.api_base_url}/get_estimated"
+            
+            for from_currency, to_currency in priority_pairs:
                 try:
                     # 根據 from_currency 調整金額
                     if from_currency == 'btc':
-                        # 假設 BTC 價格約 $30,000，計算需要的 BTC 數量
-                        btc_amount = amount_usd / 30000  # 大概的 BTC 數量
-                        test_amount = max(btc_amount, 0.001)  # 最小 0.001 BTC
+                        # 假設 BTC 價格約 $30,000
+                        test_amount = max(amount_usd / 30000, 0.001)
                     elif from_currency == 'eth':
-                        # 假設 ETH 價格約 $2,000，計算需要的 ETH 數量  
-                        eth_amount = amount_usd / 2000
-                        test_amount = max(eth_amount, 0.01)  # 最小 0.01 ETH
+                        # 假設 ETH 價格約 $2,000
+                        test_amount = max(amount_usd / 2000, 0.01)
                     else:
                         test_amount = amount_usd
                     
-                    # 嘗試新的估算 API 格式
                     estimate_params = {
                         'api_key': self.api_key,
                         'fixed': 'false',
@@ -155,52 +146,48 @@ class SimpleSwapService:
                         'amount': test_amount
                     }
                     
-                    # 嘗試不同的端點
-                    estimate_endpoints = [
-                        f"{self.api_base_url}/get_estimated",
-                        f"{self.api_base_url}/v1/get_estimated",
-                        f"{self.api_base_url}/api/v1/get_estimated"
-                    ]
+                    estimate_response = requests.get(
+                        main_endpoint,
+                        params=estimate_params,
+                        timeout=10  # 減少超時時間
+                    )
                     
-                    for endpoint in estimate_endpoints:
+                    logger.info(f"測試貨幣對 {from_currency}/{to_currency}: {estimate_response.status_code}")
+                    
+                    if estimate_response.status_code == 200:
                         try:
-                            estimate_response = requests.get(
-                                endpoint,
-                                params=estimate_params,
-                                timeout=15
-                            )
+                            response_text = estimate_response.text.strip()
+                            logger.info(f"API 回應內容: '{response_text}'")
                             
-                            logger.info(f"測試端點 {endpoint} 貨幣對 {from_currency}/{to_currency}: {estimate_response.status_code}")
-                            
-                            if estimate_response.status_code == 200:
-                                try:
-                                    response_text = estimate_response.text.strip()
-                                    if response_text and response_text != "null":
-                                        estimated_crypto = float(response_text)
-                                        successful_pair = (from_currency, to_currency, test_amount)
-                                        logger.info(f"✅ 找到可用貨幣對: {from_currency}/{to_currency}, 估算: {estimated_crypto}")
-                                        break
-                                    else:
-                                        logger.warning(f"估算回應為空或 null: {response_text}")
-                                        continue
-                                except ValueError as e:
-                                    logger.warning(f"無法解析估算結果: {response_text}")
+                            # 修正解析邏輯
+                            if response_text and response_text != "null" and response_text != '""':
+                                # 移除可能的引號
+                                clean_text = response_text.strip('"\'')
+                                
+                                # 嘗試轉換為數字
+                                estimated_crypto = float(clean_text)
+                                
+                                if estimated_crypto > 0:  # 確保是有效的正數
+                                    successful_pair = (from_currency, to_currency, test_amount)
+                                    logger.info(f"✅ 找到可用貨幣對: {from_currency}/{to_currency}, 估算: {estimated_crypto}")
+                                    break
+                                else:
+                                    logger.warning(f"估算結果為零或負數: {estimated_crypto}")
                                     continue
-                            elif estimate_response.status_code == 422:
-                                logger.info(f"貨幣對 {from_currency}/{to_currency} 不支援 (422)")
-                                break  # 422 表示貨幣對不支援，不需要嘗試其他端點
-                            elif estimate_response.status_code == 404:
-                                logger.info(f"端點 {endpoint} 不存在 (404)")
-                                continue  # 嘗試下一個端點
                             else:
-                                logger.warning(f"估算請求失敗: {estimate_response.status_code} - {estimate_response.text}")
-                                break
-                        except Exception as endpoint_error:
-                            logger.warning(f"測試端點 {endpoint} 失敗: {endpoint_error}")
+                                logger.warning(f"估算回應為空或 null: '{response_text}'")
+                                continue
+                                
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"無法解析估算結果 '{response_text}': {e}")
                             continue
-                    
-                    if successful_pair:
-                        break
+                            
+                    elif estimate_response.status_code == 422:
+                        logger.info(f"貨幣對 {from_currency}/{to_currency} 不支援")
+                        continue
+                    else:
+                        logger.warning(f"估算請求失敗: {estimate_response.status_code}")
+                        continue
                         
                 except Exception as e:
                     logger.warning(f"測試貨幣對 {from_currency}/{to_currency} 失敗: {e}")
@@ -231,93 +218,92 @@ class SimpleSwapService:
             }
             
             # 創建交換
-            response = requests.post(
-                f"{self.api_base_url}/create_exchange",
-                params={'api_key': self.api_key},
-                json=exchange_data,
-                timeout=30
-            )
-            
-            logger.info(f"創建交換請求: {exchange_data}")
-            logger.info(f"API 回應狀態: {response.status_code}")
-            
-            if response.status_code == 200:
-                result = response.json()
-                logger.info(f"✅ SimpleSwap 交換創建成功: {result}")
+            try:
+                response = requests.post(
+                    f"{self.api_base_url}/create_exchange",
+                    params={'api_key': self.api_key},
+                    json=exchange_data,
+                    timeout=15  # 減少超時時間
+                )
                 
-                if 'id' in result:
-                    exchange_id = result['id']
+                logger.info(f"創建交換請求: {exchange_data}")
+                logger.info(f"API 回應狀態: {response.status_code}")
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    logger.info(f"✅ SimpleSwap 交換創建成功: {result}")
                     
-                    # 保存交換記錄
-                    exchange_record = {
-                        'exchange_id': exchange_id,
-                        'order_id': order_id,
-                        'user_name': user_info['name'],
-                        'user_email': user_info['email'],
-                        'plan_id': plan_info['id'],
-                        'plan_name': plan_info['name'],
-                        'plan_period': plan_info['period'],
-                        'amount_twd': amount_twd,
-                        'amount_usd': amount_usd,
-                        'amount_btc': crypto_amount if from_currency == 'btc' else None,
-                        'amount_fiat': crypto_amount,
-                        'fiat_currency': from_currency.upper(),
-                        'estimated_crypto': estimated_crypto,
-                        'crypto_currency': to_currency.upper(),
-                        'currency_from': from_currency,
-                        'currency_to': to_currency,
-                        'status': 'waiting_payment',
-                        'created_at': datetime.now(),
-                        'payment_method': 'crypto_to_crypto',  # 實際上是加密貨幣交換
-                        'receiving_address': receiving_address,
-                        'expires_at': datetime.now() + timedelta(hours=2),
-                        'payment_type': 'crypto'
-                    }
-                    
-                    # 如果 API 返回了付款地址或 URL
-                    if 'address_from' in result:
-                        exchange_record['payment_address'] = result['address_from']
-                    if 'payment_url' in result:
-                        exchange_record['payment_url'] = result['payment_url']
-                    
-                    self.save_exchange_record(exchange_id, exchange_record)
-                    
-                    # 決定付款 URL
-                    base_url = os.environ.get('BASE_URL', 'https://scrilab.onrender.com')
-                    
-                    if 'payment_url' in result:
-                        payment_url = result['payment_url']
-                    elif 'address_from' in result:
-                        # 加密貨幣付款，使用我們的詳情頁面
+                    if 'id' in result:
+                        exchange_id = result['id']
+                        
+                        # 保存交換記錄
+                        exchange_record = {
+                            'exchange_id': exchange_id,
+                            'order_id': order_id,
+                            'user_name': user_info['name'],
+                            'user_email': user_info['email'],
+                            'plan_id': plan_info['id'],
+                            'plan_name': plan_info['name'],
+                            'plan_period': plan_info['period'],
+                            'amount_twd': amount_twd,
+                            'amount_usd': amount_usd,
+                            'amount_btc': crypto_amount if from_currency == 'btc' else None,
+                            'amount_fiat': crypto_amount,
+                            'fiat_currency': from_currency.upper(),
+                            'estimated_crypto': estimated_crypto,
+                            'crypto_currency': to_currency.upper(),
+                            'currency_from': from_currency,
+                            'currency_to': to_currency,
+                            'status': 'waiting_payment',
+                            'created_at': datetime.now(),
+                            'payment_method': 'crypto_to_crypto',
+                            'receiving_address': receiving_address,
+                            'expires_at': datetime.now() + timedelta(hours=2),
+                            'payment_type': 'crypto'
+                        }
+                        
+                        # 如果 API 返回了付款地址
+                        if 'address_from' in result:
+                            exchange_record['payment_address'] = result['address_from']
+                        
+                        self.save_exchange_record(exchange_id, exchange_record)
+                        
+                        # 決定付款 URL
+                        base_url = os.environ.get('BASE_URL', 'https://scrilab.onrender.com')
                         payment_url = f"{base_url}/payment/simpleswap/details/{exchange_id}"
+                        
+                        return {
+                            'success': True,
+                            'exchange_id': exchange_id,
+                            'order_id': order_id,
+                            'payment_url': payment_url,
+                            'amount_usd': amount_usd,
+                            'amount_twd': amount_twd,
+                            'amount_fiat': crypto_amount,
+                            'fiat_currency': from_currency.upper(),
+                            'estimated_crypto': estimated_crypto,
+                            'crypto_currency': to_currency.upper(),
+                            'expires_at': exchange_record['expires_at'].isoformat(),
+                            'payment_method': 'crypto_to_crypto'
+                        }
                     else:
-                        # 使用詳情頁面
-                        payment_url = f"{base_url}/payment/simpleswap/details/{exchange_id}"
-                    
-                    return {
-                        'success': True,
-                        'exchange_id': exchange_id,
-                        'order_id': order_id,
-                        'payment_url': payment_url,
-                        'amount_usd': amount_usd,
-                        'amount_twd': amount_twd,
-                        'amount_fiat': crypto_amount,
-                        'fiat_currency': from_currency.upper(),
-                        'estimated_crypto': estimated_crypto,
-                        'crypto_currency': to_currency.upper(),
-                        'expires_at': exchange_record['expires_at'].isoformat(),
-                        'payment_method': 'crypto_to_crypto'
-                    }
+                        logger.error(f"SimpleSwap 回應中沒有 exchange ID: {result}")
+                        return self.create_mercuryo_mock_payment(plan_info, user_info, order_id)
                 else:
-                    logger.error(f"SimpleSwap 回應中沒有 exchange ID: {result}")
+                    logger.error(f"SimpleSwap API 請求失敗: {response.status_code} - {response.text}")
                     return self.create_mercuryo_mock_payment(plan_info, user_info, order_id)
-            else:
-                logger.error(f"SimpleSwap API 請求失敗: {response.status_code} - {response.text}")
+                    
+            except requests.exceptions.Timeout:
+                logger.error("創建交換請求超時")
+                return self.create_mercuryo_mock_payment(plan_info, user_info, order_id)
+            except Exception as e:
+                logger.error(f"創建交換請求失敗: {str(e)}")
                 return self.create_mercuryo_mock_payment(plan_info, user_info, order_id)
                 
         except Exception as e:
             logger.error(f"創建 Fiat-to-Crypto 交換失敗: {str(e)}", exc_info=True)
             return self.create_mercuryo_mock_payment(plan_info, user_info, f"mock_{datetime.now().strftime('%Y%m%d%H%M%S')}")
+        
     def get_exchange_status(self, exchange_id: str) -> Optional[Dict]:
         """獲取交換狀態"""
         try:
