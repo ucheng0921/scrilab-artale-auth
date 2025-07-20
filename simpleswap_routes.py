@@ -1,7 +1,6 @@
-# 在 simpleswap_routes.py 文件的頂部添加這個模板
-import os
+# 在 simpleswap_routes.py 文件中
 
-
+# 首先，在文件頂部（其他模板定義之後）添加 SIMPLESWAP_WIDGET_TEMPLATE
 SIMPLESWAP_WIDGET_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -135,7 +134,7 @@ SIMPLESWAP_WIDGET_TEMPLATE = r"""
             </div>
             <iframe 
                 id="simpleswap-widget"
-                src="https://widget.simpleswap.io"
+                src="https://widget.simpleswap.io?from=usd&to=usdt&amount={{ exchange_record.amount_fiat }}&variant=fiat&affiliateId={{ api_key }}"
                 width="100%" 
                 height="600"
                 frameborder="0"
@@ -150,90 +149,47 @@ SIMPLESWAP_WIDGET_TEMPLATE = r"""
     </div>
 
     <script>
-        // SimpleSwap Widget 配置
-        const widgetParams = {
-            from: 'usd',
-            to: 'usdt',
-            amount: {{ exchange_record.amount_fiat }},
-            address: '',  // 留空，讓用戶在 widget 中填寫
-            extraId: '',
-            affiliateId: '{{ api_key }}',  // 您的 affiliate ID
-            variant: 'fiat'  // 指定 fiat 變體
-        };
-
         // 當 iframe 載入完成後
         document.getElementById('simpleswap-widget').onload = function() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('simpleswap-widget').style.display = 'block';
-            
-            // 發送配置到 widget
-            const iframe = document.getElementById('simpleswap-widget');
-            iframe.contentWindow.postMessage({
-                type: 'simpleswap-config',
-                data: widgetParams
-            }, '*');
         };
 
         // 監聽來自 widget 的消息
         window.addEventListener('message', function(event) {
-            if (event.origin !== 'https://widget.simpleswap.io') return;
+            // 安全檢查
+            if (!event.origin.includes('simpleswap.io')) return;
             
             console.log('Widget message:', event.data);
             
             // 處理交換完成事件
-            if (event.data.type === 'exchange-created') {
+            if (event.data.type === 'exchange-created' || event.data.exchangeId) {
                 // 保存交換 ID
-                const exchangeId = event.data.exchangeId;
+                const exchangeId = event.data.exchangeId || event.data.id;
                 console.log('Exchange created:', exchangeId);
                 
-                // 可以在這裡更新後端
-                updateExchangeStatus(exchangeId);
+                // 可以在這裡更新後端或重定向
+                if (exchangeId) {
+                    // 延遲重定向到成功頁面
+                    setTimeout(() => {
+                        window.location.href = `/payment/simpleswap/success?id={{ exchange_id }}&simpleswap_id=${exchangeId}`;
+                    }, 3000);
+                }
             }
         });
 
-        async function updateExchangeStatus(simpleswapExchangeId) {
-            try {
-                const response = await fetch('/api/update-simpleswap-exchange', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        internal_exchange_id: '{{ exchange_id }}',
-                        simpleswap_exchange_id: simpleswapExchangeId
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    console.log('Exchange status updated');
-                }
-            } catch (error) {
-                console.error('Failed to update exchange status:', error);
+        // 設置超時檢查
+        setTimeout(() => {
+            const iframe = document.getElementById('simpleswap-widget');
+            if (iframe.style.display === 'none') {
+                document.getElementById('loading').innerHTML = '<i class="fas fa-exclamation-triangle"></i>&nbsp; 載入失敗，請重新整理頁面';
             }
-        }
+        }, 10000);
     </script>
 </body>
 </html>
 """
 
-# 在 SimpleSwapRoutes 類中添加這個方法
-def show_widget_payment(self, exchange_id):
-    """顯示 SimpleSwap Widget 付款頁面"""
-    try:
-        exchange_record = self.simpleswap_service.get_exchange_record(exchange_id)
-        if not exchange_record:
-            return redirect('/products?error=exchange_not_found')
-        
-        api_key = os.environ.get('SIMPLESWAP_API_KEY')
-        
-        return render_template_string(
-            SIMPLESWAP_WIDGET_TEMPLATE,
-            exchange_record=exchange_record,
-            exchange_id=exchange_id,
-            api_key=api_key
-        )
-    except Exception as e:
-        logger.error(f"顯示 Widget 付款頁面錯誤: {str(e)}")
-        return redirect('/products?error=system_error')
 # SimpleSwap 付款詳情頁面模板
 SIMPLESWAP_PAYMENT_DETAILS_TEMPLATE = r"""
 <!DOCTYPE html>
@@ -655,6 +611,7 @@ MERCURYO_MOCK_PAYMENT_TEMPLATE = r"""
 </html>
 """
 # simpleswap_routes.py - 修復版本，統一使用新的欄位名稱
+import os
 from flask import request, jsonify, render_template_string, redirect
 import logging
 import json
@@ -961,6 +918,25 @@ class SimpleSwapRoutes:
             
         except Exception as e:
             logger.error(f"顯示付款詳情錯誤: {str(e)}")
+            return redirect('/products?error=system_error')
+
+    def show_widget_payment(self, exchange_id):
+        """顯示 SimpleSwap Widget 付款頁面"""
+        try:
+            exchange_record = self.simpleswap_service.get_exchange_record(exchange_id)
+            if not exchange_record:
+                return redirect('/products?error=exchange_not_found')
+            
+            api_key = os.environ.get('SIMPLESWAP_API_KEY')
+            
+            return render_template_string(
+                SIMPLESWAP_WIDGET_TEMPLATE,
+                exchange_record=exchange_record,
+                exchange_id=exchange_id,
+                api_key=api_key
+            )
+        except Exception as e:
+            logger.error(f"顯示 Widget 付款頁面錯誤: {str(e)}")
             return redirect('/products?error=system_error')
 
 # SimpleSwap 付款成功頁面模板
