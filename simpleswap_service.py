@@ -52,7 +52,7 @@ class SimpleSwapService:
         return address
 
     def create_fiat_to_crypto_exchange(self, plan_info: Dict, user_info: Dict) -> Optional[Dict]:
-        """創建法幣到加密貨幣交換 - 使用有效地址佔位符"""
+        """創建法幣到加密貨幣交換 - 正確的 Fiat API 實現"""
         try:
             order_id = f"fiat_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             amount_twd = plan_info['price']
@@ -86,7 +86,7 @@ class SimpleSwapService:
                 
                 if 'id' in result:
                     exchange_id = result['id']
-                    estimated_crypto = amount_usd * 0.9505
+                    estimated_crypto = amount_usd * 0.996  # 扣除 0.4% 手續費
                     
                     # 保存交換記錄
                     exchange_record = {
@@ -108,7 +108,6 @@ class SimpleSwapService:
                         'status': 'waiting_payment',
                         'created_at': datetime.now(),
                         'payment_method': 'fiat_to_crypto',
-                        #'receiving_address': placeholder_usdt_address,  # 記錄佔位符地址
                         'expires_at': datetime.now() + timedelta(hours=2),
                         'payment_type': 'credit_card',
                         'is_fiat_exchange': True,
@@ -117,23 +116,23 @@ class SimpleSwapService:
                     
                     self.save_exchange_record(exchange_id, exchange_record)
                     
-                    # 尋找 Guardarian/Mercuryo 連結
+                    # 根據文檔，fiat 交換會返回一個到 Guardarian 的連結
                     payment_url = None
-                    url_fields = ['guardarian_url', 'mercuryo_url', 'redirect_url', 'payment_url', 'url']
+                    
+                    # 檢查各種可能的 URL 欄位
+                    url_fields = ['redirect_url', 'url', 'guardarian_url', 'payment_url']
                     
                     for url_field in url_fields:
                         if result.get(url_field):
                             payment_url = result[url_field]
-                            logger.info(f"找到 {url_field}: {payment_url}")
+                            logger.info(f"找到 Guardarian 付款 URL ({url_field}): {payment_url}")
                             break
                     
-                    # 如果沒有找到外部付款 URL，檢查回應結構
                     if not payment_url:
-                        logger.warning(f"未找到付款 URL，完整回應: {result}")
-                        # 使用我們的內部信用卡頁面作為備選
+                        logger.warning(f"未找到 Guardarian URL，完整回應: {result}")
+                        # 如果沒有返回 URL，使用交換 ID 構建一個
                         base_url = os.environ.get('BASE_URL', 'https://scrilab.onrender.com')
                         payment_url = f"{base_url}/payment/credit-card/{exchange_id}"
-                        logger.info(f"使用內部信用卡頁面: {payment_url}")
                     
                     return {
                         'success': True,
@@ -149,8 +148,9 @@ class SimpleSwapService:
                         'expires_at': exchange_record['expires_at'].isoformat(),
                         'payment_method': 'credit_card',
                         'is_fiat_exchange': True,
-                        'fee_info': '4.95% (Mercuryo 3.95% + SimpleSwap 1%)',
-                        'raw_response': result  # 保留原始回應用於調試
+                        'fee_info': '0.4% (SimpleSwap Fiat API 固定費率)',
+                        'provider': 'Guardarian',
+                        'raw_response': result
                     }
                 else:
                     logger.error(f"API 回應中沒有 exchange ID: {result}")
@@ -160,16 +160,22 @@ class SimpleSwapService:
                 error_data = response.json() if response.content else {}
                 logger.error(f"API 請求失敗: {response.status_code} - {error_data}")
                 
-                # 如果仍然是地址驗證錯誤，可能需要檢查 API Key 設定
-                if response.status_code == 400 and 'address_to' in error_data.get('description', ''):
-                    logger.error("⚠️ 地址驗證失敗！請檢查：")
-                    logger.error("1. API Key 是否設為 'Fiat' 類型")
-                    logger.error("2. API Key 是否有 Fiat 交換權限")
-                    logger.error("3. 聯繫 SimpleSwap 支援確認設定")
-                    return {'success': False, 'error': '地址驗證失敗，請檢查 API 設定或聯繫技術支援'}
-                
-                return {'success': False, 'error': f'API 錯誤：{error_data.get("description", "未知錯誤")}'}
-                
+                # 更新錯誤處理
+                if response.status_code == 400:
+                    error_desc = error_data.get('description', '')
+                    if 'currency' in error_desc:
+                        logger.error("貨幣驗證失敗 - 請確認 USD 和 USDT 是否支援")
+                    elif 'amount' in error_desc:
+                        logger.error(f"金額驗證失敗 - 金額: {amount_usd}")
+                    
+                    return {'success': False, 'error': f'API 錯誤：{error_desc}'}
+                elif response.status_code == 401:
+                    return {'success': False, 'error': 'API Key 無效或無 Fiat 交換權限'}
+                elif response.status_code == 403:
+                    return {'success': False, 'error': 'API Key 沒有 Fiat 交換權限'}
+                else:
+                    return {'success': False, 'error': f'API 錯誤 ({response.status_code})'}
+                    
         except Exception as e:
             logger.error(f"創建 Fiat-to-Crypto 交換失敗: {str(e)}", exc_info=True)
             return {'success': False, 'error': '系統錯誤，請稍後再試'}
