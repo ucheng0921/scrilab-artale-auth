@@ -132,10 +132,14 @@ SIMPLESWAP_WIDGET_TEMPLATE = r"""
             <div class="loading" id="loading">
                 <i class="fas fa-spinner fa-spin"></i>&nbsp; 正在載入付款界面...
             </div> 
-            <script>
-                // 直接重定向到 SimpleSwap 網站
-                window.location.href = "https://simpleswap.io/?from=usd&to=usdt&amount={{ exchange_record.amount_fiat }}&ref={{ api_key }}";
-            </script>
+            <iframe 
+                id="simpleswap-widget"
+                src="https://widget.simpleswap.io?from=usd&to=usdt&amount={{ exchange_record.amount_fiat }}&variant=fiat&affiliateId={{ api_key }}"
+                width="100%" 
+                height="600"
+                frameborder="0"
+                style="border-radius: 14px; display: none;"
+            ></iframe>
         </div>
 
         <a href="/products" class="back-link">
