@@ -52,26 +52,26 @@ class SimpleSwapService:
         return address
 
     def create_fiat_to_crypto_exchange(self, plan_info: Dict, user_info: Dict) -> Optional[Dict]:
-        """創建法幣到加密貨幣交換 - 使用有效地址佔位符"""
+        """創建法幣到加密貨幣交換 - 正確的 Fiat API 實現"""
         try:
             order_id = f"fiat_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             amount_twd = plan_info['price']
             amount_usd = amount_twd * 0.032
             
-            logger.info(f"開始創建 SimpleSwap Fiat-to-Crypto 交換 - Plan: {plan_info['name']}, USD: {amount_usd}")
+            # 確保金額符合最小要求（通常 fiat 交換需要至少 $50）
+            min_amount = 10.0
+            if amount_usd < min_amount:
+                logger.warning(f"金額 ${amount_usd} 低於建議最小值 ${min_amount}")
+                # 您可以選擇：
+                # 1. 返回錯誤
+                # return {'success': False, 'error': f'最小交換金額為 ${min_amount}'}
+                # 2. 或繼續嘗試
             
-            # 對於 fiat 交換，需要提供有效的 USDT 地址作為佔位符
-            # 這個地址不會被實際使用，但必須格式正確以通過驗證
-            placeholder_usdt_address = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"  # 有效的 USDT TRC20 地址
-            
+            # Fiat API 不需要 address_to，因為用戶會被重定向到 Guardarian
             exchange_data = {
                 'currency_from': 'usd',
                 'currency_to': 'usdt',
                 'amount': amount_usd,
-                'address_to': placeholder_usdt_address,  # 使用有效地址佔位符
-                'extra_id_to': '',
-                'user_refund_address': '',
-                'user_refund_extra_id': '',
                 'fixed': False
             }
             
@@ -115,7 +115,7 @@ class SimpleSwapService:
                         'status': 'waiting_payment',
                         'created_at': datetime.now(),
                         'payment_method': 'fiat_to_crypto',
-                        'receiving_address': placeholder_usdt_address,  # 記錄佔位符地址
+                        #'receiving_address': placeholder_usdt_address,  # 記錄佔位符地址
                         'expires_at': datetime.now() + timedelta(hours=2),
                         'payment_type': 'credit_card',
                         'is_fiat_exchange': True,
