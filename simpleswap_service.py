@@ -52,7 +52,7 @@ class SimpleSwapService:
         return address
 
     def create_fiat_to_crypto_exchange(self, plan_info: Dict, user_info: Dict) -> Optional[Dict]:
-        """創建法幣到加密貨幣交換 - 正確的 Fiat API 實現"""
+        """創建法幣到加密貨幣交換 - 使用 Widget 方法"""
         try:
             order_id = f"fiat_{uuid_lib.uuid4().hex[:12]}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             amount_twd = plan_info['price']
@@ -60,122 +60,73 @@ class SimpleSwapService:
             
             logger.info(f"開始創建 SimpleSwap Fiat-to-Crypto 交換 - Plan: {plan_info['name']}, USD: {amount_usd}")
             
-            # Fiat API 不需要 address_to，因為用戶會被重定向到 Guardarian
-            exchange_data = {
-                'currency_from': 'usd',
-                'currency_to': 'usdt',
+            # 如果 API 不支援 fiat，我們可以直接構建 widget URL
+            # 這是一個備選方案
+            exchange_id = f"fiat_widget_{uuid_lib.uuid4().hex[:12]}"
+            
+            # SimpleSwap widget URL 格式
+            widget_params = {
+                'from': 'usd',
+                'to': 'usdt',
                 'amount': amount_usd,
-                'fixed': False
+                'api_key': self.api_key
             }
             
-            logger.info(f"創建 Fiat 交換請求: {exchange_data}")
+            # 構建 widget URL
+            widget_url = f"https://simpleswap.io/widget?" + "&".join([f"{k}={v}" for k, v in widget_params.items()])
             
-            response = requests.post(
-                f"{self.api_base_url}/create_exchange",
-                params={'api_key': self.api_key},
-                json=exchange_data,
-                timeout=30
-            )
+            estimated_crypto = amount_usd * 0.996  # 扣除 0.4% 手續費
             
-            logger.info(f"API 回應狀態: {response.status_code}")
-            logger.info(f"API 回應內容: {response.text}")
+            # 保存交換記錄
+            exchange_record = {
+                'exchange_id': exchange_id,
+                'order_id': order_id,
+                'user_name': user_info['name'],
+                'user_email': user_info['email'],
+                'plan_id': plan_info['id'],
+                'plan_name': plan_info['name'],
+                'plan_period': plan_info['period'],
+                'amount_twd': amount_twd,
+                'amount_usd': amount_usd,
+                'amount_fiat': amount_usd,
+                'fiat_currency': 'USD',
+                'estimated_crypto': estimated_crypto,
+                'crypto_currency': 'USDT',
+                'currency_from': 'usd',
+                'currency_to': 'usdt',
+                'status': 'waiting_payment',
+                'created_at': datetime.now(),
+                'payment_method': 'fiat_to_crypto_widget',
+                'expires_at': datetime.now() + timedelta(hours=24),
+                'payment_type': 'credit_card',
+                'is_fiat_exchange': True,
+                'widget_url': widget_url
+            }
             
-            if response.status_code == 200:
-                result = response.json()
-                logger.info(f"✅ SimpleSwap Fiat 交換創建成功: {result}")
-                
-                if 'id' in result:
-                    exchange_id = result['id']
-                    estimated_crypto = amount_usd * 0.996  # 扣除 0.4% 手續費
-                    
-                    # 保存交換記錄
-                    exchange_record = {
-                        'exchange_id': exchange_id,
-                        'order_id': order_id,
-                        'user_name': user_info['name'],
-                        'user_email': user_info['email'],
-                        'plan_id': plan_info['id'],
-                        'plan_name': plan_info['name'],
-                        'plan_period': plan_info['period'],
-                        'amount_twd': amount_twd,
-                        'amount_usd': amount_usd,
-                        'amount_fiat': amount_usd,
-                        'fiat_currency': 'USD',
-                        'estimated_crypto': estimated_crypto,
-                        'crypto_currency': 'USDT',
-                        'currency_from': 'usd',
-                        'currency_to': 'usdt',
-                        'status': 'waiting_payment',
-                        'created_at': datetime.now(),
-                        'payment_method': 'fiat_to_crypto',
-                        'expires_at': datetime.now() + timedelta(hours=2),
-                        'payment_type': 'credit_card',
-                        'is_fiat_exchange': True,
-                        'simpleswap_data': result
-                    }
-                    
-                    self.save_exchange_record(exchange_id, exchange_record)
-                    
-                    # 根據文檔，fiat 交換會返回一個到 Guardarian 的連結
-                    payment_url = None
-                    
-                    # 檢查各種可能的 URL 欄位
-                    url_fields = ['redirect_url', 'url', 'guardarian_url', 'payment_url']
-                    
-                    for url_field in url_fields:
-                        if result.get(url_field):
-                            payment_url = result[url_field]
-                            logger.info(f"找到 Guardarian 付款 URL ({url_field}): {payment_url}")
-                            break
-                    
-                    if not payment_url:
-                        logger.warning(f"未找到 Guardarian URL，完整回應: {result}")
-                        # 如果沒有返回 URL，使用交換 ID 構建一個
-                        base_url = os.environ.get('BASE_URL', 'https://scrilab.onrender.com')
-                        payment_url = f"{base_url}/payment/credit-card/{exchange_id}"
-                    
-                    return {
-                        'success': True,
-                        'exchange_id': exchange_id,
-                        'order_id': order_id,
-                        'payment_url': payment_url,
-                        'amount_usd': amount_usd,
-                        'amount_twd': amount_twd,
-                        'amount_fiat': amount_usd,
-                        'fiat_currency': 'USD',
-                        'estimated_crypto': estimated_crypto,
-                        'crypto_currency': 'USDT',
-                        'expires_at': exchange_record['expires_at'].isoformat(),
-                        'payment_method': 'credit_card',
-                        'is_fiat_exchange': True,
-                        'fee_info': '0.4% (SimpleSwap Fiat API 固定費率)',
-                        'provider': 'Guardarian',
-                        'raw_response': result
-                    }
-                else:
-                    logger.error(f"API 回應中沒有 exchange ID: {result}")
-                    return {'success': False, 'error': '交換創建失敗：回應格式錯誤'}
+            self.save_exchange_record(exchange_id, exchange_record)
             
-            else:
-                error_data = response.json() if response.content else {}
-                logger.error(f"API 請求失敗: {response.status_code} - {error_data}")
-                
-                # 更新錯誤處理
-                if response.status_code == 400:
-                    error_desc = error_data.get('description', '')
-                    if 'currency' in error_desc:
-                        logger.error("貨幣驗證失敗 - 請確認 USD 和 USDT 是否支援")
-                    elif 'amount' in error_desc:
-                        logger.error(f"金額驗證失敗 - 金額: {amount_usd}")
-                    
-                    return {'success': False, 'error': f'API 錯誤：{error_desc}'}
-                elif response.status_code == 401:
-                    return {'success': False, 'error': 'API Key 無效或無 Fiat 交換權限'}
-                elif response.status_code == 403:
-                    return {'success': False, 'error': 'API Key 沒有 Fiat 交換權限'}
-                else:
-                    return {'success': False, 'error': f'API 錯誤 ({response.status_code})'}
-                    
+            logger.info(f"✅ 使用 Widget 方法創建 Fiat 交換: {exchange_id}")
+            logger.info(f"Widget URL: {widget_url}")
+            
+            return {
+                'success': True,
+                'exchange_id': exchange_id,
+                'order_id': order_id,
+                'payment_url': widget_url,
+                'amount_usd': amount_usd,
+                'amount_twd': amount_twd,
+                'amount_fiat': amount_usd,
+                'fiat_currency': 'USD',
+                'estimated_crypto': estimated_crypto,
+                'crypto_currency': 'USDT',
+                'expires_at': exchange_record['expires_at'].isoformat(),
+                'payment_method': 'credit_card',
+                'is_fiat_exchange': True,
+                'fee_info': '0.4% (SimpleSwap Fiat 固定費率)',
+                'provider': 'SimpleSwap Widget',
+                'note': '使用 SimpleSwap Widget 進行 Fiat 交換'
+            }
+            
         except Exception as e:
             logger.error(f"創建 Fiat-to-Crypto 交換失敗: {str(e)}", exc_info=True)
             return {'success': False, 'error': '系統錯誤，請稍後再試'}
