@@ -1,4 +1,4 @@
-# 專業軟體服務頁面 HTML 模板 - 修復版本，恢復打字機特效和遊戲圖片
+# templates.py - 更新版本，僅支援 itch.io 付款
 PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -30,6 +30,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             --accent-purple: #8b5cf6;
             --accent-green: #10b981;
             --accent-orange: #f59e0b;
+            --accent-itchio: #fa5c5c;
             
             --border-color: #333333;
             --border-hover: #555555;
@@ -38,11 +39,13 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             --gradient-accent: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%);
             --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
             --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --gradient-itchio: linear-gradient(135deg, #fa5c5c 0%, #e53e3e 100%);
             
             --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.15);
             --shadow-md: 0 8px 25px rgba(0, 0, 0, 0.25);
             --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
             --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.3);
+            --shadow-itchio: 0 0 30px rgba(250, 92, 92, 0.3);
             
             --border-radius: 16px;
             --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -57,7 +60,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             position: relative;
         }
 
-        /* 恢復打字機代碼背景特效 CSS */
+        /* 背景動效 CSS 保持不變 */
         @keyframes typewriter {
             0% { width: 0; }
             90% { width: 100%; }
@@ -75,7 +78,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             100% { opacity: 0; }
         }
 
-        /* 增強版背景動效 - 新增淡淡漸層特效 */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -119,11 +121,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             0%, 100% { transform: translate(0, 0) rotate(0deg); }
             33% { transform: translate(30px, -30px) rotate(1deg); }
             66% { transform: translate(-20px, 20px) rotate(-1deg); }
-        }
-
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         @keyframes gradient-flow {
@@ -228,9 +225,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            color: var(--accent-blue);
+            background: rgba(250, 92, 92, 0.1);
+            border: 1px solid rgba(250, 92, 92, 0.2);
+            color: var(--accent-itchio);
             padding: 0.5rem 1rem;
             border-radius: 50px;
             font-size: 0.85rem;
@@ -248,7 +245,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .hero .highlight {
-            background: var(--gradient-accent);
+            background: var(--gradient-itchio);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -271,7 +268,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .btn-primary {
-            background: var(--gradient-accent);
+            background: var(--gradient-itchio);
             color: white;
             padding: 1rem 2rem;
             border-radius: 12px;
@@ -288,7 +285,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: var(--shadow-glow);
+            box-shadow: var(--shadow-itchio);
         }
 
         .btn-secondary {
@@ -307,8 +304,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .btn-secondary:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
+            border-color: var(--accent-itchio);
+            color: var(--accent-itchio);
             transform: translateY(-3px);
         }
 
@@ -331,9 +328,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .section-badge {
             display: inline-block;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            color: var(--accent-purple);
+            background: rgba(250, 92, 92, 0.1);
+            border: 1px solid rgba(250, 92, 92, 0.2);
+            color: var(--accent-itchio);
             padding: 0.5rem 1rem;
             border-radius: 50px;
             font-size: 0.85rem;
@@ -375,7 +372,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .game-card.active:hover {
             transform: translateY(-5px);
-            border-color: var(--accent-blue);
+            border-color: var(--accent-itchio);
             box-shadow: var(--shadow-lg);
         }
 
@@ -422,7 +419,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .game-overlay i {
             font-size: 2.5rem;
-            color: var(--accent-blue);
+            color: var(--accent-itchio);
         }
 
         .game-info {
@@ -437,7 +434,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .game-subtitle {
-            color: var(--accent-blue);
+            color: var(--accent-itchio);
             font-size: 0.9rem;
             margin-bottom: 1rem;
         }
@@ -453,6 +450,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             gap: 1rem;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .status-badge {
@@ -476,8 +474,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
+        .game-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
         .manual-btn {
-            background: var(--gradient-accent);
+            background: var(--gradient-itchio);
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 8px;
@@ -492,7 +496,18 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .manual-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(250, 92, 92, 0.3);
+        }
+
+        .intro-btn {
+            background: transparent;
+            border: 1px solid var(--accent-itchio);
+            color: var(--accent-itchio);
+        }
+
+        .intro-btn:hover {
+            background: var(--accent-itchio);
+            color: white;
         }
 
         /* Services Section */
@@ -534,7 +549,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             position: absolute;
             top: -12px;
             right: 2rem;
-            background: var(--gradient-accent);
+            background: var(--gradient-itchio);
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 20px;
@@ -574,14 +589,17 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             font-weight: 400;
         }
 
-        .crypto-info {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
+        .itchio-info {
+            background: rgba(250, 92, 92, 0.1);
+            border: 1px solid rgba(250, 92, 92, 0.2);
             border-radius: 8px;
             padding: 0.8rem;
             margin: 1rem 0;
             font-size: 0.9rem;
-            color: var(--accent-blue);
+            color: var(--accent-itchio);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .service-body {
@@ -617,7 +635,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         .service-button {
             width: 100%;
             padding: 1rem;
-            background: var(--gradient-accent);
+            background: var(--gradient-itchio);
             color: white;
             border: none;
             border-radius: 12px;
@@ -633,7 +651,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .service-button:hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-glow);
+            box-shadow: var(--shadow-itchio);
         }
 
         /* Footer */
@@ -679,10 +697,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .email-link:hover {
-            color: var(--accent-blue);
-            border-color: var(--accent-blue);
+            color: var(--accent-itchio);
+            border-color: var(--accent-itchio);
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 5px 15px rgba(250, 92, 92, 0.3);
         }
 
         /* Purchase Modal */
@@ -747,14 +765,17 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             margin: 1.5rem 0;
         }
 
-        .crypto-notice {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.3);
+        .itchio-notice {
+            background: rgba(250, 92, 92, 0.1);
+            border: 1px solid rgba(250, 92, 92, 0.3);
             border-radius: 8px;
             padding: 1rem;
             margin: 1rem 0;
             font-size: 0.9rem;
-            color: var(--accent-blue);
+            color: var(--accent-itchio);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .form-group {
@@ -782,8 +803,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .form-input:focus {
             outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+            border-color: var(--accent-itchio);
+            box-shadow: 0 0 0 3px rgba(250, 92, 92, 0.1);
         }
 
         .modal-buttons {
@@ -851,6 +872,17 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 flex-direction: column;
                 gap: 1.5rem;
             }
+
+            .game-status {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .game-buttons {
+                width: 100%;
+                justify-content: flex-start;
+            }
         }
     </style>
 </head>
@@ -879,10 +911,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <section id="home" class="hero">
         <div class="hero-content">
             <div class="hero-badge">
-                <span>台灣團隊打造</span>
+                <i class="fab fa-itch-io"></i>
+                <span>支援 itch.io 付款</span>
             </div>
             <h1>自動化<span class="highlight">遊戲技術服務</span><br>與個人化方案</h1>
-            <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。我們專注於為客戶提供安全、穩定的遊戲體驗優化服務。</p>
+            <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。現在支援 itch.io 付款，讓購買更加便利。</p>
             <div class="hero-buttons">
                 <a href="#games" class="btn-primary">
                     <i class="fas fa-gamepad"></i>
@@ -914,7 +947,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <div class="game-info">
                         <h3>MapleStory Worlds - Artale</h3>
                         <p class="game-subtitle">繁體中文版</p>
-                        <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案</p>
+                        <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案，透過 itch.io 安全付款</p>
                         <div class="game-status">
                             <span class="status-badge active">服務中</span>
                             <div class="game-buttons">
@@ -949,6 +982,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     </div>
                 </div>
             </div>
+        </div>
     </section>
 
     <!-- Services Section -->
@@ -961,7 +995,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 </button>
                 <div class="section-badge">服務方案</div>
                 <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale 專屬方案</h2>
-                <p class="section-description">一次購買越久享受更優惠的價格，所有方案均提供完整的技術服務</p>
+                <p class="section-description">透過 itch.io 安全付款，支援多種付款方式</p>
             </div>
             
             <div class="services-grid">
@@ -973,6 +1007,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-price">
                             <span class="currency">NT$</span>5
                             <span class="period">/7天</span>
+                        </div>
+                        <div class="itchio-info">
+                            <i class="fab fa-itch-io"></i>
+                            <span>透過 itch.io 安全付款 ≈ $0.16 USD</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1002,12 +1040,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                                 <span>24/7技術支援</span>
                             </li>
                         </ul>
-                        <div class="payment-options">
-                            <button class="service-button" onclick="selectPlan('monthly_30')">
-                                <i class="fas fa-credit-card"></i>
-                                <span>信用卡付款</span>
-                            </button>
-                        </div>                       
+                        <button class="service-button" onclick="selectPlan('trial_7')">
+                            <i class="fab fa-itch-io"></i>
+                            <span>itch.io 付款</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1021,6 +1057,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             <span class="currency">NT$</span>599
                             <span class="period">/30天</span>
                         </div>
+                        <div class="itchio-info">
+                            <i class="fab fa-itch-io"></i>
+                            <span>透過 itch.io 安全付款 ≈ $19.17 USD</span>
+                        </div>
                     </div>
                     <div class="service-body">
                         <ul class="service-features">
@@ -1049,12 +1089,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                                 <span>24/7技術支援</span>
                             </li>
                         </ul>
-                        <div class="payment-options">
-                            <button class="service-button" onclick="selectPlan('monthly_30')">
-                                <i class="fas fa-credit-card"></i>
-                                <span>信用卡付款</span>
-                            </button>
-                        </div>
+                        <button class="service-button" onclick="selectPlan('monthly_30')">
+                            <i class="fab fa-itch-io"></i>
+                            <span>itch.io 付款</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1067,6 +1105,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             <span class="currency">NT$</span>1,499
                             <span class="period">/90天</span>
                         </div>
+                        <div class="itchio-info">
+                            <i class="fab fa-itch-io"></i>
+                            <span>透過 itch.io 安全付款 ≈ $47.97 USD</span>
+                        </div>
                     </div>
                     <div class="service-body">
                         <ul class="service-features">
@@ -1095,12 +1137,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                                 <span>24/7技術支援</span>
                             </li>
                         </ul>
-                        <div class="payment-options">
-                            <button class="service-button" onclick="selectPlan('monthly_30')">
-                                <i class="fas fa-credit-card"></i>
-                                <span>信用卡付款</span>
-                            </button>
-                        </div>
+                        <button class="service-button" onclick="selectPlan('quarterly_90')">
+                            <i class="fab fa-itch-io"></i>
+                            <span>itch.io 付款</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1126,9 +1166,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             </div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 2rem; text-align: center; color: var(--text-muted);">
                 <p style="margin-bottom: 1rem;">
-                    <a href="/disclaimer" style="color: var(--text-muted); text-decoration: none; margin-right: 2rem; transition: color 0.3s ease;" onmouseover="this.style.color='var(--accent-blue)'" onmouseout="this.style.color='var(--text-muted)'">免責聲明</a>
+                    <a href="/disclaimer" style="color: var(--text-muted); text-decoration: none; margin-right: 2rem; transition: color 0.3s ease;" onmouseover="this.style.color='var(--accent-itchio)'" onmouseout="this.style.color='var(--text-muted)'">免責聲明</a>
                 </p>
-                <p>&copy; 2025 Scrilab. All rights reserved. Powered by OxaPay.</p>
+                <p>&copy; 2025 Scrilab. All rights reserved. Powered by itch.io.</p>
             </div>
         </div>
     </footer>
@@ -1137,9 +1177,13 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <div id="purchase-modal" class="modal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
-            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">付款</h3>
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">itch.io 付款</h3>
             <div id="selected-plan-info" class="plan-info">
                 <!-- Plan info will be inserted here -->
+            </div>
+            <div class="itchio-notice">
+                <i class="fab fa-itch-io"></i>
+                <span>將跳轉至 itch.io 完成安全付款，支援 PayPal 和信用卡</span>
             </div>
             <div class="form-group">
                 <label for="user-name">用戶名稱</label>
@@ -1151,13 +1195,13 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             </div>
             <div class="form-group">
                 <label for="contact-phone">備用信箱（選填）</label>
-                <input type="tel" id="contact-phone" placeholder="請輸入備用信箱" class="form-input">
+                <input type="email" id="contact-phone" placeholder="請輸入備用信箱" class="form-input">
             </div>
             <div class="form-group" style="text-align: left;">
                 <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
-                    <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
+                    <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-itchio);">
                     <span style="font-size: 0.95rem; line-height: 1.5;">
-                        我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-blue); text-decoration: none;">免責聲明與服務條款</a>，
+                        我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-itchio); text-decoration: none;">免責聲明與服務條款</a>，
                         理解使用本服務的風險，並自願承擔相關責任。
                     </span>
                 </label>
@@ -1166,8 +1210,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <button class="btn-cancel" onclick="closeModal()">取消</button>
                 <button class="btn-primary" onclick="submitPayment()" id="payment-btn">
                     <span id="payment-btn-text">
-                        <i class="fab fa-bitcoin"></i>
-                        立即付款
+                        <i class="fab fa-itch-io"></i>
+                        前往 itch.io 付款
                     </span>
                     <div class="loading" id="payment-loading" style="display: none;"></div>
                 </button>
@@ -1180,24 +1224,24 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         const servicePlans = {
             'trial_7': {
                 name: '體驗服務',
-                price: 5,
+                price_twd: 5,
+                price_usd: 0.16,
                 period: '7天',
-                description: '適合新手玩家體驗的基礎技術服務',
-                crypto_price: '0.16 USDT'
+                description: '適合新手玩家體驗的基礎技術服務'
             },
             'monthly_30': {
                 name: '標準服務',
-                price: 599,
+                price_twd: 599,
+                price_usd: 19.17,
                 period: '30天',
-                description: '最受歡迎的完整技術服務方案',
-                crypto_price: '19.17 USDT'
+                description: '最受歡迎的完整技術服務方案'
             },
             'quarterly_90': {
                 name: '季度服務',
-                price: 1499,
+                price_twd: 1499,
+                price_usd: 47.97,
                 period: '90天',
-                description: '長期使用最划算的全功能技術服務',
-                crypto_price: '47.97 USDT'
+                description: '長期使用最划算的全功能技術服務'
             }
         };
 
@@ -1227,10 +1271,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <p style="margin: 0 0 1rem 0; color: var(--text-secondary);">${plan.description}</p>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem;">
                     <div style="font-size: 1.3rem; font-weight: bold; color: var(--text-primary);">
-                        NT$ ${plan.price.toLocaleString()}
+                        NT$ ${plan.price_twd.toLocaleString()}
                     </div>
-                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-blue); font-family: 'Courier New', monospace;">
-                        ≈ ${plan.crypto_price}
+                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-itchio); font-family: 'Courier New', monospace;">
+                        ≈ ${plan.price_usd} USD
                     </div>
                 </div>
                 <div style="font-size: 0.9rem; color: var(--text-secondary);">
@@ -1239,16 +1283,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             `;
             
             document.getElementById('purchase-modal').style.display = 'flex';
-        }
-
-        function selectPaymentMethod(planId, paymentType) {
-            if (paymentType === 'smart_pay' || paymentType === 'credit_card') {
-                // 統一使用 SimpleSwap 信用卡付款
-                selectPlan(planId);
-            } else if (paymentType === 'direct_crypto') {
-                // 如果你想保留直接加密貨幣選項，也使用 SimpleSwap
-                selectPlan(planId);
-            }
         }
 
         function closeModal() {
@@ -1288,14 +1322,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             document.getElementById('payment-btn-text').style.display = 'none';
             document.getElementById('payment-loading').style.display = 'inline-block';
             
-            // 直接使用 SimpleSwap 信用卡付款
-            submitSimpleSwapPayment(userName, contactEmail, contactPhone);
+            // 提交 itch.io 付款
+            submitItchioPayment(userName, contactEmail, contactPhone);
         }
 
-        // SimpleSwap 信用卡付款提交
-        async function submitSimpleSwapPayment(userName, contactEmail, contactPhone) {
+        // itch.io 付款提交
+        async function submitItchioPayment(userName, contactEmail, contactPhone) {
             try {
-                const response = await fetch('/api/create-simpleswap-payment', {
+                const response = await fetch('/itchio/create-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1311,8 +1345,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 重定向到 SimpleSwap 付款頁面
-                    window.location.href = data.payment_url;
+                    // 重定向到 itch.io 付款頁面
+                    window.open(data.purchase_url, '_blank');
+                    closeModal();
                 } else {
                     alert('付款創建失敗: ' + data.error);
                     resetPaymentButton();
@@ -1373,11 +1408,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             }
         });
 
-        // =============================================
-        // 恢復打字機代碼背景特效
-        // =============================================
-
-        // 創建打字機效果的代碼背景
+        // 背景特效代碼 (保持原有的打字機效果)
         function createCodeBackground() {
             const codeContainer = document.createElement('div');
             codeContainer.id = 'code-background';
@@ -1391,7 +1422,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 z-index: 1; 
                 opacity: 1; 
                 font-family: 'Courier New', monospace; 
-                color: #00d4ff;
+                color: #fa5c5c;
                 overflow: hidden; 
                 font-size: 14px; 
                 font-weight: 400;
@@ -1399,9 +1430,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             `;
             
             document.body.appendChild(codeContainer);
-            console.log('Code background container created');
-            
-            // 開始第一個打字循環
             startTypingCycle();
         }
 
@@ -1455,11 +1483,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             ];
             
             let currentLine = 0;
-            let lineHeight = 22; // 行高
+            let lineHeight = 22;
             
             function typeLine() {
                 if (currentLine >= codeSnippets.length) {
-                    // 清空容器，重新開始
                     setTimeout(() => {
                         container.innerHTML = '';
                         currentLine = 0;
@@ -1489,15 +1516,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 container.appendChild(lineElement);
                 
                 currentLine++;
-                
-                // 下一行的延遲
                 setTimeout(typeLine, 400 + Math.random() * 600);
             }
             
             typeLine();
         }
 
-        // 添加浮動粒子效果
         function createFloatingParticles() {
             const particlesContainer = document.createElement('div');
             particlesContainer.style.cssText = `
@@ -1516,7 +1540,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     position: absolute; 
                     width: 2px; 
                     height: 2px; 
-                    background: var(--accent-blue); 
+                    background: var(--accent-itchio); 
                     border-radius: 50%; 
                     opacity: 0.3; 
                     animation: float-particle ${10 + Math.random() * 10}s linear infinite; 
@@ -1530,7 +1554,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             document.body.appendChild(particlesContainer);
         }
 
-        // 添加粒子動畫 CSS
         const particleStyle = document.createElement('style');
         particleStyle.textContent = `
             @keyframes float-particle { 
@@ -1542,14 +1565,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         `;
         document.head.appendChild(particleStyle);
 
-        // 初始化增強背景效果
+        // 初始化背景效果
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing background effects');
             createCodeBackground();
             createFloatingParticles();
         });
 
-        // 如果 DOMContentLoaded 已經觸發，立即執行
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
                 createCodeBackground();
@@ -1564,7 +1585,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 </html>
 """
 
-# 付款成功頁面模板
+# 付款成功頁面模板（保持不變）
 PAYMENT_SUCCESS_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -1589,7 +1610,7 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
             --text-secondary: #b3b3b3;
             --text-muted: #808080;
             --accent-green: #10b981;
-            --accent-blue: #00d4ff;
+            --accent-itchio: #fa5c5c;
             --border-color: #333333;
             --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
             --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
@@ -1696,7 +1717,7 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
 
         .uuid-section {
             background: var(--bg-primary);
-            border: 2px solid var(--accent-blue);
+            border: 2px solid var(--accent-itchio);
             border-radius: 12px;
             padding: 1.5rem;
             margin-bottom: 2.5rem;
@@ -1705,7 +1726,7 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
         .uuid-title {
             font-size: 1.2rem;
             font-weight: 700;
-            color: var(--accent-blue);
+            color: var(--accent-itchio);
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
@@ -1764,17 +1785,17 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
 
         .btn-secondary:hover {
             color: var(--text-primary);
-            border-color: var(--accent-blue);
+            border-color: var(--accent-itchio);
         }
 
         .email-notice {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: rgba(250, 92, 92, 0.1);
+            border: 1px solid rgba(250, 92, 92, 0.3);
             border-radius: 8px;
             padding: 1rem;
             margin-bottom: 2rem;
             font-size: 0.95rem;
-            color: var(--accent-blue);
+            color: var(--accent-itchio);
         }
 
         .contact-info {
@@ -1809,7 +1830,7 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
         }
 
         .contact-link:hover {
-            color: var(--accent-blue);
+            color: var(--accent-itchio);
         }
 
         .footer-note {
@@ -1845,7 +1866,7 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
         </div>
         
         <h1 class="success-title">付款成功！</h1>
-        <p class="success-subtitle">感謝您購買 Scrilab Artale 遊戲技術服務</p>
+        <p class="success-subtitle">感謝您透過 itch.io 購買 Scrilab Artale 遊戲技術服務</p>
         
         <div class="purchase-info">
             <div class="info-row">
@@ -1858,7 +1879,11 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
             </div>
             <div class="info-row">
                 <span class="info-label">付款金額</span>
-                <span class="info-value">NT$ {{ payment_record.amount if payment_record else 'N/A' }}</span>
+                <span class="info-value">NT$ {{ payment_record.amount_twd if payment_record else 'N/A' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">付款方式</span>
+                <span class="info-value">itch.io</span>
             </div>
             <div class="info-row">
                 <span class="info-label">付款時間</span>
@@ -1885,8 +1910,8 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
         </div>
         
         <div class="email-notice">
-            <i class="fas fa-envelope"></i>
-            <span>詳細的服務訊息和序號已發送至您的信箱，請查收。</span>
+            <i class="fab fa-itch-io"></i>
+            <span>詳細的服務訊息和序號已發送至您的信箱，請查收。感謝您選擇 itch.io 付款！</span>
         </div>
         
         <div class="contact-info">
@@ -1940,13 +1965,14 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
             const uuid = "{{ user_uuid if user_uuid else '' }}";
             const planName = "{{ payment_record.plan_name if payment_record else 'N/A' }}";
             const planPeriod = "{{ payment_record.plan_period if payment_record else 'N/A' }}";
-            const amount = "{{ payment_record.amount if payment_record else 'N/A' }}";
+            const amount = "{{ payment_record.amount_twd if payment_record else 'N/A' }}";
             
             const content = `Scrilab Artale 服務購買成功
 
 服務方案：${planName}
 服務期限：${planPeriod}
 付款金額：NT$ ${amount}
+付款方式：itch.io
 專屬序號：${uuid}
 
 請妥善保管您的序號，避免外洩給他人使用。
@@ -1973,7 +1999,7 @@ ${new Date().toLocaleDateString('zh-TW')}`;
 </html>
 """
 
-# 付款取消頁面模板
+# 付款取消頁面模板（保持不變）
 PAYMENT_CANCEL_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -1997,7 +2023,7 @@ PAYMENT_CANCEL_TEMPLATE = r"""
             --text-secondary: #b3b3b3;
             --text-muted: #808080;
             --accent-orange: #f59e0b;
-            --accent-blue: #00d4ff;
+            --accent-itchio: #fa5c5c;
             --border-color: #333333;
             --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
@@ -2098,7 +2124,7 @@ PAYMENT_CANCEL_TEMPLATE = r"""
 
         .btn-secondary:hover {
             color: var(--text-primary);
-            border-color: var(--accent-blue);
+            border-color: var(--accent-itchio);
         }
 
         .footer-note {

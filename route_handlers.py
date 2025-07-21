@@ -1,7 +1,7 @@
 """
-route_handlers.py - 修復版本，加強服務可用性檢查
+route_handlers.py - 修復版本，移除 payment_service 依賴
 """
-from flask import request, jsonify, redirect, render_template_string
+from flask import request, jsonify
 import logging
 from functools import wraps
 from datetime import datetime
@@ -12,7 +12,7 @@ import threading
 
 logger = logging.getLogger(__name__)
 
-# 從 app.py 移過來的變數和函數
+# 速率限制相關變數
 blocked_ips = {}
 rate_limit_store = defaultdict(list)
 cleanup_lock = threading.Lock()
@@ -91,12 +91,11 @@ def rate_limit(max_requests=3, time_window=300, block_on_exceed=True):
     return decorator
 
 class RouteHandlers:
-    """路由處理器類別 - 加強版本"""
+    """路由處理器類別 - 更新版本，移除 payment_service"""
     
-    def __init__(self, db, session_manager, payment_service):
+    def __init__(self, db, session_manager):
         self.db = db
         self.session_manager = session_manager
-        self.payment_service = payment_service
         logger.info("✅ RouteHandlers 初始化完成")
     
     def _check_service_health(self):
@@ -126,7 +125,7 @@ class RouteHandlers:
         
         return jsonify({
             'service': 'Scrilab Artale Authentication Service',
-            'version': '2.2.0',
+            'version': '3.0.0-itchio',
             'status': 'healthy' if not health_issues else 'degraded',
             'health_issues': health_issues,
             'features': [
@@ -138,7 +137,8 @@ class RouteHandlers:
                 '🔥 Firestore 會話存儲',
                 '🛍️ 商品展示頁面',
                 '📖 操作手冊',
-                '⚖️ 免責聲明'
+                '⚖️ 免責聲明',
+                '🎮 itch.io 付款整合'
             ],
             'endpoints': {
                 'health': '/health',
@@ -149,83 +149,15 @@ class RouteHandlers:
                 'session_stats': '/session-stats',
                 'products': '/products',
                 'manual': '/manual',
-                'disclaimer': '/disclaimer'
+                'disclaimer': '/disclaimer',
+                'itchio_payment': '/itchio/create-payment'
             },
             'firebase_connected': self.db is not None
         })
     
-    def health_check(self):
-        """健康檢查端點"""
-        health_status = {
-            'status': 'healthy',
-            'timestamp': datetime.now().isoformat(),
-            'service': 'artale-auth-service',
-            'version': '2.2.0',
-            'checks': {}
-        }
-        
-        # 檢查 Firebase 連接
-        if self.db:
-            try:
-                # 測試讀取操作
-                test_ref = self.db.collection('connection_test').limit(1)
-                list(test_ref.stream())
-                health_status['checks']['firebase'] = {
-                    'status': 'healthy',
-                    'message': 'Connection successful'
-                }
-            except Exception as e:
-                health_status['checks']['firebase'] = {
-                    'status': 'unhealthy',
-                    'error': str(e)
-                }
-                health_status['status'] = 'unhealthy'
-        else:
-            health_status['checks']['firebase'] = {
-                'status': 'unavailable',
-                'message': 'Database not initialized'
-            }
-            health_status['status'] = 'degraded'
-        
-        # 檢查 Session Manager
-        if self.session_manager:
-            try:
-                stats = self.session_manager.get_session_stats()
-                health_status['checks']['session_manager'] = {
-                    'status': 'healthy',
-                    'stats': stats
-                }
-            except Exception as e:
-                health_status['checks']['session_manager'] = {
-                    'status': 'unhealthy',
-                    'error': str(e)
-                }
-                health_status['status'] = 'unhealthy'
-        else:
-            health_status['checks']['session_manager'] = {
-                'status': 'unavailable',
-                'message': 'Session Manager not initialized'
-            }
-            health_status['status'] = 'degraded'
-        
-        # 檢查 Payment Service
-        if self.payment_service:
-            health_status['checks']['payment_service'] = {
-                'status': 'healthy',
-                'message': 'Service available'
-            }
-        else:
-            health_status['checks']['payment_service'] = {
-                'status': 'unavailable',
-                'message': 'Payment Service not initialized'
-            }
-        
-        status_code = 200 if health_status['status'] in ['healthy', 'degraded'] else 503
-        return jsonify(health_status), status_code
-    
     @rate_limit(max_requests=5, time_window=300, block_on_exceed=True)
     def login(self):
-        """用戶登入端點 - 加強版本"""
+        """用戶登入端點"""
         try:
             # 多層次檢查服務狀態
             if not self.db:
@@ -443,14 +375,13 @@ class RouteHandlers:
         return self.session_manager.generate_session_token(uuid, client_ip, session_timeout)
     
     def verify_session_token(self, token):
-        """驗證會話令牌 - 優化版本"""
+        """驗證會話令牌"""
         is_valid, session_data = self.session_manager.verify_session_token(token)
         
         if not is_valid:
             return False, None
         
         # 直接返回會話數據，不再查詢數據庫
-        # 用戶過期檢查已在 session_manager 中完成
         return True, {
             'uuid': session_data.get('uuid'),
             'active': True,  # 能通過驗證說明用戶是活躍的
