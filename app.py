@@ -24,6 +24,8 @@ from itchio_service import ItchioService  # itch.io 服務
 from itchio_routes import itchio_bp, init_itchio_routes  # itch.io 路由
 from templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
 from intro_routes import intro_bp
+from gumroad_service import GumroadService
+from gumroad_routes import gumroad_bp, init_gumroad_routes
 
 # 設置日誌
 logging.basicConfig(
@@ -48,6 +50,7 @@ app.register_blueprint(manual_bp)
 app.register_blueprint(disclaimer_bp)
 app.register_blueprint(intro_bp)
 app.register_blueprint(itchio_bp)
+app.register_blueprint(gumroad_bp)  # 新增
 
 # 全局變數
 db = None
@@ -55,15 +58,34 @@ firebase_initialized = False
 itchio_service = None
 route_handlers = None
 initialization_in_progress = False
+gumroad_service = None
 
 def check_environment_variables():
     """檢查必要的環境變數"""
-    required_vars = ['FIREBASE_CREDENTIALS_BASE64', 'ITCHIO_API_KEY']
+    required_vars = [
+        'FIREBASE_CREDENTIALS_BASE64',
+        'GUMROAD_ACCESS_TOKEN',  # 新增
+        'GUMROAD_TRIAL_PRODUCT_ID',  # 新增
+        'GUMROAD_MONTHLY_PRODUCT_ID',  # 新增
+        'GUMROAD_QUARTERLY_PRODUCT_ID'  # 新增
+    ]
+    
+    # 可選的環境變數
+    optional_vars = [
+        'GUMROAD_WEBHOOK_SECRET',
+        'ITCHIO_API_KEY'
+    ]
+    
     missing_vars = [var for var in required_vars if not os.environ.get(var)]
     
     if missing_vars:
         logger.error(f"❌ 缺少必要的環境變數: {missing_vars}")
         return False
+    
+    # 檢查可選變數
+    missing_optional = [var for var in optional_vars if not os.environ.get(var)]
+    if missing_optional:
+        logger.warning(f"⚠️ 缺少可選的環境變數: {missing_optional}")
     
     logger.info("✅ 環境變數檢查通過")
     return True
@@ -167,18 +189,26 @@ def init_firebase_with_retry(max_retries=3):
 
 def init_services():
     """初始化相關服務"""
-    global itchio_service, route_handlers
+    global itchio_service, gumroad_service, route_handlers
     
     try:
         # 初始化 Session Manager
         init_session_manager(db)
         logger.info("✅ Session Manager 已初始化")
         
-        # 初始化 itch.io 服務
+        # 初始化 Gumroad 服務（新增）
+        gumroad_service = GumroadService(db)
+        logger.info("✅ Gumroad Service 已初始化")
+        
+        # 初始化 Gumroad 路由（新增）
+        init_gumroad_routes(gumroad_service)
+        logger.info("✅ Gumroad Routes 已初始化")
+        
+        # 初始化 itch.io 服務（保留原有）
         itchio_service = ItchioService(db)
         logger.info("✅ itch.io Service 已初始化")
         
-        # 初始化 itch.io 路由
+        # 初始化 itch.io 路由（保留原有）
         init_itchio_routes(itchio_service)
         logger.info("✅ itch.io Routes 已初始化")
         
@@ -259,6 +289,7 @@ def root():
             'service': 'Scrilab Artale Authentication Service',
             'status': 'initializing',
             'firebase_initialized': firebase_initialized,
+            'gumroad_available': gumroad_service is not None,  # 新增
             'itchio_available': itchio_service is not None,
             'message': 'Service is starting up, please wait...'
         })
@@ -270,7 +301,7 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'service': 'artale-auth-service',
-        'version': '3.0.0-itchio',
+        'version': '3.0.0-gumroad',  # 修改版本號
         'checks': {}
     }
     
@@ -288,7 +319,14 @@ def health_check():
         health_status['checks']['firebase'] = 'not_initialized'
         health_status['status'] = 'degraded'
     
-    # 檢查 itch.io 服務
+    # 檢查 Gumroad 服務（新增）
+    if gumroad_service:
+        health_status['checks']['gumroad_service'] = 'healthy'
+    else:
+        health_status['checks']['gumroad_service'] = 'not_initialized'
+        health_status['status'] = 'degraded'
+    
+    # 檢查 itch.io 服務（保留原有）
     if itchio_service:
         health_status['checks']['itchio_service'] = 'healthy'
     else:
@@ -391,21 +429,44 @@ def manual_cleanup_sessions():
 
 @app.route('/api/create-payment', methods=['POST'])
 def create_payment():
-    """創建付款（統一入口，重定向到 itch.io）"""
-    # 重定向到 itch.io 付款創建
-    return redirect('/itchio/create-payment', code=307)
+    """創建付款（統一入口，支援 Gumroad 和 itch.io）"""
+    try:
+        data = request.get_json()
+        provider = data.get('provider', 'gumroad')  # 預設使用 Gumroad
+        
+        if provider == 'gumroad':
+            # 重定向到 Gumroad 付款創建
+            return redirect('/gumroad/create-payment', code=307)
+        elif provider == 'itchio':
+            # 重定向到 itch.io 付款創建
+            return redirect('/itchio/create-payment', code=307)
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'不支援的付款提供者: {provider}'
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"創建付款錯誤: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '系統錯誤，請稍後再試'
+        }), 500
 
 @app.route('/payment/success', methods=['GET'])
 def payment_success():
     """付款成功頁面"""
     try:
-        provider = request.args.get('provider', 'itchio')
+        provider = request.args.get('provider', 'gumroad')  # 預設 Gumroad
         
-        if provider == 'itchio':
+        if provider == 'gumroad':
+            # Gumroad 付款成功處理
+            return redirect('/gumroad/success?' + request.query_string.decode())
+        elif provider == 'itchio':
             # itch.io 付款成功處理
             return redirect('/itchio/success?' + request.query_string.decode())
         else:
-            # 其他付款方式重定向到 itch.io
+            # 其他付款方式重定向到產品頁
             return redirect('/products?error=invalid_provider')
             
     except Exception as e:
