@@ -1,26 +1,14 @@
-# render.yaml - 優化版本
 services:
   - type: web
     name: scrilab-artale-auth
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    # 優化啟動命令 - 增加超時和記憶體限制
-    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app --workers 1 --timeout 120 --max-requests 1000 --max-requests-jitter 50 --preload --worker-class sync
+    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app --workers 2 --timeout 30
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: FLASK_ENV
         value: production
-      # 添加記憶體和性能相關環境變數
-      - key: PYTHONUNBUFFERED
-        value: "1"
-      - key: PYTHONDONTWRITEBYTECODE
-        value: "1"
-      # 優化 gRPC 和 Firebase 連接
-      - key: GRPC_POLL_STRATEGY
-        value: epoll1
-      - key: GRPC_VERBOSITY
-        value: ERROR
     healthCheckPath: /health
     autoDeploy: false
