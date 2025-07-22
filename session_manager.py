@@ -1,4 +1,4 @@
-# session_manager.py - 修復時間格式問題版本
+# session_manager.py - 修復用戶權限檢查問題
 import logging
 import time
 import secrets
@@ -10,7 +10,7 @@ import os
 logger = logging.getLogger(__name__)
 
 class FirestoreSessionManager:
-    """基於 Firestore 的 Session 管理器 - 修復時間格式問題"""
+    """基於 Firestore 的 Session 管理器 - 修復用戶權限檢查問題"""
     
     def __init__(self, db=None):
         self.db = db
@@ -69,17 +69,8 @@ class FirestoreSessionManager:
                 logger.error("❌ Firestore 數據庫未初始化")
                 raise Exception("Database not initialized")
             
-            # *** 新增：獲取用戶過期時間 ***
-            user_expires_at = None
-            try:
-                uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
-                user_ref = self.db.collection('authorized_users').document(uuid_hash)
-                user_doc = user_ref.get()
-                if user_doc.exists:
-                    user_data = user_doc.to_dict()
-                    user_expires_at = user_data.get('expires_at')
-            except Exception as e:
-                logger.warning(f"無法獲取用戶過期時間: {e}")
+            # *** 移除：不再在會話創建時緩存用戶過期時間 ***
+            # 讓驗證時實時檢查用戶狀態，確保準確性
             
             token = secrets.token_urlsafe(32)
             now = self._now_utc()
@@ -92,8 +83,7 @@ class FirestoreSessionManager:
                 'expires_at': expires_at,
                 'last_activity': now,
                 'client_ip': client_ip,
-                'active': True,
-                'user_expires_at': user_expires_at  # *** 新增：緩存用戶過期時間 ***
+                'active': True
             }
             
             # 存儲到 Firestore
@@ -108,7 +98,7 @@ class FirestoreSessionManager:
             raise
     
     def verify_session_token(self, token: str) -> Tuple[bool, Optional[Dict]]:
-        """驗證會話令牌 - 優化版本，使用緩存的過期時間"""
+        """驗證會話令牌 - 修復版本，實時檢查用戶狀態"""
         try:
             if not self.db:
                 logger.error("❌ Firestore 數據庫未初始化")
@@ -122,6 +112,11 @@ class FirestoreSessionManager:
                 return False, None
             
             session_data = session_doc.to_dict()
+            uuid = session_data.get('uuid')
+            
+            if not uuid:
+                logger.debug(f"❌ Session 缺少用戶 UUID: {token[:16]}...")
+                return False, None
             
             # 檢查是否被標記為非活躍
             if not session_data.get('active', True):
@@ -140,14 +135,47 @@ class FirestoreSessionManager:
                     logger.warning(f"刪除過期 session 失敗: {e}")
                 return False, None
             
-            # *** 新增：檢查緩存的用戶過期時間 ***
-            user_expires_at = self._parse_datetime(session_data.get('user_expires_at'))
-            if user_expires_at and now > user_expires_at:
-                logger.info(f"❌ 用戶已過期: {token[:16]}... (cached check)")
-                try:
-                    session_ref.delete()
-                except Exception as e:
-                    logger.warning(f"刪除過期用戶 session 失敗: {e}")
+            # *** 修復：實時檢查用戶狀態，而不是使用緩存 ***
+            try:
+                uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
+                user_ref = self.db.collection('authorized_users').document(uuid_hash)
+                user_doc = user_ref.get()
+                
+                if not user_doc.exists:
+                    logger.info(f"❌ 用戶不存在: {token[:16]}...")
+                    # 用戶被刪除，清理會話
+                    try:
+                        session_ref.delete()
+                    except Exception as e:
+                        logger.warning(f"刪除無效用戶 session 失敗: {e}")
+                    return False, None
+                
+                user_data = user_doc.to_dict()
+                
+                # 檢查用戶是否被停用
+                if not user_data.get('active', False):
+                    logger.info(f"❌ 用戶已被停用: {token[:16]}...")
+                    try:
+                        session_ref.delete()
+                    except Exception as e:
+                        logger.warning(f"刪除停用用戶 session 失敗: {e}")
+                    return False, None
+                
+                # 檢查用戶是否過期
+                user_expires_at = user_data.get('expires_at')
+                if user_expires_at:
+                    user_expires_parsed = self._parse_datetime(user_expires_at)
+                    if user_expires_parsed and now > user_expires_parsed:
+                        logger.info(f"❌ 用戶已過期: {token[:16]}... (實時檢查)")
+                        try:
+                            session_ref.delete()
+                        except Exception as e:
+                            logger.warning(f"刪除過期用戶 session 失敗: {e}")
+                        return False, None
+                
+            except Exception as user_check_error:
+                logger.error(f"實時檢查用戶狀態失敗: {user_check_error}")
+                # 如果檢查用戶狀態失敗，為了安全考慮，拒絕驗證
                 return False, None
             
             # 更新最後活動時間
@@ -282,38 +310,6 @@ class FirestoreSessionManager:
         except Exception as e:
             logger.error(f"❌ 清理過期會話失敗: {str(e)}")
             return 0
-
-    def sync_user_expiration_cache(self, uuid: str, session_token: str):
-        """同步用戶過期時間緩存"""
-        try:
-            # 獲取最新的用戶過期時間
-            uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
-            user_ref = self.db.collection('authorized_users').document(uuid_hash)
-            user_doc = user_ref.get()
-            
-            if user_doc.exists:
-                user_data = user_doc.to_dict()
-                new_expires_at = user_data.get('expires_at')
-                
-                # 更新會話中的緩存
-                session_ref = self.db.collection(self.collection_name).document(session_token)
-                session_ref.update({
-                    'user_expires_at': new_expires_at,
-                    'cache_updated_at': self._now_utc()
-                })
-                
-                logger.debug(f"✅ 用戶過期時間緩存已更新: {uuid[:8]}...")
-                return new_expires_at
-            else:
-                # 用戶不存在，撤銷會話
-                session_ref = self.db.collection(self.collection_name).document(session_token)
-                session_ref.delete()
-                logger.info(f"❌ 用戶已刪除，撤銷會話: {uuid[:8]}...")
-                return None
-                
-        except Exception as e:
-            logger.error(f"同步用戶過期時間失敗: {e}")
-            return None
 
     def get_session_stats(self) -> Dict:
         """獲取會話統計"""
