@@ -6,6 +6,7 @@ import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Tuple, Optional
 import os
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 logger = logging.getLogger(__name__)
 
@@ -168,94 +169,45 @@ class FirestoreSessionManager:
             logger.error(f"❌ 生成 session 失敗: {str(e)}")
             raise
     
-    def verify_session_token(self, token: str) -> Tuple[bool, Optional[Dict]]:
-        """驗證會話令牌 - 智能化驗證策略"""
+    def verify_session_token(self, token):
+        """驗證會話令牌"""
+        is_valid, session_data = self.session_manager.verify_session_token(token)
+        
+        if not is_valid:
+            return False, None
+        
+        # 修正：確保返回完整的用戶數據，包含權限信息
         try:
-            if not self.db:
-                return False, None
-            
-            # 1. 獲取會話信息
-            session_ref = self.db.collection(self.collection_name).document(token)
-            session_doc = session_ref.get()
-            
-            if not session_doc.exists:
-                return False, None
-            
-            session_data = session_doc.to_dict()
             uuid = session_data.get('uuid')
-            
             if not uuid:
                 return False, None
             
-            now = self._now_utc()
+            # 獲取完整的用戶數據（包含權限）
+            import hashlib
+            uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
+            user_ref = self.db.collection('authorized_users').document(uuid_hash)
+            user_doc = user_ref.get()
             
-            # 2. 檢查會話本身是否過期
-            session_expires_at = self._parse_datetime(session_data.get('expires_at'))
-            if session_expires_at and now > session_expires_at:
-                logger.debug(f"❌ Session 已過期: {token[:16]}...")
-                try:
-                    session_ref.delete()
-                except:
-                    pass
+            if not user_doc.exists:
                 return False, None
+                
+            user_data = user_doc.to_dict()
             
-            # 3. 檢查會話中緩存的用戶過期時間
-            cached_user_expires_at = self._parse_datetime(session_data.get('user_expires_at'))
-            if cached_user_expires_at and now > cached_user_expires_at:
-                logger.info(f"❌ 用戶已過期（會話緩存）: {token[:16]}...")
-                try:
-                    session_ref.delete()
-                except:
-                    pass
-                return False, None
+            # 合併會話數據和用戶數據
+            complete_user_data = {
+                'uuid': uuid,
+                'active': user_data.get('active', False),
+                'permissions': user_data.get('permissions', {}),  # 確保包含權限
+                'display_name': user_data.get('display_name', 'Unknown'),
+                'expires_at': user_data.get('expires_at'),
+                'last_login': session_data.get('created_at'),
+                'client_ip': session_data.get('client_ip')
+            }
             
-            # 4. 決定是否需要完整的用戶狀態檢查
-            last_activity = self._parse_datetime(session_data.get('last_activity', session_data.get('created_at')))
-            need_full_check = False
-            
-            # 情況1: 長時間未活動，需要完整檢查
-            if last_activity:
-                inactive_duration = (now - last_activity).total_seconds()
-                if inactive_duration > self.full_validation_interval:
-                    need_full_check = True
-            
-            # 情況2: 即將過期的用戶，需要更頻繁的檢查
-            if cached_user_expires_at and self._is_approaching_expiry(
-                {'expires_at': cached_user_expires_at}, now, buffer_minutes=30
-            ):
-                time_since_activity = (now - last_activity).total_seconds() if last_activity else 0
-                if time_since_activity > self.expiry_check_interval:
-                    need_full_check = True
-            
-            # 5. 執行完整的用戶狀態檢查
-            if need_full_check:
-                user_valid = self._full_user_status_check(uuid, session_ref, session_data)
-                if not user_valid:
-                    return False, None
-            
-            # 6. 更新會話活動時間（批量更新以減少寫操作）
-            update_data = {'last_activity': now}
-            
-            # 如果會話快過期，自動延長
-            if session_expires_at:
-                time_left = (session_expires_at - now).total_seconds()
-                if time_left < 300:  # 少於5分鐘
-                    session_timeout = int(os.environ.get('SESSION_TIMEOUT', 3600))
-                    new_expires_at = now + timedelta(seconds=session_timeout)
-                    update_data['expires_at'] = new_expires_at
-                    logger.debug(f"🔄 Session 自動延長: {token[:16]}...")
-            
-            try:
-                session_ref.update(update_data)
-                session_data.update(update_data)
-            except Exception as e:
-                logger.warning(f"更新 session 活動時間失敗: {e}")
-            
-            logger.debug(f"✅ Session 驗證成功: {token[:16]}...")
-            return True, session_data
+            return True, complete_user_data
             
         except Exception as e:
-            logger.error(f"❌ 驗證 session 失敗: {str(e)}")
+            logger.error(f"驗證會話時獲取用戶數據失敗: {str(e)}")
             return False, None
     
     def _full_user_status_check(self, uuid: str, session_ref, session_data: Dict) -> bool:
@@ -375,7 +327,7 @@ class FirestoreSessionManager:
                 del self.user_cache[uuid]
             
             sessions_ref = self.db.collection(self.collection_name)
-            user_sessions = sessions_ref.where('uuid', '==', uuid).where('active', '==', True).stream()
+            user_sessions = sessions_ref.where(filter=FieldFilter('uuid', '==', uuid)).where(filter=FieldFilter('active', '==', True)).stream()
             
             deleted_count = 0
             for session_doc in user_sessions:
