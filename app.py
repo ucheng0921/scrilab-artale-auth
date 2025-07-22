@@ -13,6 +13,10 @@ import logging
 import threading
 import schedule
 import time as time_module
+import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 導入模組
 from admin_panel import admin_bp
@@ -194,23 +198,72 @@ def init_services():
         raise
 
 def cleanup_expired_sessions():
-    """定期清理過期會話"""
+    """智能化定期清理過期會話"""
     try:
         if session_manager and firebase_initialized:
-            deleted_count = session_manager.cleanup_expired_sessions()
-            if deleted_count > 0:
-                logger.info(f"🧹 定期清理：刪除了 {deleted_count} 個過期會話")
+            # 1. 清理過期會話
+            deleted_sessions = session_manager.cleanup_expired_sessions()
+            
+            # 2. 清理過期緩存
+            session_manager.cleanup_expired_cache()
+            
+            # 3. 記錄清理結果
+            if deleted_sessions > 0:
+                logger.info(f"🧹 定期清理：刪除了 {deleted_sessions} 個過期會話")
+            
+            # 4. 獲取統計信息
+            stats = session_manager.get_session_stats()
+            if stats.get('firestore_connected'):
+                total = stats.get('total_sessions', 0)
+                active = stats.get('active_sessions', 0)
+                cached = stats.get('cached_users', 0)
+                logger.debug(f"📊 會話統計 - 總數: {total}, 活躍: {active}, 緩存: {cached}")
+            
+            return deleted_sessions
+            
     except Exception as e:
         logger.error(f"❌ 定期清理失敗: {str(e)}")
+        return 0
 
 def run_background_tasks():
-    """運行後台任務"""
-    # 每30分鐘清理一次過期會話
-    schedule.every(30).minutes.do(cleanup_expired_sessions)
+    """運行智能化後台任務"""
+    logger.info("🚀 智能化後台清理任務已啟動")
+    
+    last_cleanup_time = 0
+    cleanup_interval = 30 * 60  # 初始30分鐘
     
     while True:
-        schedule.run_pending()
-        time_module.sleep(60)  # 每分鐘檢查一次
+        try:
+            current_time = time.time()
+            
+            # 定期清理任務
+            if current_time - last_cleanup_time >= cleanup_interval:
+                deleted_count = cleanup_expired_sessions()
+                last_cleanup_time = current_time
+                
+                # 根據系統負載動態調整清理間隔
+                if session_manager:
+                    stats = session_manager.get_session_stats()
+                    total_sessions = stats.get('total_sessions', 0)
+                    expired_sessions = stats.get('expired_sessions', 0)
+                    
+                    if total_sessions > 1000:  # 高負載
+                        cleanup_interval = 15 * 60  # 15分鐘
+                    elif total_sessions > 500:  # 中負載
+                        cleanup_interval = 20 * 60  # 20分鐘
+                    elif expired_sessions > 50:  # 過期會話較多
+                        cleanup_interval = 25 * 60  # 25分鐘
+                    else:  # 正常負載
+                        cleanup_interval = 30 * 60  # 30分鐘
+                
+                if deleted_count > 0:
+                    logger.info(f"🧹 清理完成，下次清理間隔: {cleanup_interval//60} 分鐘")
+            
+            time.sleep(60)  # 每分鐘檢查一次
+            
+        except Exception as e:
+            logger.error(f"❌ 後台任務循環錯誤: {str(e)}")
+            time.sleep(60)
 
 def start_background_tasks():
     """啟動後台任務線程"""
