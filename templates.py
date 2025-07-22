@@ -30,7 +30,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             --accent-purple: #8b5cf6;
             --accent-green: #10b981;
             --accent-orange: #f59e0b;
-            --accent-itchio: #fa5c5c;
             
             --border-color: #333333;
             --border-hover: #555555;
@@ -39,13 +38,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             --gradient-accent: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%);
             --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
             --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            --gradient-itchio: linear-gradient(135deg, #fa5c5c 0%, #e53e3e 100%);
             
             --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.15);
             --shadow-md: 0 8px 25px rgba(0, 0, 0, 0.25);
             --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
             --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.3);
-            --shadow-itchio: 0 0 30px rgba(250, 92, 92, 0.3);
             
             --border-radius: 16px;
             --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -60,7 +57,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             position: relative;
         }
 
-        /* 背景動效 CSS 保持不變 */
+        /* 背景動效 */
         @keyframes typewriter {
             0% { width: 0; }
             90% { width: 100%; }
@@ -225,9 +222,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            background: rgba(250, 92, 92, 0.1);
-            border: 1px solid rgba(250, 92, 92, 0.2);
-            color: var(--accent-itchio);
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: var(--accent-blue);
             padding: 0.5rem 1rem;
             border-radius: 50px;
             font-size: 0.85rem;
@@ -245,7 +242,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .hero .highlight {
-            background: var(--gradient-itchio);
+            background: var(--gradient-accent);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -268,7 +265,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .btn-primary {
-            background: var(--gradient-itchio);
+            background: var(--gradient-accent);
             color: white;
             padding: 1rem 2rem;
             border-radius: 12px;
@@ -285,7 +282,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: var(--shadow-itchio);
+            box-shadow: var(--shadow-glow);
         }
 
         .btn-secondary {
@@ -304,8 +301,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .btn-secondary:hover {
-            border-color: var(--accent-itchio);
-            color: var(--accent-itchio);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
             transform: translateY(-3px);
         }
 
@@ -328,9 +325,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .section-badge {
             display: inline-block;
-            background: rgba(250, 92, 92, 0.1);
-            border: 1px solid rgba(250, 92, 92, 0.2);
-            color: var(--accent-itchio);
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: var(--accent-blue);
             padding: 0.5rem 1rem;
             border-radius: 50px;
             font-size: 0.85rem;
@@ -372,7 +369,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .game-card.active:hover {
             transform: translateY(-5px);
-            border-color: var(--accent-itchio);
+            border-color: var(--accent-blue);
             box-shadow: var(--shadow-lg);
         }
 
@@ -419,7 +416,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .game-overlay i {
             font-size: 2.5rem;
-            color: var(--accent-itchio);
+            color: var(--accent-blue);
         }
 
         .game-info {
@@ -434,7 +431,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .game-subtitle {
-            color: var(--accent-itchio);
+            color: var(--accent-blue);
             font-size: 0.9rem;
             margin-bottom: 1rem;
         }
@@ -481,7 +478,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .manual-btn {
-            background: var(--gradient-itchio);
+            background: var(--gradient-accent);
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 8px;
@@ -496,17 +493,17 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .manual-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(250, 92, 92, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
         }
 
         .intro-btn {
             background: transparent;
-            border: 1px solid var(--accent-itchio);
-            color: var(--accent-itchio);
+            border: 1px solid var(--accent-blue);
+            color: var(--accent-blue);
         }
 
         .intro-btn:hover {
-            background: var(--accent-itchio);
+            background: var(--accent-blue);
             color: white;
         }
 
@@ -549,7 +546,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             position: absolute;
             top: -12px;
             right: 2rem;
-            background: var(--gradient-itchio);
+            background: var(--gradient-accent);
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 20px;
@@ -589,14 +586,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             font-weight: 400;
         }
 
-        .itchio-info {
-            background: rgba(250, 92, 92, 0.1);
-            border: 1px solid rgba(250, 92, 92, 0.2);
+        .gumroad-info {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
             border-radius: 8px;
             padding: 0.8rem;
             margin: 1rem 0;
             font-size: 0.9rem;
-            color: var(--accent-itchio);
+            color: var(--accent-blue);
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -635,7 +632,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         .service-button {
             width: 100%;
             padding: 1rem;
-            background: var(--gradient-itchio);
+            background: var(--gradient-accent);
             color: white;
             border: none;
             border-radius: 12px;
@@ -651,7 +648,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .service-button:hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-itchio);
+            box-shadow: var(--shadow-glow);
         }
 
         /* Footer */
@@ -697,10 +694,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .email-link:hover {
-            color: var(--accent-itchio);
-            border-color: var(--accent-itchio);
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(250, 92, 92, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
         }
 
         /* Purchase Modal */
@@ -765,14 +762,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             margin: 1.5rem 0;
         }
 
-        .itchio-notice {
-            background: rgba(250, 92, 92, 0.1);
-            border: 1px solid rgba(250, 92, 92, 0.3);
+        .gumroad-notice {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
             border-radius: 8px;
             padding: 1rem;
             margin: 1rem 0;
             font-size: 0.9rem;
-            color: var(--accent-itchio);
+            color: var(--accent-blue);
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -803,8 +800,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         .form-input:focus {
             outline: none;
-            border-color: var(--accent-itchio);
-            box-shadow: 0 0 0 3px rgba(250, 92, 92, 0.1);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
         }
 
         .modal-buttons {
@@ -911,11 +908,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <section id="home" class="hero">
         <div class="hero-content">
             <div class="hero-badge">
-                <i class="fab fa-itch-io"></i>
-                <span>支援 itch.io 付款</span>
+                <i class="fas fa-shield-alt"></i>
+                <span>支援 Gumroad 安全付款</span>
             </div>
             <h1>自動化<span class="highlight">遊戲技術服務</span><br>與個人化方案</h1>
-            <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。現在支援 itch.io 付款，讓購買更加便利。</p>
+            <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。現在支援 Gumroad 安全付款，讓購買更加便利。</p>
             <div class="hero-buttons">
                 <a href="#games" class="btn-primary">
                     <i class="fas fa-gamepad"></i>
@@ -943,11 +940,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <div class="game-card active" onclick="showGamePlans('artale')">
                     <div class="game-image">
                         <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div class="game-overlay">
+                            <i class="fas fa-play"></i>
+                        </div>
                     </div>
                     <div class="game-info">
                         <h3>MapleStory Worlds - Artale</h3>
                         <p class="game-subtitle">繁體中文版</p>
-                        <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案，透過 itch.io 安全付款</p>
+                        <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案，透過 Gumroad 安全付款</p>
                         <div class="game-status">
                             <span class="status-badge active">服務中</span>
                             <div class="game-buttons">
@@ -995,7 +995,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 </button>
                 <div class="section-badge">服務方案</div>
                 <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale 專屬方案</h2>
-                <p class="section-description">透過 itch.io 安全付款，支援多種付款方式</p>
+                <p class="section-description">透過 Gumroad 安全付款，支援多種付款方式</p>
             </div>
             
             <div class="services-grid">
@@ -1005,12 +1005,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">體驗服務</div>
                         <div class="service-subtitle">適合新手玩家體驗</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>5
-                            <span class="period">/7天</span>
+                            <span class="currency">NT$</span>150
                         </div>
-                        <div class="itchio-info">
-                            <i class="fab fa-itch-io"></i>
-                            <span>透過 itch.io 安全付款 ≈ $0.16 USD</span>
+                        <div class="gumroad-info">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>透過 Gumroad 安全付款 ≈ $5.00 USD</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1041,8 +1040,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                         </ul>
                         <button class="service-button" onclick="selectPlan('trial_7')">
-                            <i class="fab fa-itch-io"></i>
-                            <span>itch.io 付款</span>
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Gumroad 付款</span>
                         </button>
                     </div>
                 </div>
@@ -1054,12 +1053,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">標準服務</div>
                         <div class="service-subtitle">最佳性價比選擇</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>599
-                            <span class="period">/30天</span>
+                            <span class="currency">NT$</span>899
                         </div>
-                        <div class="itchio-info">
-                            <i class="fab fa-itch-io"></i>
-                            <span>透過 itch.io 安全付款 ≈ $19.17 USD</span>
+                        <div class="gumroad-info">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>透過 Gumroad 安全付款 ≈ $29.99 USD</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1090,8 +1088,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                         </ul>
                         <button class="service-button" onclick="selectPlan('monthly_30')">
-                            <i class="fab fa-itch-io"></i>
-                            <span>itch.io 付款</span>
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Gumroad 付款</span>
                         </button>
                     </div>
                 </div>
@@ -1099,15 +1097,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- 季度方案 -->
                 <div class="service-card">
                     <div class="service-header">
-                        <div class="service-title">季度服務</div>
+                        <div class="service-title">最佳服務</div>
                         <div class="service-subtitle">長期使用最划算</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>1,499
-                            <span class="period">/90天</span>
+                            <span class="currency">NT$</span>2,399
                         </div>
-                        <div class="itchio-info">
-                            <i class="fab fa-itch-io"></i>
-                            <span>透過 itch.io 安全付款 ≈ $47.97 USD</span>
+                        <div class="gumroad-info">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>透過 Gumroad 安全付款 ≈ $79.99 USD</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1138,8 +1135,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                         </ul>
                         <button class="service-button" onclick="selectPlan('quarterly_90')">
-                            <i class="fab fa-itch-io"></i>
-                            <span>itch.io 付款</span>
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Gumroad 付款</span>
                         </button>
                     </div>
                 </div>
@@ -1166,9 +1163,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             </div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 2rem; text-align: center; color: var(--text-muted);">
                 <p style="margin-bottom: 1rem;">
-                    <a href="/disclaimer" style="color: var(--text-muted); text-decoration: none; margin-right: 2rem; transition: color 0.3s ease;" onmouseover="this.style.color='var(--accent-itchio)'" onmouseout="this.style.color='var(--text-muted)'">免責聲明</a>
+                    <a href="/disclaimer" style="color: var(--text-muted); text-decoration: none; margin-right: 2rem; transition: color 0.3s ease;" onmouseover="this.style.color='var(--accent-blue)'" onmouseout="this.style.color='var(--text-muted)'">免責聲明</a>
                 </p>
-                <p>&copy; 2025 Scrilab. All rights reserved. Powered by itch.io.</p>
+                <p>&copy; 2025 Scrilab. All rights reserved. Powered by Gumroad.</p>
             </div>
         </div>
     </footer>
@@ -1177,13 +1174,13 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <div id="purchase-modal" class="modal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
-            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">itch.io 付款</h3>
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Gumroad 安全付款</h3>
             <div id="selected-plan-info" class="plan-info">
                 <!-- Plan info will be inserted here -->
             </div>
-            <div class="itchio-notice">
-                <i class="fab fa-itch-io"></i>
-                <span>將跳轉至 itch.io 完成安全付款，支援 PayPal 和信用卡</span>
+            <div class="gumroad-notice">
+                <i class="fas fa-shield-alt"></i>
+                <span>將跳轉至 Gumroad 完成安全付款，支援 PayPal 和信用卡</span>
             </div>
             <div class="form-group">
                 <label for="user-name">用戶名稱</label>
@@ -1199,9 +1196,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             </div>
             <div class="form-group" style="text-align: left;">
                 <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
-                    <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-itchio);">
+                    <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
                     <span style="font-size: 0.95rem; line-height: 1.5;">
-                        我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-itchio); text-decoration: none;">免責聲明與服務條款</a>，
+                        我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-blue); text-decoration: none;">免責聲明與服務條款</a>，
                         理解使用本服務的風險，並自願承擔相關責任。
                     </span>
                 </label>
@@ -1210,10 +1207,37 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <button class="btn-cancel" onclick="closeModal()">取消</button>
                 <button class="btn-primary" onclick="submitPayment()" id="payment-btn">
                     <span id="payment-btn-text">
-                        <i class="fab fa-itch-io"></i>
-                        前往 itch.io 付款
+                        <i class="fas fa-shield-alt"></i>
+                        前往 Gumroad 付款
                     </span>
                     <div class="loading" id="payment-loading" style="display: none;"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Instructions Modal -->
+    <div id="instructions-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeInstructionModal()">&times;</button>
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">付款進行中</h3>
+            <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+                我們已為您開啟 Gumroad 付款頁面。完成付款後，您將收到包含序號的確認郵件。
+            </p>
+            <div id="payment-id-info" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                <p style="color: var(--accent-green); margin: 0; font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="payment-id-text">付款 ID: </span>
+                </p>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button onclick="checkPaymentStatus()" class="btn-primary" id="check-status-btn">
+                    <i class="fas fa-sync"></i>
+                    檢查付款狀態
+                </button>
+                <button onclick="closeInstructionModal()" class="btn-secondary">
+                    <i class="fas fa-times"></i>
+                    關閉
                 </button>
             </div>
         </div>
@@ -1224,28 +1248,29 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         const servicePlans = {
             'trial_7': {
                 name: '體驗服務',
-                price_twd: 5,
-                price_usd: 0.16,
+                price_twd: 150,
+                price_usd: 5.00,
                 period: '7天',
                 description: '適合新手玩家體驗的基礎技術服務'
             },
             'monthly_30': {
                 name: '標準服務',
-                price_twd: 599,
-                price_usd: 19.17,
+                price_twd: 899,
+                price_usd: 29.99,
                 period: '30天',
                 description: '最受歡迎的完整技術服務方案'
             },
             'quarterly_90': {
                 name: '季度服務',
-                price_twd: 1499,
-                price_usd: 47.97,
+                price_twd: 2399,
+                price_usd: 79.99,
                 period: '90天',
                 description: '長期使用最划算的全功能技術服務'
             }
         };
 
         let selectedPlan = null;
+        let currentPaymentId = null;
 
         // Game Selection
         function showGamePlans(gameId) {
@@ -1273,7 +1298,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <div style="font-size: 1.3rem; font-weight: bold; color: var(--text-primary);">
                         NT$ ${plan.price_twd.toLocaleString()}
                     </div>
-                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-itchio); font-family: 'Courier New', monospace;">
+                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-blue); font-family: 'Courier New', monospace;">
                         ≈ ${plan.price_usd} USD
                     </div>
                 </div>
@@ -1293,8 +1318,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             document.getElementById('contact-phone').value = '';
             document.getElementById('agree-terms').checked = false;
             // Reset button
-            document.getElementById('payment-btn-text').style.display = 'inline-flex';
-            document.getElementById('payment-loading').style.display = 'none';
+            resetPaymentButton();
         }
 
         function submitPayment() {
@@ -1322,14 +1346,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             document.getElementById('payment-btn-text').style.display = 'none';
             document.getElementById('payment-loading').style.display = 'inline-block';
             
-            // 提交 itch.io 付款
-            submitItchioPayment(userName, contactEmail, contactPhone);
+            // 提交 Gumroad 付款
+            submitGumroadPayment(userName, contactEmail, contactPhone);
         }
 
-        // itch.io 付款提交
-        async function submitItchioPayment(userName, contactEmail, contactPhone) {
+        // Gumroad 付款提交
+        async function submitGumroadPayment(userName, contactEmail, contactPhone) {
             try {
-                const response = await fetch('/itchio/create-payment', {
+                const response = await fetch('/gumroad/create-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1345,9 +1369,15 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 重定向到 itch.io 付款頁面
+                    // 儲存付款 ID
+                    currentPaymentId = data.payment_id;
+                    
+                    // 重定向到 Gumroad 付款頁面
                     window.open(data.purchase_url, '_blank');
                     closeModal();
+                    
+                    // 顯示付款指示
+                    showPaymentInstructions(data.payment_id);
                 } else {
                     alert('付款創建失敗: ' + data.error);
                     resetPaymentButton();
@@ -1356,6 +1386,62 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 alert('系統錯誤: ' + error.message);
                 resetPaymentButton();
             }
+        }
+
+        // 顯示付款指示
+        function showPaymentInstructions(paymentId) {
+            document.getElementById('payment-id-text').textContent = `付款 ID: ${paymentId}`;
+            document.getElementById('instructions-modal').style.display = 'flex';
+        }
+
+        // 檢查付款狀態
+        async function checkPaymentStatus() {
+            if (!currentPaymentId) {
+                alert('找不到付款 ID');
+                return;
+            }
+            
+            const checkBtn = document.getElementById('check-status-btn');
+            const originalText = checkBtn.innerHTML;
+            checkBtn.innerHTML = '<div class="loading"></div> 檢查中...';
+            checkBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/gumroad/check-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ payment_id: currentPaymentId })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.status === 'completed') {
+                        alert('付款成功！您將收到包含序號的確認郵件。');
+                        closeInstructionModal();
+                        
+                        // 可選：重定向到成功頁面
+                        if (data.user_uuid) {
+                            window.location.href = `/payment/success?provider=gumroad&payment_id=${currentPaymentId}`;
+                        }
+                    } else {
+                        alert('付款尚未完成，請完成 Gumroad 付款流程。');
+                    }
+                } else {
+                    alert('無法檢查付款狀態: ' + data.error);
+                }
+            } catch (error) {
+                alert('檢查狀態時發生錯誤: ' + error.message);
+            } finally {
+                checkBtn.innerHTML = originalText;
+                checkBtn.disabled = false;
+            }
+        }
+
+        // 關閉指示模態框
+        function closeInstructionModal() {
+            document.getElementById('instructions-modal').style.display = 'none';
+            currentPaymentId = null;
         }
 
         function resetPaymentButton() {
@@ -1401,14 +1487,21 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             }
         });
 
+        document.getElementById('instructions-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeInstructionModal();
+            }
+        });
+
         // Escape key to close modal
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeModal();
+                closeInstructionModal();
             }
         });
 
-        // 背景特效代碼 (保持原有的打字機效果)
+        // 背景特效代碼
         function createCodeBackground() {
             const codeContainer = document.createElement('div');
             codeContainer.id = 'code-background';
@@ -1422,7 +1515,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 z-index: 1; 
                 opacity: 1; 
                 font-family: 'Courier New', monospace; 
-                color: #fa5c5c;
+                color: #00d4ff;
                 overflow: hidden; 
                 font-size: 14px; 
                 font-weight: 400;
@@ -1540,7 +1633,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     position: absolute; 
                     width: 2px; 
                     height: 2px; 
-                    background: var(--accent-itchio); 
+                    background: var(--accent-blue); 
                     border-radius: 50%; 
                     opacity: 0.3; 
                     animation: float-particle ${10 + Math.random() * 10}s linear infinite; 
@@ -1580,6 +1673,37 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             createCodeBackground();
             createFloatingParticles();
         }
+
+        // 讓密碼輸入框支援 Enter 鍵
+        document.addEventListener('DOMContentLoaded', function() {
+            const userNameInput = document.getElementById('user-name');
+            const contactEmailInput = document.getElementById('contact-email');
+            const contactPhoneInput = document.getElementById('contact-phone');
+            
+            if (userNameInput) {
+                userNameInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        submitPayment();
+                    }
+                });
+            }
+            
+            if (contactEmailInput) {
+                contactEmailInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        submitPayment();
+                    }
+                });
+            }
+            
+            if (contactPhoneInput) {
+                contactPhoneInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        submitPayment();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
