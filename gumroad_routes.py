@@ -341,3 +341,65 @@ def test_webhook():
         }), 503
     
     return gumroad_routes.webhook_test()
+
+@gumroad_bp.route('/emergency-debug', methods=['GET'])
+def emergency_debug():
+    """緊急調試 - 獲取產品的真實購買鏈接"""
+    if not gumroad_routes or not gumroad_routes.gumroad_service:
+        return jsonify({
+            'success': False,
+            'error': 'Gumroad 服務未初始化'
+        }), 503
+    
+    try:
+        # 使用調試方法獲取所有產品
+        result = gumroad_routes.gumroad_service.debug_all_products()
+        
+        if result.get('success'):
+            products = result.get('products', [])
+            
+            # 映射我們的產品 ID
+            our_product_ids = {
+                '27M21oDD__7HRLfycCIKiQ': 'trial_7',
+                'KBeLX9NDOECb4hpr5YD_9g': 'monthly_30', 
+                '4ibYDgcsoi8_DPDacdNzpA': 'quarterly_90'
+            }
+            
+            matched_products = {}
+            for product in products:
+                product_id = product.get('id')
+                if product_id in our_product_ids:
+                    plan_id = our_product_ids[product_id]
+                    matched_products[plan_id] = {
+                        **product,
+                        'plan_id': plan_id,
+                        'correct_purchase_url': product.get('short_url'),
+                        'current_env_product_id': product_id
+                    }
+            
+            return jsonify({
+                'success': True,
+                'debug_info': {
+                    'all_products': products,
+                    'our_products': matched_products,
+                    'total_products_found': len(products),
+                    'our_products_matched': len(matched_products)
+                },
+                'next_steps': [
+                    "查看 'our_products' 中每個產品的 'correct_purchase_url'",
+                    "這些就是正確的購買鏈接格式",
+                    "如果 short_url 存在，使用它；否則產品可能未發布"
+                ]
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'API 調用失敗',
+                'details': result.get('error')
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'調試失敗: {str(e)}'
+        }), 500
