@@ -140,7 +140,7 @@ class GumroadService:
             return []
     
     def create_purchase_url(self, plan_id, user_info):
-        """為指定方案創建 Gumroad 購買 URL"""
+        """為指定方案創建 Gumroad 購買 URL - 修復版本"""
         try:
             plans = self.get_service_plans()
             if plan_id not in plans:
@@ -148,18 +148,27 @@ class GumroadService:
             
             plan = plans[plan_id]
             
-            if not plan.get('gumroad_product_id'):
+            product_id = plan.get('gumroad_product_id')
+            if not product_id:
                 raise ValueError(f"方案 {plan_id} 沒有設定 Gumroad 產品 ID")
             
             # 創建付款記錄
             payment_id = self.create_payment_record(plan_id, plan, user_info)
             
-            # 構建 Gumroad 購買 URL
-            product_id = plan['gumroad_product_id']
-            purchase_url = f"https://gumroad.com/l/{product_id}"
+            # ===== 修復：使用正確的 URL 格式 =====
+            # 不使用 /l/ 路徑，改用購買頁面的直接鏈接
+            
+            # 方法 1: 使用 checkout 路徑
+            purchase_url = f"https://gumroad.com/checkout/{product_id}"
+            
+            # 方法 2: 如果你有 Gumroad 用戶名，可以用這個格式
+            # gumroad_username = "scrilab"  # 替換為你的實際用戶名
+            # purchase_url = f"https://{gumroad_username}.gumroad.com/checkout/{product_id}"
             
             # 添加自定義參數以便追蹤
-            purchase_url += f"?custom_data={payment_id}"
+            purchase_url += f"?wanted=true&custom_data={payment_id}"
+            
+            logger.info(f"生成購買 URL: {purchase_url}")
             
             return {
                 'success': True,
