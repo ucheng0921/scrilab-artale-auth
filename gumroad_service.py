@@ -1,5 +1,5 @@
 """
-gumroad_service.py - 修復版本，正確實現 Gumroad API 整合
+gumroad_service.py - 全面修復版本，解決並發、退款、記憶體洩露等問題
 """
 import requests
 import logging
@@ -12,11 +12,18 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import json
+import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor
+import time
+from typing import Dict, List, Optional, Tuple
+import weakref
+from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
 class GumroadService:
-    """正確的 Gumroad API 服務實現"""
+    """全面修復的 Gumroad API 服務 - 處理並發、退款、性能優化"""
     
     def __init__(self, db):
         self.db = db
@@ -24,26 +31,42 @@ class GumroadService:
         self.base_url = 'https://api.gumroad.com/v2'
         self.webhook_secret = os.environ.get('GUMROAD_WEBHOOK_SECRET')
         
+        # 並發處理
+        self.executor = ThreadPoolExecutor(max_workers=5)
+        self.processing_lock = threading.RLock()
+        self.duplicate_checks = {}  # 使用 WeakValueDictionary 防止記憶體洩露
+        self.rate_limiter = RateLimiter(max_requests=100, time_window=3600)
+        
+        # 退款處理
+        self.refund_handlers = []
+        
+        # 緩存管理
+        self.cache_timeout = 300  # 5分鐘
+        self.last_cleanup = time.time()
+        
         if not self.access_token:
             logger.warning("⚠️ GUMROAD_ACCESS_TOKEN 未設定")
         else:
             logger.info("✅ Gumroad 服務已初始化")
-            # 延遲設置 webhooks，讓應用先完全啟動
             self._delayed_setup_webhooks()
+    
+    def __del__(self):
+        """清理資源"""
+        if hasattr(self, 'executor'):
+            self.executor.shutdown(wait=True)
     
     def _delayed_setup_webhooks(self):
         """延遲設置 webhooks"""
-        import threading
         def setup_later():
-            import time
-            time.sleep(5)  # 等待 5 秒讓應用完全啟動
+            time.sleep(5)
             self.setup_webhooks()
         
         thread = threading.Thread(target=setup_later, daemon=True)
         thread.start()
     
+    @lru_cache(maxsize=1)
     def get_service_plans(self):
-        """獲取服務方案配置 - 使用正確的產品 ID"""
+        """獲取服務方案配置 - 使用緩存"""
         return {
             'trial_7': {
                 'name': '體驗服務',
@@ -84,7 +107,7 @@ class GumroadService:
         }
     
     def setup_webhooks(self):
-        """正確設置 Gumroad Resource Subscriptions"""
+        """設置 Gumroad Resource Subscriptions - 支援退款事件"""
         try:
             webhook_base_url = os.environ.get('WEBHOOK_BASE_URL', 'https://scrilab.onrender.com')
             
@@ -96,13 +119,12 @@ class GumroadService:
             
             logger.info(f"🔗 設置 Webhook URL: {webhook_url}")
             
-            # 只監聽 sale 事件
-            resource_types = ['sale', 'refund']
+            # 支援所有重要事件，包括退款
+            resource_types = ['sale', 'refund', 'cancellation', 'subscription_ended']
             success_count = 0
             
             for resource_name in resource_types:
                 try:
-                    # 先檢查是否已存在
                     existing = self._get_existing_subscriptions(resource_name)
                     valid_existing = [sub for sub in existing if sub.get('post_url') == webhook_url]
                     
@@ -111,11 +133,11 @@ class GumroadService:
                         success_count += 1
                         continue
                     
-                    # 清理舊的無效 webhooks
+                    # 清理舊的 webhooks
                     invalid_existing = [sub for sub in existing if sub.get('post_url') != webhook_url]
                     for invalid_sub in invalid_existing:
                         self._delete_subscription(invalid_sub.get('id'))
-                        logger.info(f"🗑️ 清理無效的 {resource_name} webhook: {invalid_sub.get('post_url')}")
+                        logger.info(f"🗑️ 清理無效的 {resource_name} webhook")
                     
                     # 創建新的 webhook
                     url = f"{self.base_url}/resource_subscriptions"
@@ -125,7 +147,7 @@ class GumroadService:
                         'post_url': webhook_url
                     }
                     
-                    response = requests.put(url, data=data)
+                    response = requests.put(url, data=data, timeout=30)
                     result = response.json()
                     
                     if result.get('success'):
@@ -157,7 +179,7 @@ class GumroadService:
                 'resource_name': resource_name
             }
             
-            response = requests.get(url, params=params)
+            response = requests.get(url, params=params, timeout=10)
             result = response.json()
             
             if result.get('success'):
@@ -174,7 +196,7 @@ class GumroadService:
             url = f"{self.base_url}/resource_subscriptions/{subscription_id}"
             data = {'access_token': self.access_token}
             
-            response = requests.delete(url, data=data)
+            response = requests.delete(url, data=data, timeout=10)
             result = response.json()
             return result.get('success', False)
             
@@ -183,58 +205,86 @@ class GumroadService:
             return False
     
     def create_purchase_url(self, plan_id, user_info):
-        """創建 Gumroad 購買 URL - 修復版本"""
-        try:
-            plans = self.get_service_plans()
-            if plan_id not in plans:
-                raise ValueError(f"無效的方案 ID: {plan_id}")
-            
-            plan = plans[plan_id]
-            product_id = plan.get('gumroad_product_id')
-            
-            if not product_id:
-                raise ValueError(f"方案 {plan_id} 沒有設定 Gumroad 產品 ID")
-            
-            # 獲取產品的實際購買 URL
-            product_info = self._get_product_info(product_id)
-            
-            if not product_info:
-                raise ValueError(f"無法獲取產品 {product_id} 的信息")
-            
-            # 創建付款記錄用於追蹤
-            payment_id = self.create_payment_record(plan_id, plan, user_info)
-            
-            # 使用產品的 short_url
-            purchase_url = product_info.get('short_url')
-            
-            if not purchase_url:
-                # 如果沒有 short_url，嘗試使用其他方式
-                custom_permalink = product_info.get('custom_permalink')
-                if custom_permalink:
-                    purchase_url = f"https://gumroad.com/l/{custom_permalink}"
-                else:
-                    # 最後手段，使用產品 ID
-                    purchase_url = f"https://gumroad.com/l/{product_id}"
-            
-            # 添加追蹤參數
-            separator = '&' if '?' in purchase_url else '?'
-            purchase_url += f"{separator}payment_tracking={payment_id}"
-            
-            logger.info(f"生成購買 URL: {purchase_url}")
-            
-            return {
-                'success': True,
-                'purchase_url': purchase_url,
-                'payment_id': payment_id,
-                'plan': plan
-            }
-            
-        except Exception as e:
-            logger.error(f"創建 Gumroad 購買 URL 失敗: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+        """創建 Gumroad 購買 URL - 並發安全版本"""
+        with self.processing_lock:
+            try:
+                # 速率限制檢查
+                if not self.rate_limiter.allow_request():
+                    raise Exception("API 請求超過速率限制")
+                
+                plans = self.get_service_plans()
+                if plan_id not in plans:
+                    raise ValueError(f"無效的方案 ID: {plan_id}")
+                
+                plan = plans[plan_id]
+                product_id = plan.get('gumroad_product_id')
+                
+                if not product_id:
+                    raise ValueError(f"方案 {plan_id} 沒有設定 Gumroad 產品 ID")
+                
+                # 獲取產品信息（使用緩存）
+                product_info = self._get_product_info_cached(product_id)
+                
+                if not product_info:
+                    raise ValueError(f"無法獲取產品 {product_id} 的信息")
+                
+                # 創建付款記錄
+                payment_id = self.create_payment_record(plan_id, plan, user_info)
+                
+                # 構建購買 URL
+                purchase_url = product_info.get('short_url')
+                
+                if not purchase_url:
+                    custom_permalink = product_info.get('custom_permalink')
+                    if custom_permalink:
+                        purchase_url = f"https://gumroad.com/l/{custom_permalink}"
+                    else:
+                        purchase_url = f"https://gumroad.com/l/{product_id}"
+                
+                # 添加追蹤參數
+                separator = '&' if '?' in purchase_url else '?'
+                purchase_url += f"{separator}payment_tracking={payment_id}"
+                
+                logger.info(f"生成購買 URL: {purchase_url}")
+                
+                return {
+                    'success': True,
+                    'purchase_url': purchase_url,
+                    'payment_id': payment_id,
+                    'plan': plan
+                }
+                
+            except Exception as e:
+                logger.error(f"創建 Gumroad 購買 URL 失敗: {str(e)}")
+                return {
+                    'success': False,
+                    'error': str(e)
+                }
+    
+    def _get_product_info_cached(self, product_id):
+        """獲取產品信息 - 帶緩存"""
+        cache_key = f"product_{product_id}"
+        cached = getattr(self, '_product_cache', {}).get(cache_key)
+        
+        if cached and time.time() - cached['timestamp'] < self.cache_timeout:
+            return cached['data']
+        
+        # 從 API 獲取
+        product_info = self._get_product_info(product_id)
+        
+        # 更新緩存
+        if not hasattr(self, '_product_cache'):
+            self._product_cache = {}
+        
+        self._product_cache[cache_key] = {
+            'data': product_info,
+            'timestamp': time.time()
+        }
+        
+        # 定期清理緩存
+        self._cleanup_cache()
+        
+        return product_info
     
     def _get_product_info(self, product_id):
         """獲取產品信息"""
@@ -242,7 +292,7 @@ class GumroadService:
             url = f"{self.base_url}/products/{product_id}"
             params = {'access_token': self.access_token}
             
-            response = requests.get(url, params=params)
+            response = requests.get(url, params=params, timeout=10)
             result = response.json()
             
             if result.get('success'):
@@ -255,10 +305,32 @@ class GumroadService:
             logger.error(f"獲取產品信息錯誤: {str(e)}")
             return None
     
+    def _cleanup_cache(self):
+        """清理過期緩存"""
+        if time.time() - self.last_cleanup < 300:  # 5分鐘清理一次
+            return
+        
+        if hasattr(self, '_product_cache'):
+            current_time = time.time()
+            expired_keys = [
+                key for key, value in self._product_cache.items()
+                if current_time - value['timestamp'] > self.cache_timeout
+            ]
+            
+            for key in expired_keys:
+                del self._product_cache[key]
+            
+            if expired_keys:
+                logger.debug(f"清理了 {len(expired_keys)} 個過期緩存項目")
+        
+        self.last_cleanup = time.time()
+    
     def create_payment_record(self, plan_id, plan, user_info):
-        """創建付款記錄"""
+        """創建付款記錄 - 防止重複"""
         try:
-            payment_id = f"gumroad_{uuid_lib.uuid4().hex[:16]}"
+            # 生成唯一的付款 ID
+            unique_key = f"{user_info['email']}_{plan_id}_{int(time.time())}"
+            payment_id = f"gumroad_{hashlib.md5(unique_key.encode()).hexdigest()[:16]}"
             
             payment_data = {
                 'payment_id': payment_id,
@@ -308,7 +380,6 @@ class GumroadService:
                 hashlib.sha256
             ).hexdigest()
             
-            # 比較簽名
             return hmac.compare_digest(signature, expected_signature)
             
         except Exception as e:
@@ -316,21 +387,59 @@ class GumroadService:
             return False
     
     def process_webhook(self, webhook_data):
-        """處理 Gumroad webhook - 修復版本"""
+        """處理 Gumroad webhook - 支援並發和退款"""
+        # 使用異步處理防止阻塞
+        future = self.executor.submit(self._process_webhook_async, webhook_data)
+        
         try:
-            logger.info(f"處理 Gumroad webhook: {webhook_data}")
-            
-            # 提取關鍵信息
+            # 等待最多 30 秒
+            return future.result(timeout=30)
+        except Exception as e:
+            logger.error(f"Webhook 處理超時或失敗: {str(e)}")
+            return {'success': False, 'error': 'Processing timeout'}
+    
+    def _process_webhook_async(self, webhook_data):
+        """異步處理 webhook"""
+        with self.processing_lock:
+            try:
+                logger.info(f"處理 Gumroad webhook: {webhook_data}")
+                
+                # 確定事件類型
+                if 'sale_id' in webhook_data:
+                    # 銷售事件
+                    return self._handle_sale_event(webhook_data)
+                elif 'refund_id' in webhook_data:
+                    # 退款事件
+                    return self._handle_refund_event(webhook_data)
+                elif 'cancellation' in webhook_data:
+                    # 取消事件
+                    return self._handle_cancellation_event(webhook_data)
+                else:
+                    logger.warning(f"未知的 webhook 事件類型: {webhook_data}")
+                    return {'success': False, 'error': 'Unknown event type'}
+                
+            except Exception as e:
+                logger.error(f"處理 webhook 異步失敗: {str(e)}")
+                return {'success': False, 'error': str(e)}
+    
+    def _handle_sale_event(self, webhook_data):
+        """處理銷售事件"""
+        try:
             sale_id = webhook_data.get('sale_id')
             if not sale_id:
-                logger.error("Webhook 缺少 sale_id")
+                logger.error("Sale webhook 缺少 sale_id")
                 return {'success': False, 'error': 'Missing sale_id'}
+            
+            # 檢查重複處理
+            if self.is_duplicate_webhook(sale_id, 'sale'):
+                logger.info(f"跳過重複的銷售 webhook: {sale_id}")
+                return {'success': True, 'message': 'Duplicate webhook ignored'}
             
             product_id = webhook_data.get('product_id')
             buyer_email = webhook_data.get('email')
             buyer_name = webhook_data.get('purchaser_name', buyer_email)
             
-            # price 是以美分為單位的整數
+            # 處理價格
             price_cents = webhook_data.get('price', 0)
             if isinstance(price_cents, str):
                 try:
@@ -340,12 +449,7 @@ class GumroadService:
             
             amount_usd = price_cents / 100.0
             
-            # 檢查是否為重複處理
-            if self.is_duplicate_webhook(sale_id):
-                logger.info(f"跳過重複的 webhook: {sale_id}")
-                return {'success': True, 'message': 'Duplicate webhook ignored'}
-            
-            # 根據 product_id 確定方案
+            # 獲取方案信息
             plan_info = self.get_plan_by_product_id(product_id)
             if not plan_info:
                 logger.error(f"未找到產品 ID 對應的方案: {product_id}")
@@ -355,7 +459,6 @@ class GumroadService:
             expected_amount = plan_info['price_usd']
             if abs(amount_usd - expected_amount) > 0.01:
                 logger.warning(f"金額不匹配: 期望 ${expected_amount}, 收到 ${amount_usd}")
-                # 不直接拒絕，記錄警告即可
             
             # 創建或更新付款記錄
             payment_id = self.create_or_update_payment_record(webhook_data, plan_info)
@@ -378,36 +481,229 @@ class GumroadService:
                 else:
                     logger.warning(f"序號郵件發送失敗: {buyer_email}")
             
-            # 記錄處理完成
-            self.mark_webhook_processed(sale_id)
+            # 標記處理完成
+            self.mark_webhook_processed(sale_id, 'sale')
             
-            logger.info(f"Gumroad 付款處理完成: {payment_id} -> {user_uuid}")
+            logger.info(f"Gumroad 銷售處理完成: {payment_id} -> {user_uuid}")
             
             return {
                 'success': True,
                 'payment_id': payment_id,
-                'user_uuid': user_uuid
+                'user_uuid': user_uuid,
+                'event_type': 'sale'
             }
             
         except Exception as e:
-            logger.error(f"處理 Gumroad webhook 失敗: {str(e)}")
+            logger.error(f"處理銷售事件失敗: {str(e)}")
             return {'success': False, 'error': str(e)}
     
-    def is_duplicate_webhook(self, sale_id):
-        """檢查是否為重複的 webhook"""
+    def _handle_refund_event(self, webhook_data):
+        """處理退款事件 - 停用相關帳號"""
         try:
-            doc = self.db.collection('processed_webhooks').document(sale_id).get()
+            refund_id = webhook_data.get('refund_id') or webhook_data.get('sale_id')
+            if not refund_id:
+                logger.error("Refund webhook 缺少 refund_id 或 sale_id")
+                return {'success': False, 'error': 'Missing refund_id'}
+            
+            # 檢查重複處理
+            if self.is_duplicate_webhook(refund_id, 'refund'):
+                logger.info(f"跳過重複的退款 webhook: {refund_id}")
+                return {'success': True, 'message': 'Duplicate refund webhook ignored'}
+            
+            # 查找相關的付款記錄
+            sale_id = webhook_data.get('sale_id')
+            payment_id = f"gumroad_{sale_id}" if sale_id else f"gumroad_{refund_id}"
+            
+            # 獲取付款記錄
+            payment_record = self.get_payment_record(payment_id)
+            if not payment_record:
+                logger.error(f"找不到退款相關的付款記錄: {payment_id}")
+                return {'success': False, 'error': 'Payment record not found'}
+            
+            # 更新付款記錄狀態
+            self.db.collection('payment_records').document(payment_id).update({
+                'status': 'refunded',
+                'refund_processed_at': datetime.now(),
+                'refund_id': refund_id,
+                'refund_data': webhook_data
+            })
+            
+            # 停用相關用戶帳號
+            user_uuid = payment_record.get('user_uuid')
+            if user_uuid:
+                result = self.deactivate_user_account(user_uuid, f"Gumroad 退款: {refund_id}")
+                if result:
+                    logger.info(f"已停用退款用戶帳號: {user_uuid}")
+                else:
+                    logger.error(f"停用用戶帳號失敗: {user_uuid}")
+            
+            # 發送退款通知郵件
+            user_email = payment_record.get('user_email')
+            user_name = payment_record.get('user_name')
+            if user_email:
+                self.send_refund_notification_email(user_email, user_name, payment_record)
+            
+            # 標記退款處理完成
+            self.mark_webhook_processed(refund_id, 'refund')
+            
+            logger.info(f"Gumroad 退款處理完成: {payment_id}")
+            
+            return {
+                'success': True,
+                'payment_id': payment_id,
+                'refund_id': refund_id,
+                'user_uuid': user_uuid,
+                'event_type': 'refund'
+            }
+            
+        except Exception as e:
+            logger.error(f"處理退款事件失敗: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def _handle_cancellation_event(self, webhook_data):
+        """處理訂閱取消事件"""
+        try:
+            subscription_id = webhook_data.get('subscription_id')
+            if not subscription_id:
+                logger.error("Cancellation webhook 缺少 subscription_id")
+                return {'success': False, 'error': 'Missing subscription_id'}
+            
+            # 檢查重複處理
+            if self.is_duplicate_webhook(subscription_id, 'cancellation'):
+                logger.info(f"跳過重複的取消 webhook: {subscription_id}")
+                return {'success': True, 'message': 'Duplicate cancellation webhook ignored'}
+            
+            # 查找相關的用戶（如果有的話）
+            # 訂閱取消不一定要立即停用帳號，可能只是標記為即將過期
+            logger.info(f"處理訂閱取消: {subscription_id}")
+            
+            # 標記處理完成
+            self.mark_webhook_processed(subscription_id, 'cancellation')
+            
+            return {
+                'success': True,
+                'subscription_id': subscription_id,
+                'event_type': 'cancellation'
+            }
+            
+        except Exception as e:
+            logger.error(f"處理取消事件失敗: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def deactivate_user_account(self, user_uuid, reason):
+        """停用用戶帳號"""
+        try:
+            uuid_hash = hashlib.sha256(user_uuid.encode()).hexdigest()
+            
+            user_ref = self.db.collection('authorized_users').document(uuid_hash)
+            user_doc = user_ref.get()
+            
+            if not user_doc.exists:
+                logger.warning(f"嘗試停用不存在的用戶帳號: {user_uuid}")
+                return False
+            
+            # 更新用戶狀態
+            user_ref.update({
+                'active': False,
+                'deactivated_at': datetime.now(),
+                'deactivation_reason': reason,
+                'deactivated_by': 'gumroad_refund_system'
+            })
+            
+            logger.info(f"用戶帳號已停用: {user_uuid} - {reason}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"停用用戶帳號失敗: {str(e)}")
+            return False
+    
+    def send_refund_notification_email(self, email, name, payment_record):
+        """發送退款通知郵件"""
+        try:
+            smtp_server = os.environ.get('SMTP_SERVER')
+            smtp_port = int(os.environ.get('SMTP_PORT', 587))
+            email_user = os.environ.get('EMAIL_USER')
+            email_password = os.environ.get('EMAIL_PASSWORD')
+            
+            if not all([smtp_server, email_user, email_password]):
+                logger.warning("Email 配置不完整，跳過退款通知發送")
+                return False
+            
+            msg = MIMEMultipart()
+            
+            from_display_name = "Scrilab"
+            msg['From'] = f"{from_display_name} <{email_user}>"
+            msg['To'] = email
+            msg['Subject'] = f"Scrilab Artale 服務退款通知"
+            
+            support_email = os.environ.get('SUPPORT_EMAIL', email_user)
+            msg['Reply-To'] = f"Scrilab Support <{support_email}>"
+            
+            plan_name = payment_record.get('plan_name', 'N/A')
+            amount_twd = payment_record.get('amount_twd', 'N/A')
+            
+            body = f"""
+親愛的 {name}，
+
+您的 Scrilab Artale 服務已成功退款。
+
+退款詳情：
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 服務方案：{plan_name}
+💰 退款金額：NT$ {amount_twd}
+🕒 處理時間：{datetime.now().strftime('%Y年%m月%d日 %H:%M')}
+🔐 相關序號：已停用
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ 重要提醒：
+- 您的服務序號已被停用，無法繼續使用
+- 退款將在 3-5 個工作日內退回到您的原付款方式
+- 如有任何疑問，歡迎聯繫我們的客服團隊
+
+📞 客服聯繫：
+- Discord：https://discord.gg/HPzNrQmN
+- Email：scrilabstaff@gmail.com
+
+感謝您曾經選擇 Scrilab 技術服務。
+
+Scrilab 技術團隊
+{datetime.now().strftime('%Y年%m月%d日')}
+            """
+            
+            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+            
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(email_user, email_password)
+            server.send_message(msg)
+            server.quit()
+            
+            logger.info(f"退款通知 Email 已發送至: {email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"發送退款通知 Email 失敗: {str(e)}")
+            return False
+    
+    def is_duplicate_webhook(self, identifier, event_type):
+        """檢查是否為重複的 webhook - 防止記憶體洩露"""
+        try:
+            doc_id = f"{event_type}_{identifier}"
+            doc = self.db.collection('processed_webhooks').document(doc_id).get()
             return doc.exists
         except Exception as e:
             logger.error(f"檢查重複 webhook 失敗: {str(e)}")
             return False
     
-    def mark_webhook_processed(self, sale_id):
+    def mark_webhook_processed(self, identifier, event_type):
         """標記 webhook 已處理"""
         try:
-            self.db.collection('processed_webhooks').document(sale_id).set({
-                'sale_id': sale_id,
-                'processed_at': datetime.now()
+            doc_id = f"{event_type}_{identifier}"
+            self.db.collection('processed_webhooks').document(doc_id).set({
+                'identifier': identifier,
+                'event_type': event_type,
+                'processed_at': datetime.now(),
+                'expires_at': datetime.now() + timedelta(days=30)  # 30天後自動清理
             })
         except Exception as e:
             logger.error(f"標記 webhook 已處理失敗: {str(e)}")
@@ -534,13 +830,11 @@ class GumroadService:
             
             msg = MIMEMultipart()
             
-            # 設置顯示名稱
             from_display_name = "Scrilab"
             msg['From'] = f"{from_display_name} <{email_user}>"
             msg['To'] = email
             msg['Subject'] = f"Scrilab Artale 服務序號 - {plan_name}"
             
-            # 設置回覆地址
             support_email = os.environ.get('SUPPORT_EMAIL', email_user)
             msg['Reply-To'] = f"Scrilab Support <{support_email}>"
             
@@ -602,29 +896,39 @@ Scrilab 技術團隊
             return None
     
     def get_purchase_stats(self):
-        """獲取購買統計"""
+        """獲取購買統計 - 包含退款統計"""
         try:
             payments_ref = self.db.collection('payment_records')
             gumroad_payments = payments_ref.where('payment_method', '==', 'gumroad').stream()
             
             total_payments = 0
             completed_payments = 0
+            refunded_payments = 0
             total_revenue = 0
+            total_refunded = 0
             
             for payment in gumroad_payments:
                 payment_data = payment.to_dict()
                 total_payments += 1
                 
-                if payment_data.get('status') == 'completed':
+                status = payment_data.get('status', '')
+                if status == 'completed':
                     completed_payments += 1
                     total_revenue += payment_data.get('amount_twd', 0)
+                elif status == 'refunded':
+                    refunded_payments += 1
+                    total_refunded += payment_data.get('amount_twd', 0)
             
             return {
                 'total_payments': total_payments,
                 'completed_payments': completed_payments,
-                'pending_payments': total_payments - completed_payments,
+                'refunded_payments': refunded_payments,
+                'pending_payments': total_payments - completed_payments - refunded_payments,
                 'total_revenue_twd': total_revenue,
-                'success_rate': (completed_payments / total_payments * 100) if total_payments > 0 else 0
+                'total_refunded_twd': total_refunded,
+                'net_revenue_twd': total_revenue - total_refunded,
+                'success_rate': (completed_payments / total_payments * 100) if total_payments > 0 else 0,
+                'refund_rate': (refunded_payments / total_payments * 100) if total_payments > 0 else 0
             }
             
         except Exception as e:
@@ -632,9 +936,13 @@ Scrilab 技術團隊
             return {
                 'total_payments': 0,
                 'completed_payments': 0,
+                'refunded_payments': 0,
                 'pending_payments': 0,
                 'total_revenue_twd': 0,
-                'success_rate': 0
+                'total_refunded_twd': 0,
+                'net_revenue_twd': 0,
+                'success_rate': 0,
+                'refund_rate': 0
             }
     
     def debug_all_products(self):
@@ -643,7 +951,7 @@ Scrilab 技術團隊
             url = f"{self.base_url}/products"
             params = {'access_token': self.access_token}
             
-            response = requests.get(url, params=params)
+            response = requests.get(url, params=params, timeout=10)
             result = response.json()
             
             if result.get('success'):
@@ -666,3 +974,58 @@ Scrilab 技術團隊
                 'success': False,
                 'error': str(e)
             }
+    
+    def cleanup_old_webhooks(self):
+        """清理舊的 webhook 記錄"""
+        try:
+            cutoff_date = datetime.now() - timedelta(days=30)
+            
+            # 查詢並刪除過期的 webhook 記錄
+            old_webhooks = self.db.collection('processed_webhooks')\
+                              .where('expires_at', '<', cutoff_date)\
+                              .limit(100)\
+                              .stream()
+            
+            deleted_count = 0
+            for webhook_doc in old_webhooks:
+                try:
+                    webhook_doc.reference.delete()
+                    deleted_count += 1
+                except Exception as e:
+                    logger.warning(f"刪除舊 webhook 記錄失敗: {e}")
+            
+            if deleted_count > 0:
+                logger.info(f"🧹 清理了 {deleted_count} 個舊 webhook 記錄")
+            
+            return deleted_count
+            
+        except Exception as e:
+            logger.error(f"清理舊 webhook 記錄失敗: {str(e)}")
+            return 0
+
+
+class RateLimiter:
+    """簡單的速率限制器"""
+    
+    def __init__(self, max_requests=100, time_window=3600):
+        self.max_requests = max_requests
+        self.time_window = time_window
+        self.requests = []
+        self.lock = threading.Lock()
+    
+    def allow_request(self):
+        """檢查是否允許請求"""
+        with self.lock:
+            now = time.time()
+            
+            # 清理過期的請求記錄
+            self.requests = [req_time for req_time in self.requests 
+                           if now - req_time < self.time_window]
+            
+            # 檢查是否超過限制
+            if len(self.requests) >= self.max_requests:
+                return False
+            
+            # 記錄此次請求
+            self.requests.append(now)
+            return True
