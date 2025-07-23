@@ -621,7 +621,7 @@ ENHANCED_ADMIN_TEMPLATE = """
         let isLoggedIn = false;
         let currentRefundData = null;
 
-        // 頁面載入時檢查登入狀態
+        // Check login status when page loads
         window.onload = function() {
             console.log('頁面載入完成，開始檢查登入狀態');
             checkLoginStatus();
@@ -1701,7 +1701,18 @@ def generate_secure_uuid(prefix='artale', custom_id=None, date_format='YYYYMMDD'
 @admin_bp.route('', methods=['GET'])
 def admin_dashboard():
     """增強版管理員面板"""
-    return render_template_string(ENHANCED_ADMIN_TEMPLATE)
+    from flask import Response
+    
+    # 確保正確的UTF-8編碼
+    html_content = ENHANCED_ADMIN_TEMPLATE.encode('utf-8')
+    
+    response = Response(
+        html_content,
+        mimetype='text/html',
+        headers={'Content-Type': 'text/html; charset=utf-8'}
+    )
+    
+    return response
 
 @admin_bp.route('/debug', methods=['GET'])
 def admin_debug():
