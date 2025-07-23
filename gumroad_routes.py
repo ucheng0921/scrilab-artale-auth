@@ -1,10 +1,9 @@
 """
-gumroad_routes.py - Gumroad 路由處理器
+gumroad_routes.py - 修復版本
 """
 from flask import Blueprint, request, jsonify, redirect, render_template_string
 import logging
 import json
-from urllib.parse import parse_qs
 
 logger = logging.getLogger(__name__)
 
@@ -12,14 +11,14 @@ logger = logging.getLogger(__name__)
 gumroad_bp = Blueprint('gumroad', __name__, url_prefix='/gumroad')
 
 class GumroadRoutes:
-    """Gumroad 路由處理器"""
+    """Gumroad 路由處理器 - 修復版本"""
     
     def __init__(self, gumroad_service):
         self.gumroad_service = gumroad_service
         logger.info("✅ GumroadRoutes 已初始化")
     
     def create_payment(self):
-        """創建 Gumroad 付款"""
+        """創建 Gumroad 付款 - 修復版本"""
         try:
             data = request.get_json()
             
@@ -73,38 +72,44 @@ class GumroadRoutes:
             }), 500
     
     def webhook_handler(self):
-        """處理 Gumroad webhook"""
+        """處理 Gumroad webhook - 修復版本"""
         try:
-            # 獲取請求數據
-            content_type = request.headers.get('Content-Type', '')
-            
-            if 'application/x-www-form-urlencoded' in content_type:
-                # Gumroad 發送的是 form-urlencoded 格式
-                payload = request.get_data(as_text=True)
-                webhook_data = dict(parse_qs(payload, keep_blank_values=True))
-                
-                # 轉換為單值字典（去掉列表包裝）
-                webhook_data = {k: v[0] if isinstance(v, list) and len(v) == 1 else v 
-                              for k, v in webhook_data.items()}
-            else:
-                # 嘗試解析 JSON
-                try:
-                    webhook_data = request.get_json()
-                    payload = json.dumps(webhook_data) if webhook_data else ''
-                except:
-                    payload = request.get_data(as_text=True)
-                    webhook_data = {}
+            # 獲取原始請求數據
+            raw_data = request.get_data()
             
             # 獲取簽名
             signature = request.headers.get('X-Gumroad-Signature', '')
             
-            logger.info(f"收到 Gumroad webhook: {len(payload)} 字節")
-            logger.debug(f"Webhook 數據: {webhook_data}")
+            # 記錄收到的 webhook
+            logger.info(f"收到 Gumroad webhook: {len(raw_data)} 字節")
+            logger.info(f"Content-Type: {request.headers.get('Content-Type', 'N/A')}")
             
-            # 驗證簽名（如果設置了密鑰）
-            if not self.gumroad_service.verify_webhook_signature(payload, signature):
+            # 驗證簽名
+            if not self.gumroad_service.verify_webhook_signature(raw_data, signature):
                 logger.warning("Gumroad webhook 簽名驗證失敗")
                 return jsonify({'error': 'Invalid signature'}), 401
+            
+            # 解析 webhook 數據
+            content_type = request.headers.get('Content-Type', '').lower()
+            
+            if 'application/json' in content_type:
+                # JSON 格式
+                webhook_data = request.get_json()
+            elif 'application/x-www-form-urlencoded' in content_type:
+                # Form 格式 - Gumroad 的標準格式
+                webhook_data = request.form.to_dict()
+            else:
+                # 嘗試作為 JSON 解析
+                try:
+                    webhook_data = json.loads(raw_data.decode('utf-8'))
+                except:
+                    webhook_data = request.form.to_dict()
+            
+            if not webhook_data:
+                logger.error("無法解析 webhook 數據")
+                return jsonify({'error': 'Invalid webhook data'}), 400
+            
+            logger.debug(f"解析的 webhook 數據: {webhook_data}")
             
             # 處理 webhook
             result = self.gumroad_service.process_webhook(webhook_data)
@@ -228,37 +233,55 @@ class GumroadRoutes:
                 'error': '系統錯誤'
             }), 500
     
-    def webhook_test(self):
-        """測試 webhook 端點"""
+    def debug_products(self):
+        """調試：獲取所有產品信息"""
         try:
-            # 獲取測試數據
-            test_data = {
-                'seller_id': 'test_seller',
-                'product_id': 'test_product',
-                'email': 'test@example.com',
-                'sale_id': 'test_sale_123',
-                'order_number': '999999',
-                'price': '2999',  # 29.99 USD in cents
-                'currency': 'usd',
-                'purchaser_name': 'Test User'
-            }
+            result = self.gumroad_service.debug_all_products()
             
-            logger.info("處理測試 webhook")
-            
-            # 處理測試 webhook
-            result = self.gumroad_service.process_webhook(test_data)
-            
-            return jsonify({
-                'success': True,
-                'message': 'Test webhook processed',
-                'result': result
-            })
-            
+            if result.get('success'):
+                products = result.get('products', [])
+                
+                # 映射我們的產品 ID
+                our_product_mapping = {
+                    os.environ.get('GUMROAD_TRIAL_PRODUCT_ID'): 'trial_7',
+                    os.environ.get('GUMROAD_MONTHLY_PRODUCT_ID'): 'monthly_30',
+                    os.environ.get('GUMROAD_QUARTERLY_PRODUCT_ID'): 'quarterly_90'
+                }
+                
+                matched_products = {}
+                for product in products:
+                    product_id = product.get('id')
+                    if product_id in our_product_mapping:
+                        plan_id = our_product_mapping[product_id]
+                        matched_products[plan_id] = {
+                            **product,
+                            'plan_id': plan_id,
+                            'purchase_url': product.get('short_url') or f"https://gumroad.com/l/{product_id}",
+                            'env_product_id': product_id
+                        }
+                
+                return jsonify({
+                    'success': True,
+                    'debug_info': {
+                        'all_products': products,
+                        'our_products': matched_products,
+                        'total_products_found': len(products),
+                        'our_products_matched': len(matched_products),
+                        'environment_mapping': our_product_mapping
+                    }
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'API 調用失敗',
+                    'details': result.get('error')
+                }), 500
+                
         except Exception as e:
-            logger.error(f"測試 webhook 錯誤: {str(e)}")
+            logger.error(f"調試產品錯誤: {str(e)}")
             return jsonify({
                 'success': False,
-                'error': str(e)
+                'error': f'調試失敗: {str(e)}'
             }), 500
 
 # 全局路由處理器實例
@@ -331,6 +354,17 @@ def service_plans():
     
     return gumroad_routes.get_service_plans()
 
+@gumroad_bp.route('/debug/products', methods=['GET'])
+def debug_products():
+    """調試：獲取產品信息"""
+    if not gumroad_routes:
+        return jsonify({
+            'success': False,
+            'error': 'Gumroad 服務未初始化'
+        }), 503
+    
+    return gumroad_routes.debug_products()
+
 @gumroad_bp.route('/test-webhook', methods=['POST'])
 def test_webhook():
     """測試 webhook 端點"""
@@ -340,161 +374,30 @@ def test_webhook():
             'error': 'Gumroad 服務未初始化'
         }), 503
     
-    return gumroad_routes.webhook_test()
-
-@gumroad_bp.route('/emergency-debug', methods=['GET'])
-def emergency_debug():
-    """緊急調試 - 獲取產品的真實購買鏈接"""
-    if not gumroad_routes or not gumroad_routes.gumroad_service:
-        return jsonify({
-            'success': False,
-            'error': 'Gumroad 服務未初始化'
-        }), 503
-    
     try:
-        # 使用調試方法獲取所有產品
-        result = gumroad_routes.gumroad_service.debug_all_products()
+        # 模擬測試數據
+        test_data = {
+            'sale_id': 'test_sale_123456',
+            'product_id': os.environ.get('GUMROAD_TRIAL_PRODUCT_ID', 'test_product'),
+            'email': 'test@example.com',
+            'purchaser_name': 'Test User',
+            'price': '500',  # 5.00 USD in cents
+            'currency': 'usd',
+            'seller_id': 'test_seller'
+        }
         
-        if result.get('success'):
-            products = result.get('products', [])
-            
-            # 映射我們的產品 ID
-            our_product_ids = {
-                '27M21oDD__7HRLfycCIKiQ': 'trial_7',
-                'KBeLX9NDOECb4hpr5YD_9g': 'monthly_30', 
-                '4ibYDgcsoi8_DPDacdNzpA': 'quarterly_90'
-            }
-            
-            matched_products = {}
-            for product in products:
-                product_id = product.get('id')
-                if product_id in our_product_ids:
-                    plan_id = our_product_ids[product_id]
-                    matched_products[plan_id] = {
-                        **product,
-                        'plan_id': plan_id,
-                        'correct_purchase_url': product.get('short_url'),
-                        'current_env_product_id': product_id
-                    }
-            
-            return jsonify({
-                'success': True,
-                'debug_info': {
-                    'all_products': products,
-                    'our_products': matched_products,
-                    'total_products_found': len(products),
-                    'our_products_matched': len(matched_products)
-                },
-                'next_steps': [
-                    "查看 'our_products' 中每個產品的 'correct_purchase_url'",
-                    "這些就是正確的購買鏈接格式",
-                    "如果 short_url 存在，使用它；否則產品可能未發布"
-                ]
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'API 調用失敗',
-                'details': result.get('error')
-            }), 500
-
-@gumroad_bp.route('/debug/webhooks', methods=['GET'])
-def debug_webhooks():
-    """調試現有的 webhook 設置"""
-    if not gumroad_routes or not gumroad_routes.gumroad_service:
-        return jsonify({
-            'success': False,
-            'error': 'Gumroad 服務未初始化'
-        }), 503
-    
-    try:
-        result = gumroad_routes.gumroad_service.check_existing_webhooks()
-        
-        # 添加環境變數資訊
-        webhook_base_url = os.environ.get('WEBHOOK_BASE_URL', 'NOT_SET')
-        expected_webhook_url = f"https://scrilab.onrender.com/gumroad/webhook"
-        
-        if webhook_base_url != 'NOT_SET':
-            if not webhook_base_url.startswith('http'):
-                webhook_base_url = f"https://{webhook_base_url}"
-            webhook_base_url = webhook_base_url.rstrip('/')
-            expected_webhook_url = f"{webhook_base_url}/gumroad/webhook"
-        
-        return jsonify({
-            'webhook_check': result,
-            'environment': {
-                'WEBHOOK_BASE_URL': os.environ.get('WEBHOOK_BASE_URL', 'NOT_SET'),
-                'expected_webhook_url': expected_webhook_url,
-                'current_domain': 'scrilab.onrender.com'
-            },
-            'recommendations': [
-                "確保 WEBHOOK_BASE_URL 設為 'https://scrilab.onrender.com'",
-                "如果有無效的 webhook，使用 /gumroad/debug/cleanup-webhooks 清理",
-                "然後重新啟動應用以重新設置正確的 webhooks"
-            ]
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@gumroad_bp.route('/debug/cleanup-webhooks', methods=['POST'])
-def cleanup_webhooks():
-    """清理無效的 webhook 設置"""
-    if not gumroad_routes or not gumroad_routes.gumroad_service:
-        return jsonify({
-            'success': False,
-            'error': 'Gumroad 服務未初始化'
-        }), 503
-    
-    try:
-        cleaned = gumroad_routes.gumroad_service.cleanup_invalid_webhooks()
+        logger.info("處理測試 webhook")
+        result = gumroad_routes.gumroad_service.process_webhook(test_data)
         
         return jsonify({
             'success': True,
-            'cleaned': cleaned,
-            'message': '無效 webhook 清理完成' if cleaned else '沒有發現需要清理的 webhook',
-            'next_step': '重新啟動應用以設置正確的 webhooks' if cleaned else '檢查 WEBHOOK_BASE_URL 環境變數'
+            'message': 'Test webhook processed',
+            'result': result
         })
         
     except Exception as e:
+        logger.error(f"測試 webhook 錯誤: {str(e)}")
         return jsonify({
             'success': False,
             'error': str(e)
-        }), 500
-
-@gumroad_bp.route('/debug/setup-webhooks', methods=['POST'])
-def manual_setup_webhooks():
-    """手動重新設置 webhooks"""
-    if not gumroad_routes or not gumroad_routes.gumroad_service:
-        return jsonify({
-            'success': False,
-            'error': 'Gumroad 服務未初始化'
-        }), 503
-    
-    try:
-        # 先清理
-        gumroad_routes.gumroad_service.cleanup_invalid_webhooks()
-        
-        # 重新設置
-        success = gumroad_routes.gumroad_service.setup_webhooks()
-        
-        return jsonify({
-            'success': success,
-            'message': 'Webhooks 重新設置完成' if success else 'Webhooks 設置失敗',
-            'webhook_url': f"{os.environ.get('WEBHOOK_BASE_URL', 'https://scrilab.onrender.com')}/gumroad/webhook"
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': f'調試失敗: {str(e)}'
         }), 500
