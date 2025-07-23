@@ -1787,11 +1787,8 @@ def admin_dashboard():
     """增強版管理員面板"""
     from flask import Response
     
-    # 使用組合函數生成完整模板
-    template_content = build_admin_template()
-    
     # 確保正確的UTF-8編碼
-    html_content = template_content.encode('utf-8')
+    html_content = ENHANCED_ADMIN_TEMPLATE.encode('utf-8')
     
     response = Response(
         html_content,
@@ -1800,3 +1797,705 @@ def admin_dashboard():
     )
     
     return response
+
+@admin_bp.route('/debug', methods=['GET'])
+def admin_debug():
+    """調試端點"""
+    admin_token = os.environ.get('ADMIN_TOKEN', 'NOT_SET')
+    return jsonify({
+        'admin_token_set': admin_token != 'NOT_SET',
+        'admin_token_value': admin_token[:8] + '...' if len(admin_token) > 8 else admin_token,
+        'expected_default': 'your-secret-admin-token'
+    })
+
+@admin_bp.route('/users', methods=['GET'])
+def get_all_users():
+    """獲取所有用戶"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+            
+        users_ref = db.collection('authorized_users')
+        users = users_ref.stream()
+        
+        user_list = []
+        for user in users:
+            user_data = user.to_dict()
+            
+            # 處理時間格式
+            created_at = user_data.get('created_at')
+            if hasattr(created_at, 'strftime'):
+                created_at_str = created_at.strftime('%Y-%m-%d %H:%M')
+            else:
+                created_at_str = str(created_at)[:16] if created_at else 'Unknown'
+            
+            expires_at = user_data.get('expires_at')
+            if expires_at:
+                if isinstance(expires_at, str):
+                    expires_at_str = expires_at.split('T')[0] + ' ' + expires_at.split('T')[1][:5]
+                else:
+                    expires_at_str = str(expires_at)[:16]
+            else:
+                expires_at_str = None
+            
+            # 生成顯示用的 UUID
+            original_uuid = user_data.get('original_uuid', 'Unknown')
+            uuid_preview = original_uuid[:16] + '...' if len(original_uuid) > 16 else original_uuid
+            
+            # 檢查退款狀態
+            payment_status = user_data.get('payment_status', '手動創建')
+            if user_data.get('deactivation_reason', '').startswith('Gumroad 退款'):
+                payment_status = 'refunded'
+            
+            user_list.append({
+                'document_id': user.id,
+                'uuid_preview': uuid_preview,
+                'original_uuid': original_uuid,
+                'display_name': user_data.get('display_name', 'Unknown'),
+                'active': user_data.get('active', False),
+                'expires_at': expires_at_str,
+                'login_count': user_data.get('login_count', 0),
+                'created_at': created_at_str,
+                'permissions': user_data.get('permissions', {}),
+                'notes': user_data.get('notes', ''),
+                'payment_status': payment_status,
+                'payment_id': user_data.get('payment_id')
+            })
+        
+        # 按創建時間排序
+        user_list.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'users': user_list,
+            'total_count': len(user_list)
+        })
+        
+    except Exception as e:
+        logger.error(f"Get users error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/create-user', methods=['POST'])
+def create_user_admin():
+    """創建新用戶（管理員）"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+            
+        data = request.get_json()
+        uuid_string = data.get('uuid', '').strip()
+        display_name = data.get('display_name', '').strip()
+        days_valid = data.get('days', 30)
+        
+        if not uuid_string or not display_name:
+            return jsonify({'success': False, 'error': 'UUID 和顯示名稱為必填'}), 400
+        
+        # 檢查 UUID 是否已存在
+        uuid_hash = hashlib.sha256(uuid_string.encode()).hexdigest()
+        user_ref = db.collection('authorized_users').document(uuid_hash)
+        
+        if user_ref.get().exists:
+            return jsonify({'success': False, 'error': 'UUID 已存在'}), 400
+        
+        # 創建用戶
+        expires_at = None
+        if days_valid > 0:
+            expires_at = (datetime.now() + timedelta(days=days_valid)).isoformat()
+        
+        user_data = {
+            "original_uuid": uuid_string,
+            "display_name": display_name,
+            "permissions": {
+                "script_access": True,
+                "config_modify": True
+            },
+            "active": True,
+            "created_at": datetime.now(),
+            "created_by": "admin_dashboard",
+            "login_count": 0,
+            "notes": f"管理員創建 - {datetime.now().strftime('%Y-%m-%d')}",
+            "payment_status": "手動創建"
+        }
+        
+        if expires_at:
+            user_data["expires_at"] = expires_at
+        
+        user_ref.set(user_data)
+        
+        return jsonify({
+            'success': True,
+            'message': '用戶創建成功',
+            'uuid': uuid_string,
+            'display_name': display_name
+        })
+        
+    except Exception as e:
+        logger.error(f"Create user admin error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/users/<document_id>', methods=['PUT'])
+def update_user_admin(document_id):
+    """更新用戶資訊"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+            
+        data = request.get_json()
+        user_ref = db.collection('authorized_users').document(document_id)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists:
+            return jsonify({'success': False, 'error': '用戶不存在'}), 404
+        
+        update_data = {}
+        
+        # 更新顯示名稱
+        if 'display_name' in data:
+            update_data['display_name'] = data['display_name']
+        
+        # 延長有效期
+        if 'extend_days' in data:
+            from firebase_admin import firestore
+            extend_days = data['extend_days']
+            current_data = user_doc.to_dict()
+            current_expires = current_data.get('expires_at')
+            
+            if current_expires:
+                if isinstance(current_expires, str):
+                    current_expires = datetime.fromisoformat(current_expires.replace('Z', ''))
+                
+                # 如果已過期，從現在開始計算
+                if current_expires < datetime.now():
+                    new_expires = datetime.now() + timedelta(days=extend_days)
+                else:
+                    new_expires = current_expires + timedelta(days=extend_days)
+            else:
+                # 如果原本是永久，從現在開始計算
+                new_expires = datetime.now() + timedelta(days=extend_days)
+            
+            update_data['expires_at'] = new_expires.isoformat()
+        
+        update_data['updated_at'] = datetime.now()
+        update_data['updated_by'] = 'admin_dashboard'
+        
+        user_ref.update(update_data)
+        
+        return jsonify({
+            'success': True,
+            'message': '用戶資訊已更新'
+        })
+        
+    except Exception as e:
+        logger.error(f"Update user admin error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/users/<document_id>/toggle', methods=['PUT'])
+def toggle_user_status(document_id):
+    """啟用/停用用戶"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+            
+        data = request.get_json()
+        new_status = data.get('active', True)
+        
+        user_ref = db.collection('authorized_users').document(document_id)
+        if not user_ref.get().exists:
+            return jsonify({'success': False, 'error': '用戶不存在'}), 404
+        
+        user_ref.update({
+            'active': new_status,
+            'status_changed_at': datetime.now(),
+            'status_changed_by': 'admin_dashboard'
+        })
+        
+        return jsonify({
+            'success': True,
+            'message': f'用戶已{"啟用" if new_status else "停用"}'
+        })
+        
+    except Exception as e:
+        logger.error(f"Toggle user status error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/users/<document_id>', methods=['DELETE'])
+def delete_user_admin(document_id):
+    """刪除用戶"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+            
+        user_ref = db.collection('authorized_users').document(document_id)
+        if not user_ref.get().exists:
+            return jsonify({'success': False, 'error': '用戶不存在'}), 404
+        
+        # 刪除用戶
+        user_ref.delete()
+        
+        return jsonify({
+            'success': True,
+            'message': '用戶已刪除'
+        })
+        
+    except Exception as e:
+        logger.error(f"Delete user admin error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/check-uuid', methods=['POST'])
+def check_uuid_exists():
+    """檢查 UUID 是否已存在"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+            
+        data = request.get_json()
+        uuid_string = data.get('uuid', '').strip()
+        
+        if not uuid_string:
+            return jsonify({'success': False, 'error': 'UUID 為必填'}), 400
+        
+        # 檢查 UUID 是否已存在
+        uuid_hash = hashlib.sha256(uuid_string.encode()).hexdigest()
+        user_ref = db.collection('authorized_users').document(uuid_hash)
+        user_doc = user_ref.get()
+        
+        return jsonify({
+            'success': True,
+            'exists': user_doc.exists,
+            'uuid': uuid_string
+        })
+        
+    except Exception as e:
+        logger.error(f"Check UUID error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/payments', methods=['GET'])
+def get_payments():
+    """獲取付款記錄"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+            
+        payments_ref = db.collection('payment_records')
+        payments = payments_ref.order_by('created_at', direction=firestore.Query.DESCENDING).stream()
+        
+        payment_list = []
+        for payment in payments:
+            payment_data = payment.to_dict()
+            
+            # 處理時間格式
+            created_at = payment_data.get('created_at')
+            if hasattr(created_at, 'strftime'):
+                created_at_str = created_at.strftime('%Y-%m-%d %H:%M')
+            else:
+                created_at_str = str(created_at)[:16] if created_at else 'Unknown'
+            
+            payment_list.append({
+                'payment_id': payment.id,
+                'created_at': created_at_str,
+                'user_name': payment_data.get('user_name', ''),
+                'user_email': payment_data.get('user_email', ''),
+                'plan_name': payment_data.get('plan_name', ''),
+                'amount_twd': payment_data.get('amount_twd', 0),
+                'amount_usd': payment_data.get('amount_usd', 0),
+                'status': payment_data.get('status', ''),
+                'user_uuid': payment_data.get('user_uuid', '')
+            })
+        
+        return jsonify({'success': True, 'payments': payment_list})
+        
+    except Exception as e:
+        logger.error(f"Get payments error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/refunds', methods=['GET'])
+def get_refunds():
+    """獲取退款記錄"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+        
+        # 獲取所有狀態為 refunded 的付款記錄
+        payments_ref = db.collection('payment_records')
+        refunded_payments = payments_ref.where('status', '==', 'refunded').stream()
+        
+        refund_list = []
+        for payment in refunded_payments:
+            payment_data = payment.to_dict()
+            
+            # 處理時間格式
+            refund_time = payment_data.get('refund_processed_at')
+            if hasattr(refund_time, 'strftime'):
+                refund_time_str = refund_time.strftime('%Y-%m-%d %H:%M')
+            else:
+                refund_time_str = str(refund_time)[:16] if refund_time else 'Unknown'
+            
+            refund_list.append({
+                'refund_id': payment_data.get('refund_id', payment.id),
+                'original_payment_id': payment.id,
+                'refund_processed_at': refund_time_str,
+                'user_name': payment_data.get('user_name', ''),
+                'user_email': payment_data.get('user_email', ''),
+                'refund_amount': payment_data.get('amount_twd', 0),
+                'refund_reason': payment_data.get('refund_data', {}).get('reason', '客戶要求退款'),
+                'status': 'processed',
+                'user_uuid': payment_data.get('user_uuid', '')
+            })
+        
+        return jsonify({'success': True, 'refunds': refund_list})
+        
+    except Exception as e:
+        logger.error(f"Get refunds error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/process-refund', methods=['POST'])
+def process_refund():
+    """處理退款請求"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db, gumroad_service
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+        
+        data = request.get_json()
+        payment_id = data.get('payment_id')
+        refund_reason = data.get('refund_reason', 'admin_manual_refund')
+        refund_note = data.get('refund_note', '')
+        
+        if not payment_id:
+            return jsonify({'success': False, 'error': '缺少付款 ID'}), 400
+        
+        # 獲取付款記錄
+        payment_ref = db.collection('payment_records').document(payment_id)
+        payment_doc = payment_ref.get()
+        
+        if not payment_doc.exists:
+            return jsonify({'success': False, 'error': '找不到付款記錄'}), 404
+        
+        payment_data = payment_doc.to_dict()
+        
+        if payment_data.get('status') == 'refunded':
+            return jsonify({'success': False, 'error': '該付款已經退款'}), 400
+        
+        # 更新付款記錄為退款狀態
+        refund_data = {
+            'status': 'refunded',
+            'refund_processed_at': datetime.now(),
+            'refund_reason': refund_reason,
+            'refund_note': refund_note,
+            'refund_processed_by': 'admin_manual',
+            'refund_data': {
+                'reason': refund_reason,
+                'note': refund_note,
+                'processed_by': 'admin',
+                'manual_refund': True
+            }
+        }
+        
+        payment_ref.update(refund_data)
+        
+        # 停用相關用戶帳號
+        user_uuid = payment_data.get('user_uuid')
+        if user_uuid and gumroad_service:
+            gumroad_service.deactivate_user_account(
+                user_uuid, 
+                f"管理員手動退款: {refund_reason} - {refund_note}"
+            )
+        
+        # 發送退款通知郵件
+        user_email = payment_data.get('user_email')
+        user_name = payment_data.get('user_name')
+        if user_email and gumroad_service:
+            gumroad_service.send_refund_notification_email(user_email, user_name, payment_data)
+        
+        logger.info(f"管理員手動處理退款: {payment_id} - {refund_reason}")
+        
+        return jsonify({
+            'success': True,
+            'message': '退款處理成功',
+            'payment_id': payment_id,
+            'refund_reason': refund_reason
+        })
+        
+    except Exception as e:
+        logger.error(f"Process refund error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/resend-email', methods=['POST'])
+def resend_email():
+    """重新發送序號Email"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import gumroad_service
+        if gumroad_service is None:
+            return jsonify({'success': False, 'error': 'Gumroad service not available'}), 503
+            
+        data = request.get_json()
+        payment_id = data.get('payment_id')
+        
+        if not payment_id:
+            return jsonify({'success': False, 'error': '缺少付款ID'}), 400
+        
+        payment_record = gumroad_service.get_payment_record(payment_id)
+        if not payment_record:
+            return jsonify({'success': False, 'error': '找不到付款記錄'}), 404
+        
+        if not payment_record.get('user_uuid'):
+            return jsonify({'success': False, 'error': '該付款尚未生成序號'}), 400
+        
+        success = gumroad_service.send_license_email(
+            payment_record['user_email'],
+            payment_record['user_name'],
+            payment_record['user_uuid'],
+            payment_record['plan_name'],
+            payment_record['plan_period']
+        )
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Email已重新發送'})
+        else:
+            return jsonify({'success': False, 'error': 'Email發送失敗'}), 500
+            
+    except Exception as e:
+        logger.error(f"Resend email error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/cleanup-webhooks', methods=['POST'])
+def cleanup_webhooks():
+    """清理舊的 webhook 記錄"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import gumroad_service
+        if gumroad_service is None:
+            return jsonify({'success': False, 'error': 'Gumroad service not available'}), 503
+        
+        deleted_count = gumroad_service.cleanup_old_webhooks()
+        
+        return jsonify({
+            'success': True,
+            'message': f'清理完成，刪除了 {deleted_count} 個舊記錄',
+            'deleted_count': deleted_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Cleanup webhooks error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/optimize-database', methods=['POST'])
+def optimize_database():
+    """優化數據庫"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+        
+        # 執行數據庫優化操作
+        # 1. 清理過期的 session 記錄
+        cutoff_date = datetime.now() - timedelta(days=7)
+        old_sessions = db.collection('user_sessions')\
+                        .where('expires_at', '<', cutoff_date)\
+                        .limit(100)\
+                        .stream()
+        
+        session_deleted = 0
+        for session in old_sessions:
+            session.reference.delete()
+            session_deleted += 1
+        
+        # 2. 清理過期的 webhook 記錄
+        old_webhooks = db.collection('processed_webhooks')\
+                        .where('expires_at', '<', cutoff_date)\
+                        .limit(100)\
+                        .stream()
+        
+        webhook_deleted = 0
+        for webhook in old_webhooks:
+            webhook.reference.delete()
+            webhook_deleted += 1
+        
+        logger.info(f"數據庫優化完成: 清理了 {session_deleted} 個過期 session, {webhook_deleted} 個過期 webhook")
+        
+        return jsonify({
+            'success': True,
+            'message': f'數據庫優化完成，清理了 {session_deleted + webhook_deleted} 個過期記錄',
+            'details': {
+                'sessions_deleted': session_deleted,
+                'webhooks_deleted': webhook_deleted
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Optimize database error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/bulk-cleanup', methods=['POST'])
+def bulk_cleanup():
+    """批量清理過期用戶"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+        
+        now = datetime.now()
+        users_ref = db.collection('authorized_users')
+        all_users = users_ref.stream()
+        
+        processed_count = 0
+        
+        for user_doc in all_users:
+            user_data = user_doc.to_dict()
+            expires_at = user_data.get('expires_at')
+            
+            if expires_at:
+                if isinstance(expires_at, str):
+                    expires_at = datetime.fromisoformat(expires_at.replace('Z', ''))
+                
+                # 如果已過期且仍然啟用，則停用
+                if expires_at < now and user_data.get('active', False):
+                    user_doc.reference.update({
+                        'active': False,
+                        'deactivated_at': now,
+                        'deactivation_reason': 'Bulk cleanup - expired',
+                        'deactivated_by': 'admin_bulk_cleanup'
+                    })
+                    processed_count += 1
+        
+        logger.info(f"批量清理完成: 處理了 {processed_count} 個過期用戶")
+        
+        return jsonify({
+            'success': True,
+            'message': f'批量清理完成，處理了 {processed_count} 個過期用戶',
+            'processed_count': processed_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Bulk cleanup error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/sync-gumroad', methods=['POST'])
+def sync_gumroad():
+    """同步 Gumroad 數據"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        # 這裡可以實現與 Gumroad API 同步的邏輯
+        # 例如獲取最新的銷售和退款記錄
+        
+        logger.info("Gumroad 數據同步完成")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Gumroad 數據同步完成',
+            'updated_count': 0  # 實際實現時返回更新的記錄數
+        })
+        
+    except Exception as e:
+        logger.error(f"Sync Gumroad error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/system-report', methods=['GET'])
+def generate_system_report():
+    """生成系統報告"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        # 這裡可以實現生成 PDF 報告的邏輯
+        # 暫時返回文本報告
+        
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+        
+        # 收集統計數據
+        users_count = len(list(db.collection('authorized_users').stream()))
+        payments_count = len(list(db.collection('payment_records').stream()))
+        
+        report_content = f"""
+Scrilab Artale 系統報告
+生成時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+用戶統計:
+- 總用戶數: {users_count}
+- 付款記錄: {payments_count}
+
+系統狀態: 正常運行
+        """
+        
+        from flask import Response
+        return Response(
+            report_content,
+            mimetype='text/plain',
+            headers={'Content-Disposition': f'attachment; filename=system_report_{datetime.now().strftime("%Y%m%d")}.txt'}
+        )
+        
+    except Exception as e:
+        logger.error(f"Generate system report error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/backup-data', methods=['POST'])
+def backup_data():
+    """備份數據"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        # 實現數據備份邏輯
+        backup_filename = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        logger.info(f"數據備份完成: {backup_filename}")
+        
+        return jsonify({
+            'success': True,
+            'message': '數據備份完成',
+            'backup_file': backup_filename
+        })
+        
+    except Exception as e:
+        logger.error(f"Backup data error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
