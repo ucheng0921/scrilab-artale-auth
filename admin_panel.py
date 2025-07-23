@@ -1787,8 +1787,11 @@ def admin_dashboard():
     """增強版管理員面板"""
     from flask import Response
     
+    # 使用組合函數生成完整模板
+    template_content = build_admin_template()  # 改成這樣
+    
     # 確保正確的UTF-8編碼
-    html_content = ENHANCED_ADMIN_TEMPLATE.encode('utf-8')
+    html_content = template_content.encode('utf-8')
     
     response = Response(
         html_content,
