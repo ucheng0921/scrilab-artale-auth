@@ -72,20 +72,167 @@ class GumroadService:
         }
     
     def setup_webhooks(self):
-        """設置 Resource Subscriptions（啟動時自動設置）"""
+        """設置 Gumroad Resource Subscriptions"""
         try:
-            webhook_url = os.environ.get('WEBHOOK_BASE_URL', '') + '/gumroad/webhook'
+            # 獲取完整的 webhook URL
+            webhook_base_url = os.environ.get('WEBHOOK_BASE_URL')
             
-            # 需要訂閱的事件類型
-            events = ['sale', 'refund', 'dispute', 'dispute_won']
+            if not webhook_base_url:
+                logger.error("❌ WEBHOOK_BASE_URL 環境變數未設置")
+                return False
             
-            for event in events:
-                self.create_resource_subscription(event, webhook_url)
+            # 確保 URL 格式正確
+            if not webhook_base_url.startswith('http'):
+                webhook_base_url = f"https://{webhook_base_url}"
+            
+            # 移除末尾的斜線
+            webhook_base_url = webhook_base_url.rstrip('/')
+            
+            # 構建完整的 webhook URL
+            webhook_url = f"{webhook_base_url}/gumroad/webhook"
+            
+            logger.info(f"🔗 設置 Webhook URL: {webhook_url}")
+            
+            # 要監聽的事件類型
+            resource_types = [
+                'sale',
+                'refund', 
+                'dispute',
+                'dispute_won',
+                'cancellation',
+                'subscription_updated',
+                'subscription_ended',
+                'subscription_restarted'
+            ]
+            
+            success_count = 0
+            
+            for resource_name in resource_types:
+                try:
+                    url = f"{self.base_url}/resource_subscriptions"
+                    data = {
+                        'access_token': self.access_token,
+                        'resource_name': resource_name,
+                        'post_url': webhook_url  # 使用完整的 HTTPS URL
+                    }
+                    
+                    response = requests.post(url, data=data)
+                    result = response.json()
+                    
+                    if result.get('success'):
+                        logger.info(f"✅ 成功設置 {resource_name} webhook")
+                        success_count += 1
+                    else:
+                        # 檢查是否已經存在
+                        if 'already exists' in str(result.get('message', '')).lower():
+                            logger.info(f"ℹ️  {resource_name} webhook 已存在")
+                            success_count += 1
+                        else:
+                            logger.error(f"❌ Failed to create {resource_name} subscription: {result}")
+                            
+                except Exception as e:
+                    logger.error(f"❌ 設置 {resource_name} webhook 時發生錯誤: {str(e)}")
+            
+            if success_count > 0:
+                logger.info(f"🎉 成功設置 {success_count}/{len(resource_types)} 個 webhooks")
+                return True
+            else:
+                logger.error("❌ 沒有成功設置任何 webhook")
+                return False
                 
-            logger.info("✅ Gumroad webhooks 設置完成")
-            
         except Exception as e:
             logger.error(f"❌ 設置 webhooks 失敗: {str(e)}")
+            return False
+    
+    # 新增一個檢查現有 webhooks 的方法：
+    
+    def check_existing_webhooks(self):
+        """檢查現有的 Resource Subscriptions"""
+        try:
+            url = f"{self.base_url}/resource_subscriptions"
+            params = {'access_token': self.access_token}
+            
+            response = requests.get(url, params=params)
+            result = response.json()
+            
+            if result.get('success'):
+                subscriptions = result.get('resource_subscriptions', [])
+                
+                logger.info(f"📋 現有 webhook 訂閱數量: {len(subscriptions)}")
+                
+                for sub in subscriptions:
+                    logger.info(f"  - 類型: {sub.get('resource_name')}")
+                    logger.info(f"    URL: {sub.get('post_url')}")
+                    logger.info(f"    ID: {sub.get('id')}")
+                    logger.info("    ---")
+                
+                return {
+                    'success': True,
+                    'subscriptions': subscriptions,
+                    'count': len(subscriptions)
+                }
+            else:
+                logger.error(f"❌ 獲取 webhook 訂閱失敗: {result}")
+                return {
+                    'success': False,
+                    'error': result
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ 檢查 webhooks 失敗: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    # 新增清理錯誤 webhooks 的方法：
+    
+    def cleanup_invalid_webhooks(self):
+        """清理無效的 webhook 訂閱"""
+        try:
+            # 先獲取現有訂閱
+            check_result = self.check_existing_webhooks()
+            
+            if not check_result.get('success'):
+                return False
+            
+            subscriptions = check_result.get('subscriptions', [])
+            
+            cleaned_count = 0
+            
+            for sub in subscriptions:
+                sub_id = sub.get('id')
+                post_url = sub.get('post_url', '')
+                
+                # 檢查是否是無效的 URL（相對路徑或錯誤格式）
+                if (not post_url.startswith('https://') or 
+                    '/gumroad/webhook' in post_url and 'scrilab.onrender.com' not in post_url):
+                    
+                    logger.info(f"🗑️  清理無效 webhook: {post_url}")
+                    
+                    try:
+                        # 刪除無效的訂閱
+                        delete_url = f"{self.base_url}/resource_subscriptions/{sub_id}"
+                        data = {'access_token': self.access_token}
+                        
+                        response = requests.delete(delete_url, data=data)
+                        result = response.json()
+                        
+                        if result.get('success'):
+                            logger.info(f"✅ 成功刪除無效 webhook: {sub_id}")
+                            cleaned_count += 1
+                        else:
+                            logger.error(f"❌ 刪除 webhook 失敗: {result}")
+                            
+                    except Exception as e:
+                        logger.error(f"❌ 刪除 webhook {sub_id} 時發生錯誤: {str(e)}")
+            
+            logger.info(f"🧹 清理完成，刪除了 {cleaned_count} 個無效 webhook")
+            return cleaned_count > 0
+            
+        except Exception as e:
+            logger.error(f"❌ 清理 webhooks 失敗: {str(e)}")
+            return False
     
     def create_resource_subscription(self, resource_name, post_url):
         """創建 Resource Subscription"""
