@@ -27,17 +27,18 @@ ENHANCED_ADMIN_TEMPLATE = """
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
             padding: 20px; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); 
             min-height: 100vh;
+            color: #ffffff;
         }
         .container { max-width: 1600px; margin: 0 auto; }
         .header { 
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            background: linear-gradient(135deg, #1e3c72 0%, #00d4ff 100%); 
             color: white; 
             padding: 25px; 
             border-radius: 12px; 
             margin-bottom: 25px; 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 32px rgba(0,212,255,0.3);
         }
         .header h1 { margin: 0; font-size: 2.2em; font-weight: 600; }
         .header p { margin: 10px 0 0 0; opacity: 0.9; }
@@ -74,7 +75,7 @@ ENHANCED_ADMIN_TEMPLATE = """
         .user-table tr:nth-child(even) { background-color: #f8f9fa; }
         .user-table tr:hover { background-color: #e3f2fd; }
         .btn { 
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
+            background: linear-gradient(135deg, #00d4ff 0%, #0088cc 100%); 
             color: white; 
             padding: 8px 12px; 
             border: none; 
@@ -622,16 +623,30 @@ ENHANCED_ADMIN_TEMPLATE = """
 
         // 頁面載入時檢查登入狀態
         window.onload = function() {
+            console.log('頁面載入完成，開始檢查登入狀態');
             checkLoginStatus();
         };
 
+        // 確保在 DOM 完全載入後執行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM 載入完成');
+            if (!window.onload) {
+                checkLoginStatus();
+            }
+        });
+
         function checkLoginStatus() {
+            console.log('檢查登入狀態...');
+            
             const savedToken = localStorage.getItem('admin_token');
+            console.log('保存的 token:', savedToken ? '存在' : '不存在');
             
             if (savedToken) {
                 ADMIN_TOKEN = savedToken;
+                console.log('使用保存的 token 驗證...');
                 validateTokenAndShowContent();
             } else {
+                console.log('沒有保存的 token，顯示登入提示');
                 showLoginPrompt();
             }
         }
@@ -696,8 +711,11 @@ ENHANCED_ADMIN_TEMPLATE = """
         }
 
         function manualLogin() {
+            console.log('手動登入按鈕被點擊');
+            
             const password = prompt('請輸入管理員密碼:');
             if (password) {
+                console.log('用戶輸入了密碼，開始驗證...');
                 ADMIN_TOKEN = password;
                 
                 fetch('/admin/users', {
@@ -725,9 +743,20 @@ ENHANCED_ADMIN_TEMPLATE = """
 
         // 調試功能
         async function showDebugInfo() {
+            console.log('調試按鈕被點擊');
+            
             try {
-                const response = await fetch('/admin/debug');
+                console.log('正在獲取調試信息...');
+                const response = await fetch('/admin/debug', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('調試請求響應:', response.status);
                 const data = await response.json();
+                console.log('調試數據:', data);
                 
                 const debugInfo = `調試信息：
 - Admin Token 已設定: ${data.admin_token_set}
