@@ -397,6 +397,101 @@ def emergency_debug():
                 'error': 'API 調用失敗',
                 'details': result.get('error')
             }), 500
+
+@gumroad_bp.route('/debug/webhooks', methods=['GET'])
+def debug_webhooks():
+    """調試現有的 webhook 設置"""
+    if not gumroad_routes or not gumroad_routes.gumroad_service:
+        return jsonify({
+            'success': False,
+            'error': 'Gumroad 服務未初始化'
+        }), 503
+    
+    try:
+        result = gumroad_routes.gumroad_service.check_existing_webhooks()
+        
+        # 添加環境變數資訊
+        webhook_base_url = os.environ.get('WEBHOOK_BASE_URL', 'NOT_SET')
+        expected_webhook_url = f"https://scrilab.onrender.com/gumroad/webhook"
+        
+        if webhook_base_url != 'NOT_SET':
+            if not webhook_base_url.startswith('http'):
+                webhook_base_url = f"https://{webhook_base_url}"
+            webhook_base_url = webhook_base_url.rstrip('/')
+            expected_webhook_url = f"{webhook_base_url}/gumroad/webhook"
+        
+        return jsonify({
+            'webhook_check': result,
+            'environment': {
+                'WEBHOOK_BASE_URL': os.environ.get('WEBHOOK_BASE_URL', 'NOT_SET'),
+                'expected_webhook_url': expected_webhook_url,
+                'current_domain': 'scrilab.onrender.com'
+            },
+            'recommendations': [
+                "確保 WEBHOOK_BASE_URL 設為 'https://scrilab.onrender.com'",
+                "如果有無效的 webhook，使用 /gumroad/debug/cleanup-webhooks 清理",
+                "然後重新啟動應用以重新設置正確的 webhooks"
+            ]
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@gumroad_bp.route('/debug/cleanup-webhooks', methods=['POST'])
+def cleanup_webhooks():
+    """清理無效的 webhook 設置"""
+    if not gumroad_routes or not gumroad_routes.gumroad_service:
+        return jsonify({
+            'success': False,
+            'error': 'Gumroad 服務未初始化'
+        }), 503
+    
+    try:
+        cleaned = gumroad_routes.gumroad_service.cleanup_invalid_webhooks()
+        
+        return jsonify({
+            'success': True,
+            'cleaned': cleaned,
+            'message': '無效 webhook 清理完成' if cleaned else '沒有發現需要清理的 webhook',
+            'next_step': '重新啟動應用以設置正確的 webhooks' if cleaned else '檢查 WEBHOOK_BASE_URL 環境變數'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@gumroad_bp.route('/debug/setup-webhooks', methods=['POST'])
+def manual_setup_webhooks():
+    """手動重新設置 webhooks"""
+    if not gumroad_routes or not gumroad_routes.gumroad_service:
+        return jsonify({
+            'success': False,
+            'error': 'Gumroad 服務未初始化'
+        }), 503
+    
+    try:
+        # 先清理
+        gumroad_routes.gumroad_service.cleanup_invalid_webhooks()
+        
+        # 重新設置
+        success = gumroad_routes.gumroad_service.setup_webhooks()
+        
+        return jsonify({
+            'success': success,
+            'message': 'Webhooks 重新設置完成' if success else 'Webhooks 設置失敗',
+            'webhook_url': f"{os.environ.get('WEBHOOK_BASE_URL', 'https://scrilab.onrender.com')}/gumroad/webhook"
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
             
     except Exception as e:
         return jsonify({
