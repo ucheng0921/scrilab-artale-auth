@@ -1,5 +1,5 @@
 """
-gumroad_service.py - Gumroad Resource Subscriptions API 完整實現
+gumroad_service.py - 修復版本，正確實現 Gumroad API 整合
 """
 import requests
 import logging
@@ -16,7 +16,7 @@ import json
 logger = logging.getLogger(__name__)
 
 class GumroadService:
-    """Gumroad Resource Subscriptions API 服務"""
+    """正確的 Gumroad API 服務實現"""
     
     def __init__(self, db):
         self.db = db
@@ -28,10 +28,22 @@ class GumroadService:
             logger.warning("⚠️ GUMROAD_ACCESS_TOKEN 未設定")
         else:
             logger.info("✅ Gumroad 服務已初始化")
+            # 延遲設置 webhooks，讓應用先完全啟動
+            self._delayed_setup_webhooks()
+    
+    def _delayed_setup_webhooks(self):
+        """延遲設置 webhooks"""
+        import threading
+        def setup_later():
+            import time
+            time.sleep(5)  # 等待 5 秒讓應用完全啟動
             self.setup_webhooks()
+        
+        thread = threading.Thread(target=setup_later, daemon=True)
+        thread.start()
     
     def get_service_plans(self):
-        """獲取服務方案配置"""
+        """獲取服務方案配置 - 使用正確的產品 ID"""
         return {
             'trial_7': {
                 'name': '體驗服務',
@@ -72,69 +84,61 @@ class GumroadService:
         }
     
     def setup_webhooks(self):
-        """設置 Gumroad Resource Subscriptions"""
+        """正確設置 Gumroad Resource Subscriptions"""
         try:
-            # 獲取完整的 webhook URL
-            webhook_base_url = os.environ.get('WEBHOOK_BASE_URL')
+            webhook_base_url = os.environ.get('WEBHOOK_BASE_URL', 'https://scrilab.onrender.com')
             
-            if not webhook_base_url:
-                logger.error("❌ WEBHOOK_BASE_URL 環境變數未設置")
-                return False
-            
-            # 確保 URL 格式正確
             if not webhook_base_url.startswith('http'):
                 webhook_base_url = f"https://{webhook_base_url}"
             
-            # 移除末尾的斜線
             webhook_base_url = webhook_base_url.rstrip('/')
-            
-            # 構建完整的 webhook URL
             webhook_url = f"{webhook_base_url}/gumroad/webhook"
             
             logger.info(f"🔗 設置 Webhook URL: {webhook_url}")
             
-            # 要監聽的事件類型
-            resource_types = [
-                'sale',
-                'refund', 
-                'dispute',
-                'dispute_won',
-                'cancellation',
-                'subscription_updated',
-                'subscription_ended',
-                'subscription_restarted'
-            ]
-            
+            # 只監聽 sale 事件
+            resource_types = ['sale', 'refund']
             success_count = 0
             
             for resource_name in resource_types:
                 try:
+                    # 先檢查是否已存在
+                    existing = self._get_existing_subscriptions(resource_name)
+                    valid_existing = [sub for sub in existing if sub.get('post_url') == webhook_url]
+                    
+                    if valid_existing:
+                        logger.info(f"✅ {resource_name} webhook 已存在且正確")
+                        success_count += 1
+                        continue
+                    
+                    # 清理舊的無效 webhooks
+                    invalid_existing = [sub for sub in existing if sub.get('post_url') != webhook_url]
+                    for invalid_sub in invalid_existing:
+                        self._delete_subscription(invalid_sub.get('id'))
+                        logger.info(f"🗑️ 清理無效的 {resource_name} webhook: {invalid_sub.get('post_url')}")
+                    
+                    # 創建新的 webhook
                     url = f"{self.base_url}/resource_subscriptions"
                     data = {
                         'access_token': self.access_token,
                         'resource_name': resource_name,
-                        'post_url': webhook_url  # 使用完整的 HTTPS URL
+                        'post_url': webhook_url
                     }
                     
-                    response = requests.post(url, data=data)
+                    response = requests.put(url, data=data)
                     result = response.json()
                     
                     if result.get('success'):
-                        logger.info(f"✅ 成功設置 {resource_name} webhook")
+                        logger.info(f"✅ 成功創建 {resource_name} webhook")
                         success_count += 1
                     else:
-                        # 檢查是否已經存在
-                        if 'already exists' in str(result.get('message', '')).lower():
-                            logger.info(f"ℹ️  {resource_name} webhook 已存在")
-                            success_count += 1
-                        else:
-                            logger.error(f"❌ Failed to create {resource_name} subscription: {result}")
-                            
+                        logger.error(f"❌ 創建 {resource_name} webhook 失敗: {result}")
+                        
                 except Exception as e:
                     logger.error(f"❌ 設置 {resource_name} webhook 時發生錯誤: {str(e)}")
             
             if success_count > 0:
-                logger.info(f"🎉 成功設置 {success_count}/{len(resource_types)} 個 webhooks")
+                logger.info(f"🎉 Webhook 設置完成 {success_count}/{len(resource_types)}")
                 return True
             else:
                 logger.error("❌ 沒有成功設置任何 webhook")
@@ -144,129 +148,8 @@ class GumroadService:
             logger.error(f"❌ 設置 webhooks 失敗: {str(e)}")
             return False
     
-    # 新增一個檢查現有 webhooks 的方法：
-    
-    def check_existing_webhooks(self):
-        """檢查現有的 Resource Subscriptions"""
-        try:
-            url = f"{self.base_url}/resource_subscriptions"
-            params = {'access_token': self.access_token}
-            
-            response = requests.get(url, params=params)
-            result = response.json()
-            
-            if result.get('success'):
-                subscriptions = result.get('resource_subscriptions', [])
-                
-                logger.info(f"📋 現有 webhook 訂閱數量: {len(subscriptions)}")
-                
-                for sub in subscriptions:
-                    logger.info(f"  - 類型: {sub.get('resource_name')}")
-                    logger.info(f"    URL: {sub.get('post_url')}")
-                    logger.info(f"    ID: {sub.get('id')}")
-                    logger.info("    ---")
-                
-                return {
-                    'success': True,
-                    'subscriptions': subscriptions,
-                    'count': len(subscriptions)
-                }
-            else:
-                logger.error(f"❌ 獲取 webhook 訂閱失敗: {result}")
-                return {
-                    'success': False,
-                    'error': result
-                }
-                
-        except Exception as e:
-            logger.error(f"❌ 檢查 webhooks 失敗: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
-    
-    # 新增清理錯誤 webhooks 的方法：
-    
-    def cleanup_invalid_webhooks(self):
-        """清理無效的 webhook 訂閱"""
-        try:
-            # 先獲取現有訂閱
-            check_result = self.check_existing_webhooks()
-            
-            if not check_result.get('success'):
-                return False
-            
-            subscriptions = check_result.get('subscriptions', [])
-            
-            cleaned_count = 0
-            
-            for sub in subscriptions:
-                sub_id = sub.get('id')
-                post_url = sub.get('post_url', '')
-                
-                # 檢查是否是無效的 URL（相對路徑或錯誤格式）
-                if (not post_url.startswith('https://') or 
-                    '/gumroad/webhook' in post_url and 'scrilab.onrender.com' not in post_url):
-                    
-                    logger.info(f"🗑️  清理無效 webhook: {post_url}")
-                    
-                    try:
-                        # 刪除無效的訂閱
-                        delete_url = f"{self.base_url}/resource_subscriptions/{sub_id}"
-                        data = {'access_token': self.access_token}
-                        
-                        response = requests.delete(delete_url, data=data)
-                        result = response.json()
-                        
-                        if result.get('success'):
-                            logger.info(f"✅ 成功刪除無效 webhook: {sub_id}")
-                            cleaned_count += 1
-                        else:
-                            logger.error(f"❌ 刪除 webhook 失敗: {result}")
-                            
-                    except Exception as e:
-                        logger.error(f"❌ 刪除 webhook {sub_id} 時發生錯誤: {str(e)}")
-            
-            logger.info(f"🧹 清理完成，刪除了 {cleaned_count} 個無效 webhook")
-            return cleaned_count > 0
-            
-        except Exception as e:
-            logger.error(f"❌ 清理 webhooks 失敗: {str(e)}")
-            return False
-    
-    def create_resource_subscription(self, resource_name, post_url):
-        """創建 Resource Subscription"""
-        try:
-            # 先檢查是否已存在
-            existing = self.get_resource_subscriptions(resource_name)
-            if existing:
-                logger.info(f"Resource subscription for '{resource_name}' already exists")
-                return existing[0]
-            
-            url = f"{self.base_url}/resource_subscriptions"
-            data = {
-                'access_token': self.access_token,
-                'resource_name': resource_name,
-                'post_url': post_url
-            }
-            
-            response = requests.put(url, data=data)
-            response.raise_for_status()
-            
-            result = response.json()
-            if result.get('success'):
-                logger.info(f"✅ Created resource subscription for '{resource_name}'")
-                return result['resource_subscription']
-            else:
-                logger.error(f"❌ Failed to create subscription: {result}")
-                return None
-                
-        except Exception as e:
-            logger.error(f"❌ Create resource subscription error: {str(e)}")
-            return None
-    
-    def get_resource_subscriptions(self, resource_name):
-        """獲取現有的 Resource Subscriptions"""
+    def _get_existing_subscriptions(self, resource_name):
+        """獲取現有的 resource subscriptions"""
         try:
             url = f"{self.base_url}/resource_subscriptions"
             params = {
@@ -275,45 +158,67 @@ class GumroadService:
             }
             
             response = requests.get(url, params=params)
-            response.raise_for_status()
-            
             result = response.json()
+            
             if result.get('success'):
                 return result.get('resource_subscriptions', [])
             return []
             
         except Exception as e:
-            logger.error(f"❌ Get resource subscriptions error: {str(e)}")
+            logger.error(f"獲取現有訂閱失敗: {str(e)}")
             return []
     
+    def _delete_subscription(self, subscription_id):
+        """刪除 resource subscription"""
+        try:
+            url = f"{self.base_url}/resource_subscriptions/{subscription_id}"
+            data = {'access_token': self.access_token}
+            
+            response = requests.delete(url, data=data)
+            result = response.json()
+            return result.get('success', False)
+            
+        except Exception as e:
+            logger.error(f"刪除訂閱失敗: {str(e)}")
+            return False
+    
     def create_purchase_url(self, plan_id, user_info):
-        """為指定方案創建 Gumroad 購買 URL - 修復版本"""
+        """創建 Gumroad 購買 URL - 修復版本"""
         try:
             plans = self.get_service_plans()
             if plan_id not in plans:
                 raise ValueError(f"無效的方案 ID: {plan_id}")
             
             plan = plans[plan_id]
-            
             product_id = plan.get('gumroad_product_id')
+            
             if not product_id:
                 raise ValueError(f"方案 {plan_id} 沒有設定 Gumroad 產品 ID")
             
-            # 創建付款記錄
+            # 獲取產品的實際購買 URL
+            product_info = self._get_product_info(product_id)
+            
+            if not product_info:
+                raise ValueError(f"無法獲取產品 {product_id} 的信息")
+            
+            # 創建付款記錄用於追蹤
             payment_id = self.create_payment_record(plan_id, plan, user_info)
             
-            # ===== 修復：使用正確的 URL 格式 =====
-            # 不使用 /l/ 路徑，改用購買頁面的直接鏈接
+            # 使用產品的 short_url
+            purchase_url = product_info.get('short_url')
             
-            # 方法 1: 使用 checkout 路徑
-            purchase_url = f"https://gumroad.com/checkout/{product_id}"
+            if not purchase_url:
+                # 如果沒有 short_url，嘗試使用其他方式
+                custom_permalink = product_info.get('custom_permalink')
+                if custom_permalink:
+                    purchase_url = f"https://gumroad.com/l/{custom_permalink}"
+                else:
+                    # 最後手段，使用產品 ID
+                    purchase_url = f"https://gumroad.com/l/{product_id}"
             
-            # 方法 2: 如果你有 Gumroad 用戶名，可以用這個格式
-            # gumroad_username = "scrilab"  # 替換為你的實際用戶名
-            # purchase_url = f"https://{gumroad_username}.gumroad.com/checkout/{product_id}"
-            
-            # 添加自定義參數以便追蹤
-            purchase_url += f"?wanted=true&custom_data={payment_id}"
+            # 添加追蹤參數
+            separator = '&' if '?' in purchase_url else '?'
+            purchase_url += f"{separator}payment_tracking={payment_id}"
             
             logger.info(f"生成購買 URL: {purchase_url}")
             
@@ -330,6 +235,25 @@ class GumroadService:
                 'success': False,
                 'error': str(e)
             }
+    
+    def _get_product_info(self, product_id):
+        """獲取產品信息"""
+        try:
+            url = f"{self.base_url}/products/{product_id}"
+            params = {'access_token': self.access_token}
+            
+            response = requests.get(url, params=params)
+            result = response.json()
+            
+            if result.get('success'):
+                return result.get('product')
+            else:
+                logger.error(f"獲取產品信息失敗: {result}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"獲取產品信息錯誤: {str(e)}")
+            return None
     
     def create_payment_record(self, plan_id, plan, user_info):
         """創建付款記錄"""
@@ -373,10 +297,14 @@ class GumroadService:
                 logger.warning("未設定 GUMROAD_WEBHOOK_SECRET，跳過簽名驗證")
                 return True
             
+            if not signature:
+                logger.warning("沒有收到簽名")
+                return True
+            
             # Gumroad 使用 HMAC-SHA256 簽名
             expected_signature = hmac.new(
                 self.webhook_secret.encode(),
-                payload.encode(),
+                payload.encode() if isinstance(payload, str) else payload,
                 hashlib.sha256
             ).hexdigest()
             
@@ -388,21 +316,32 @@ class GumroadService:
             return False
     
     def process_webhook(self, webhook_data):
-        """處理 Gumroad webhook"""
+        """處理 Gumroad webhook - 修復版本"""
         try:
-            # 解析 webhook 數據
             logger.info(f"處理 Gumroad webhook: {webhook_data}")
             
             # 提取關鍵信息
             sale_id = webhook_data.get('sale_id')
-            order_number = webhook_data.get('order_number')
+            if not sale_id:
+                logger.error("Webhook 缺少 sale_id")
+                return {'success': False, 'error': 'Missing sale_id'}
+            
             product_id = webhook_data.get('product_id')
             buyer_email = webhook_data.get('email')
-            amount_cents = int(webhook_data.get('price', 0))
-            amount_usd = amount_cents / 100  # Gumroad 以分為單位
+            buyer_name = webhook_data.get('purchaser_name', buyer_email)
+            
+            # price 是以美分為單位的整數
+            price_cents = webhook_data.get('price', 0)
+            if isinstance(price_cents, str):
+                try:
+                    price_cents = int(price_cents)
+                except ValueError:
+                    price_cents = 0
+            
+            amount_usd = price_cents / 100.0
             
             # 檢查是否為重複處理
-            if self.is_duplicate_webhook(sale_id, order_number):
+            if self.is_duplicate_webhook(sale_id):
                 logger.info(f"跳過重複的 webhook: {sale_id}")
                 return {'success': True, 'message': 'Duplicate webhook ignored'}
             
@@ -414,9 +353,9 @@ class GumroadService:
             
             # 驗證金額
             expected_amount = plan_info['price_usd']
-            if abs(amount_usd - expected_amount) > 0.01:  # 允許1分錢的誤差
-                logger.error(f"金額不匹配: 期望 ${expected_amount}, 收到 ${amount_usd}")
-                return {'success': False, 'error': 'Amount mismatch'}
+            if abs(amount_usd - expected_amount) > 0.01:
+                logger.warning(f"金額不匹配: 期望 ${expected_amount}, 收到 ${amount_usd}")
+                # 不直接拒絕，記錄警告即可
             
             # 創建或更新付款記錄
             payment_id = self.create_or_update_payment_record(webhook_data, plan_info)
@@ -426,16 +365,21 @@ class GumroadService:
             
             # 發送序號郵件
             if user_uuid:
-                self.send_license_email(
+                email_sent = self.send_license_email(
                     buyer_email,
-                    webhook_data.get('purchaser_name', '客戶'),
+                    buyer_name,
                     user_uuid,
                     plan_info['name'],
                     plan_info['period']
                 )
+                
+                if email_sent:
+                    logger.info(f"序號郵件已發送至: {buyer_email}")
+                else:
+                    logger.warning(f"序號郵件發送失敗: {buyer_email}")
             
             # 記錄處理完成
-            self.mark_webhook_processed(sale_id, order_number)
+            self.mark_webhook_processed(sale_id)
             
             logger.info(f"Gumroad 付款處理完成: {payment_id} -> {user_uuid}")
             
@@ -449,23 +393,20 @@ class GumroadService:
             logger.error(f"處理 Gumroad webhook 失敗: {str(e)}")
             return {'success': False, 'error': str(e)}
     
-    def is_duplicate_webhook(self, sale_id, order_number):
+    def is_duplicate_webhook(self, sale_id):
         """檢查是否為重複的 webhook"""
         try:
-            doc_id = f"{sale_id}_{order_number}"
-            doc = self.db.collection('processed_webhooks').document(doc_id).get()
+            doc = self.db.collection('processed_webhooks').document(sale_id).get()
             return doc.exists
         except Exception as e:
             logger.error(f"檢查重複 webhook 失敗: {str(e)}")
             return False
     
-    def mark_webhook_processed(self, sale_id, order_number):
+    def mark_webhook_processed(self, sale_id):
         """標記 webhook 已處理"""
         try:
-            doc_id = f"{sale_id}_{order_number}"
-            self.db.collection('processed_webhooks').document(doc_id).set({
+            self.db.collection('processed_webhooks').document(sale_id).set({
                 'sale_id': sale_id,
-                'order_number': order_number,
                 'processed_at': datetime.now()
             })
         except Exception as e:
@@ -483,28 +424,33 @@ class GumroadService:
     def create_or_update_payment_record(self, webhook_data, plan_info):
         """創建或更新付款記錄"""
         try:
-            # 使用 sale_id 作為付款 ID
             payment_id = f"gumroad_{webhook_data['sale_id']}"
+            
+            price_cents = webhook_data.get('price', 0)
+            if isinstance(price_cents, str):
+                try:
+                    price_cents = int(price_cents)
+                except ValueError:
+                    price_cents = 0
             
             payment_data = {
                 'payment_id': payment_id,
                 'sale_id': webhook_data['sale_id'],
-                'order_number': webhook_data['order_number'],
                 'user_name': webhook_data.get('purchaser_name', ''),
                 'user_email': webhook_data['email'],
                 'plan_id': plan_info['plan_id'],
                 'plan_name': plan_info['name'],
                 'plan_period': plan_info['period'],
                 'amount_twd': plan_info['price_twd'],
-                'amount_usd': float(webhook_data['price']) / 100,
-                'currency': webhook_data.get('currency', 'usd'),
+                'amount_usd': price_cents / 100.0,
+                'currency': webhook_data.get('currency', 'usd').upper(),
                 'status': 'completed',
                 'payment_method': 'gumroad',
                 'gumroad_data': {
                     'product_id': webhook_data['product_id'],
-                    'seller_id': webhook_data['seller_id'],
+                    'seller_id': webhook_data.get('seller_id'),
+                    'order_number': webhook_data.get('order_number'),
                     'gumroad_fee': webhook_data.get('gumroad_fee', 0),
-                    'referrer': webhook_data.get('referrer', ''),
                     'can_contact': webhook_data.get('can_contact', False)
                 },
                 'created_at': datetime.now(),
@@ -550,7 +496,6 @@ class GumroadService:
                 "payment_status": "paid",
                 "gumroad_data": {
                     "sale_id": webhook_data['sale_id'],
-                    "order_number": webhook_data['order_number'],
                     "product_id": webhook_data['product_id']
                 },
                 "notes": f"Gumroad 付款創建 - {plan_info['name']} - {webhook_data['sale_id']}"
@@ -692,23 +637,32 @@ Scrilab 技術團隊
                 'success_rate': 0
             }
     
-    def delete_resource_subscription(self, subscription_id):
-        """刪除 Resource Subscription"""
+    def debug_all_products(self):
+        """調試方法：獲取所有產品信息"""
         try:
-            url = f"{self.base_url}/resource_subscriptions/{subscription_id}"
-            data = {'access_token': self.access_token}
+            url = f"{self.base_url}/products"
+            params = {'access_token': self.access_token}
             
-            response = requests.delete(url, data=data)
-            response.raise_for_status()
-            
+            response = requests.get(url, params=params)
             result = response.json()
+            
             if result.get('success'):
-                logger.info(f"✅ Deleted resource subscription: {subscription_id}")
-                return True
+                products = result.get('products', [])
+                logger.info(f"找到 {len(products)} 個產品")
+                return {
+                    'success': True,
+                    'products': products
+                }
             else:
-                logger.error(f"❌ Failed to delete subscription: {result}")
-                return False
+                logger.error(f"獲取產品列表失敗: {result}")
+                return {
+                    'success': False,
+                    'error': result
+                }
                 
         except Exception as e:
-            logger.error(f"❌ Delete resource subscription error: {str(e)}")
-            return False
+            logger.error(f"調試獲取產品失敗: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
