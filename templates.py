@@ -1009,7 +1009,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
-                            <span>透過 Gumroad 安全付款 ≈ $5.00 USD</span>
+                            <span>透過 Gumroad 安全付款</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1057,7 +1057,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
-                            <span>透過 Gumroad 安全付款 ≈ $29.99 USD</span>
+                            <span>透過 Gumroad 安全付款</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1104,7 +1104,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
-                            <span>透過 Gumroad 安全付款 ≈ $79.99 USD</span>
+                            <span>透過 Gumroad 安全付款</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1299,7 +1299,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         NT$ ${plan.price_twd.toLocaleString()}
                     </div>
                     <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-blue); font-family: 'Courier New', monospace;">
-                        ≈ ${plan.price_usd} USD
                     </div>
                 </div>
                 <div style="font-size: 0.9rem; color: var(--text-secondary);">
