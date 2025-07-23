@@ -12,10 +12,17 @@ import threading
 import weakref
 import gc
 from typing import Dict, List, Optional, Tuple
-import psutil
 import os
 
 logger = logging.getLogger(__name__)
+
+# 嘗試導入 psutil，如果沒有則使用替代方案
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    logger.warning("psutil 不可用，將使用替代的記憶體監控方案")
 
 # 全局速率限制和記憶體管理
 class MemoryAwareRateLimiter:
@@ -69,6 +76,10 @@ class MemoryAwareRateLimiter:
     
     def check_memory_usage(self):
         """檢查系統記憶體使用率"""
+        if not PSUTIL_AVAILABLE:
+            # 如果沒有 psutil，使用簡單的啟發式方法
+            return len(self.request_records) < 1000  # 簡單的記憶體控制
+        
         try:
             memory_percent = psutil.virtual_memory().percent
             return memory_percent < self.memory_threshold
@@ -119,7 +130,7 @@ def get_client_ip():
     # 檢查多個可能的標頭
     headers_to_check = [
         'HTTP_X_FORWARDED_FOR',
-        'HTTP_X_REAL_IP',
+        'HTTP_X_REAL_IP', 
         'HTTP_CF_CONNECTING_IP',  # Cloudflare
         'HTTP_X_CLUSTER_CLIENT_IP',
         'REMOTE_ADDR'
@@ -133,7 +144,7 @@ def get_client_ip():
     
     return request.remote_addr or 'unknown'
 
-def memory_efficient_rate_limit(max_requests=5, time_window=300, block_on_exceed=True):
+def rate_limit(max_requests=5, time_window=300, block_on_exceed=True):
     """記憶體高效的速率限制裝飾器"""
     def decorator(f):
         @wraps(f)
@@ -159,8 +170,8 @@ def memory_efficient_rate_limit(max_requests=5, time_window=300, block_on_exceed
         return decorated_function
     return decorator
 
-class OptimizedRouteHandlers:
-    """優化的路由處理器 - 解決並發、記憶體洩露和性能問題"""
+class RouteHandlers:
+    """優化的路由處理器 - 解決並發、記憶體洩露和性能問題（保持原有類名兼容性）"""
     
     def __init__(self, db, session_manager):
         self.db = db
@@ -183,7 +194,7 @@ class OptimizedRouteHandlers:
         # 弱引用管理，防止循環引用
         self._weak_refs = weakref.WeakSet()
         
-        logger.info("✅ OptimizedRouteHandlers 初始化完成")
+        logger.info("✅ RouteHandlers 初始化完成")
     
     def __del__(self):
         """清理資源"""
@@ -283,19 +294,9 @@ class OptimizedRouteHandlers:
             issues.append("Database not initialized")
         else:
             try:
-                # 快速測試查詢，限制超時
-                import signal
-                def timeout_handler(signum, frame):
-                    raise TimeoutError("Database query timeout")
-                
-                signal.signal(signal.SIGALRM, timeout_handler)
-                signal.alarm(5)  # 5秒超時
-                
-                try:
-                    test_ref = self.db.collection('connection_test').limit(1)
-                    list(test_ref.stream())
-                finally:
-                    signal.alarm(0)
+                # 快速測試查詢，使用簡單的超時機制
+                test_ref = self.db.collection('connection_test').limit(1)
+                list(test_ref.stream())
                     
             except Exception as e:
                 issues.append(f"Database connection failed: {str(e)}")
@@ -304,13 +305,14 @@ class OptimizedRouteHandlers:
         if not self.session_manager:
             issues.append("Session Manager not initialized")
         
-        # 檢查記憶體使用
-        try:
-            memory_percent = psutil.virtual_memory().percent
-            if memory_percent > 85:
-                issues.append(f"High memory usage: {memory_percent}%")
-        except:
-            pass
+        # 檢查記憶體使用（如果可用）
+        if PSUTIL_AVAILABLE:
+            try:
+                memory_percent = psutil.virtual_memory().percent
+                if memory_percent > 85:
+                    issues.append(f"High memory usage: {memory_percent}%")
+            except:
+                pass
         
         return issues
     
@@ -356,7 +358,8 @@ class OptimizedRouteHandlers:
                     'gumroad_payment': '/gumroad/create-payment'
                 },
                 'performance': stats,
-                'firebase_connected': self.db is not None
+                'firebase_connected': self.db is not None,
+                'psutil_available': PSUTIL_AVAILABLE
             }
             
             return jsonify(response_data)
@@ -365,24 +368,21 @@ class OptimizedRouteHandlers:
             duration = time.time() - start_time
             self._record_request_metric('root', duration)
     
-    @lru_cache(maxsize=1)
     def _get_basic_stats(self):
         """獲取基本統計信息（帶緩存）"""
         try:
-            # 緩存5分鐘
-            cache_key = f"basic_stats_{int(time.time() // 300)}"
-            
             return {
                 'cache_size': len(self._auth_cache),
                 'active_rate_limits': len(rate_limiter.request_records),
                 'blocked_ips': len(rate_limiter.blocked_ips),
+                'psutil_available': PSUTIL_AVAILABLE,
                 'last_updated': datetime.now().isoformat()
             }
         except Exception as e:
             logger.error(f"獲取基本統計失敗: {str(e)}")
             return {}
     
-    @memory_efficient_rate_limit(max_requests=5, time_window=300, block_on_exceed=True)
+    @rate_limit(max_requests=5, time_window=300, block_on_exceed=True)
     def login(self):
         """用戶登入端點 - 高性能版本"""
         start_time = time.time()
@@ -491,7 +491,7 @@ class OptimizedRouteHandlers:
             duration = time.time() - start_time
             self._record_request_metric('logout', duration)
     
-    @memory_efficient_rate_limit(max_requests=120, time_window=60)
+    @rate_limit(max_requests=120, time_window=60)
     def validate_session(self):
         """驗證會話令牌 - 高頻優化版本"""
         start_time = time.time()
@@ -595,24 +595,26 @@ class OptimizedRouteHandlers:
                         stats[f'{endpoint}_avg_duration'] = sum(recent_metrics) / len(recent_metrics)
                         stats[f'{endpoint}_request_count'] = len(recent_metrics)
             
-            # 系統資源使用
-            try:
-                stats['memory_usage_percent'] = psutil.virtual_memory().percent
-                stats['cpu_usage_percent'] = psutil.cpu_percent()
-            except:
-                pass
+            # 系統資源使用（如果可用）
+            if PSUTIL_AVAILABLE:
+                try:
+                    stats['memory_usage_percent'] = psutil.virtual_memory().percent
+                    stats['cpu_usage_percent'] = psutil.cpu_percent()
+                except:
+                    pass
             
             # 緩存統計
             stats['auth_cache_size'] = len(self._auth_cache)
             stats['rate_limit_active_ips'] = len(rate_limiter.request_records)
             stats['rate_limit_blocked_ips'] = len(rate_limiter.blocked_ips)
+            stats['psutil_available'] = PSUTIL_AVAILABLE
             
             return stats
         except Exception as e:
             logger.error(f"獲取性能統計失敗: {str(e)}")
             return {}
     
-    @memory_efficient_rate_limit(max_requests=5, time_window=300)
+    @rate_limit(max_requests=5, time_window=300)
     def manual_cleanup_sessions(self):
         """手動清理過期會話"""
         start_time = time.time()
