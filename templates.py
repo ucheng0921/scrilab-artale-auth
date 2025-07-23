@@ -1180,7 +1180,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             </div>
             <div class="gumroad-notice">
                 <i class="fas fa-shield-alt"></i>
-                <span>將跳轉至 Gumroad 完成安全付款，支援 PayPal 和信用卡</span>
+                <span>將跳轉至 Gumroad 完成安全付款，支援 PayPal 和信用卡(以USD計算價格)</span>
             </div>
             <div class="form-group">
                 <label for="user-name">用戶名稱</label>
