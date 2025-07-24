@@ -1,161 +1,248 @@
 #!/usr/bin/env python3
 """
-debug_gumroad.py - 調試 Gumroad 產品 ID 映射問題
+complete_webhook_setup.py - 完整的 Gumroad Webhook 設置指南
 """
 import requests
 import os
-import json
+import hmac
+import hashlib
 
-def debug_gumroad_products():
-    """調試 Gumroad 產品設置"""
+def step1_check_environment():
+    """步驟 1：檢查環境變數"""
+    print("🔍 步驟 1：檢查環境變數")
+    print("-" * 40)
     
     access_token = os.environ.get('GUMROAD_ACCESS_TOKEN')
-    if not access_token:
-        print("❌ 請設置 GUMROAD_ACCESS_TOKEN 環境變數")
-        return
+    webhook_secret = os.environ.get('GUMROAD_WEBHOOK_SECRET')
+    webhook_base_url = os.environ.get('WEBHOOK_BASE_URL')
     
-    print("🚀 開始調試 Gumroad 產品設置...")
-    print("=" * 60)
+    print(f"GUMROAD_ACCESS_TOKEN: {'✅ 已設置' if access_token else '❌ 未設置'}")
+    print(f"GUMROAD_WEBHOOK_SECRET: {'✅ 已設置' if webhook_secret else '❌ 未設置'}")
+    print(f"WEBHOOK_BASE_URL: {'✅ 已設置' if webhook_base_url else '❌ 未設置'}")
     
-    # 1. 獲取所有產品
+    if webhook_secret:
+        print(f"Secret 預覽: {webhook_secret[:8]}...")
+    
+    print()
+    return access_token, webhook_secret, webhook_base_url
+
+def step2_remove_ping_endpoint(access_token):
+    """步驟 2：移除舊的 Ping Endpoint"""
+    print("🗑️ 步驟 2：移除舊的 Ping Endpoint")
+    print("-" * 40)
+    
     try:
-        url = "https://api.gumroad.com/v2/products"
-        params = {'access_token': access_token}
+        url = "https://api.gumroad.com/v2/user"
+        data = {
+            'access_token': access_token,
+            'ping_url': ''  # 空字串移除 ping endpoint
+        }
         
-        response = requests.get(url, params=params, timeout=30)
-        response.raise_for_status()
-        
+        response = requests.put(url, data=data, timeout=30)
         result = response.json()
         
         if result.get('success'):
-            products = result.get('products', [])
-            print(f"📦 找到 {len(products)} 個產品")
-            print()
+            print("✅ 已移除舊的 Ping Endpoint")
+        else:
+            print(f"⚠️ 移除 Ping Endpoint 時發生問題: {result}")
+    
+    except Exception as e:
+        print(f"❌ 移除 Ping Endpoint 失敗: {str(e)}")
+    
+    print()
+
+def step3_setup_resource_subscriptions(access_token, webhook_url):
+    """步驟 3：設置 Resource Subscriptions"""
+    print("⚙️ 步驟 3：設置 Resource Subscriptions")
+    print("-" * 40)
+    
+    resource_types = ['sale', 'refund', 'cancellation']
+    success_count = 0
+    
+    for resource_name in resource_types:
+        try:
+            print(f"設置 {resource_name} webhook...")
             
-            # 2. 顯示產品詳情
-            for i, product in enumerate(products, 1):
-                print(f"🔹 產品 {i}:")
-                print(f"   名稱: {product.get('name', 'N/A')}")
-                print(f"   ID: {product.get('id', 'N/A')}")
-                print(f"   價格: {product.get('formatted_price', 'N/A')}")
-                print(f"   自定義連結: {product.get('custom_permalink', 'N/A')}")
-                print(f"   短網址: {product.get('short_url', 'N/A')}")
-                print(f"   已發布: {'✅' if product.get('published') else '❌'}")
-                print(f"   銷售數量: {product.get('sales_count', 0)}")
-                print()
+            # 刪除現有訂閱
+            existing_subs = get_existing_subscriptions(access_token, resource_name)
+            for sub in existing_subs:
+                delete_subscription(access_token, sub['id'])
             
-            # 3. 檢查環境變數映射
-            print("🔧 環境變數產品 ID 檢查:")
-            print("-" * 40)
-            
-            env_products = {
-                'GUMROAD_TRIAL_PRODUCT_ID': os.environ.get('GUMROAD_TRIAL_PRODUCT_ID'),
-                'GUMROAD_MONTHLY_PRODUCT_ID': os.environ.get('GUMROAD_MONTHLY_PRODUCT_ID'),
-                'GUMROAD_QUARTERLY_PRODUCT_ID': os.environ.get('GUMROAD_QUARTERLY_PRODUCT_ID')
+            # 創建新訂閱
+            create_url = "https://api.gumroad.com/v2/resource_subscriptions"
+            create_data = {
+                'access_token': access_token,
+                'resource_name': resource_name,
+                'post_url': webhook_url
             }
             
-            for env_name, env_id in env_products.items():
-                print(f"{env_name}: {env_id}")
-                
-                if env_id:
-                    # 查找匹配的產品
-                    matched_product = None
-                    for product in products:
-                        if (product.get('id') == env_id or 
-                            product.get('custom_permalink') == env_id):
-                            matched_product = product
-                            break
-                    
-                    if matched_product:
-                        print(f"  ✅ 找到匹配產品: {matched_product.get('name')}")
-                    else:
-                        print(f"  ❌ 找不到匹配的產品！")
-                        print(f"  💡 建議檢查產品 ID 是否正確")
-                else:
-                    print(f"  ⚠️ 環境變數未設置")
-                print()
+            response = requests.put(create_url, data=create_data, timeout=30)
+            result = response.json()
             
-            # 4. 生成建議的環境變數配置
-            print("💡 建議的環境變數配置:")
-            print("-" * 40)
-            
-            if len(products) >= 3:
-                # 根據價格排序，推測方案
-                sorted_products = sorted(products, key=lambda x: x.get('price', 0))
-                
-                print("# 根據產品價格推測的配置:")
-                if len(sorted_products) > 0:
-                    print(f"GUMROAD_TRIAL_PRODUCT_ID={sorted_products[0]['id']}")
-                    print(f"# {sorted_products[0]['name']} - {sorted_products[0]['formatted_price']}")
-                
-                if len(sorted_products) > 1:
-                    print(f"GUMROAD_MONTHLY_PRODUCT_ID={sorted_products[1]['id']}")
-                    print(f"# {sorted_products[1]['name']} - {sorted_products[1]['formatted_price']}")
-                
-                if len(sorted_products) > 2:
-                    print(f"GUMROAD_QUARTERLY_PRODUCT_ID={sorted_products[2]['id']}")
-                    print(f"# {sorted_products[2]['name']} - {sorted_products[2]['formatted_price']}")
-            
-            print()
-            print("📋 所有產品 ID 列表:")
-            for product in products:
-                print(f"# {product['name']}: {product['id']}")
-            
-        else:
-            print(f"❌ API 調用失敗: {result}")
-            
-    except requests.RequestException as e:
-        print(f"❌ 網路請求失敗: {str(e)}")
-    except Exception as e:
-        print(f"❌ 未知錯誤: {str(e)}")
+            if result.get('success'):
+                print(f"  ✅ {resource_name} webhook 設置成功")
+                success_count += 1
+            else:
+                print(f"  ❌ {resource_name} webhook 設置失敗: {result}")
+        
+        except Exception as e:
+            print(f"  ❌ 設置 {resource_name} webhook 錯誤: {str(e)}")
     
+    print(f"\n🎯 Resource Subscriptions 設置完成: {success_count}/{len(resource_types)}")
     print()
-    print("🔍 Webhook 調試信息:")
-    print("-" * 40)
-    webhook_url = os.environ.get('WEBHOOK_BASE_URL', 'https://scrilab.onrender.com')
-    if not webhook_url.startswith('http'):
-        webhook_url = f"https://{webhook_url}"
-    webhook_url = webhook_url.rstrip('/') + '/gumroad/webhook'
     
-    print(f"Webhook URL: {webhook_url}")
-    print()
-    print("請在 Gumroad 設置中的 'Advanced' -> 'Ping endpoint' 設置此 URL")
-    
+    return success_count > 0
 
-def test_webhook_payload():
-    """測試 webhook 數據格式"""
-    print("🧪 測試 Webhook 數據格式:")
+def get_existing_subscriptions(access_token, resource_name):
+    """獲取現有訂閱"""
+    try:
+        url = "https://api.gumroad.com/v2/resource_subscriptions"
+        params = {
+            'access_token': access_token,
+            'resource_name': resource_name
+        }
+        
+        response = requests.get(url, params=params, timeout=10)
+        result = response.json()
+        
+        if result.get('success'):
+            return result.get('resource_subscriptions', [])
+        return []
+    
+    except Exception:
+        return []
+
+def delete_subscription(access_token, subscription_id):
+    """刪除訂閱"""
+    try:
+        url = f"https://api.gumroad.com/v2/resource_subscriptions/{subscription_id}"
+        data = {'access_token': access_token}
+        
+        requests.delete(url, data=data, timeout=10)
+    except Exception:
+        pass
+
+def step4_test_webhook(webhook_url, webhook_secret):
+    """步驟 4：測試 Webhook"""
+    print("🧪 步驟 4：測試 Webhook 簽名")
     print("-" * 40)
     
-    # 模擬的 webhook 數據
-    test_webhook = {
-        'seller_id': 'test_seller_id',
-        'product_id': 'G9eGOb-BdZDHg8EWVVMuqg==',  # 從錯誤日誌中看到的
-        'product_name': 'Scrilab Artale Trial Service',
-        'permalink': 'yollr',
+    # 模擬 webhook 數據
+    test_data = {
+        'sale_id': 'test_sale_123',
+        'product_id': 'G9eGOb-BdZDHg8EWVVMuqg==',
         'email': 'test@example.com',
-        'price': '500',  # 5.00 USD in cents
-        'currency': 'usd',
-        'quantity': '1',
-        'order_number': '12345678',
-        'sale_id': 'test_sale_id',
-        'sale_timestamp': '2025-01-15T12:00:00Z',
-        'full_name': 'Test User',
-        'ip_country': 'Taiwan',
-        'refunded': 'false',
-        'resource_name': 'sale'
+        'price': '167'
     }
     
-    print("模擬的 Webhook 數據:")
-    print(json.dumps(test_webhook, indent=2, ensure_ascii=False))
+    # 將數據轉為字串（模擬 Gumroad 的格式）
+    test_payload = '&'.join([f"{k}={v}" for k, v in test_data.items()])
+    
+    # 生成簽名
+    if webhook_secret:
+        signature = hmac.new(
+            webhook_secret.encode(),
+            test_payload.encode(),
+            hashlib.sha256
+        ).hexdigest()
+        
+        print(f"測試數據: {test_payload}")
+        print(f"生成簽名: {signature}")
+        print("✅ 簽名生成成功")
+    else:
+        print("❌ 無法測試簽名，未設置 WEBHOOK_SECRET")
+    
+    print()
+
+def step5_verify_setup(access_token):
+    """步驟 5：驗證設置"""
+    print("🔍 步驟 5：驗證最終設置")
+    print("-" * 40)
+    
+    try:
+        # 檢查所有 resource subscriptions
+        url = "https://api.gumroad.com/v2/resource_subscriptions"
+        params = {'access_token': access_token}
+        
+        response = requests.get(url, params=params, timeout=30)
+        result = response.json()
+        
+        if result.get('success'):
+            subscriptions = result.get('resource_subscriptions', [])
+            print(f"📋 目前共有 {len(subscriptions)} 個 webhook 訂閱:")
+            
+            for sub in subscriptions:
+                print(f"  - {sub.get('resource_name')}: {sub.get('post_url')}")
+                
+            if len(subscriptions) >= 3:
+                print("✅ Resource Subscriptions 設置完成")
+            else:
+                print("⚠️ Resource Subscriptions 設置可能不完整")
+        else:
+            print(f"❌ 無法驗證設置: {result}")
+    
+    except Exception as e:
+        print(f"❌ 驗證設置時發生錯誤: {str(e)}")
+    
+    print()
+
+def main():
+    """主要設置流程"""
+    print("🚀 Gumroad Webhook 完整設置指南")
+    print("=" * 50)
     print()
     
-    print("❗ 關鍵問題：")
-    print(f"Webhook 中的 product_id: {test_webhook['product_id']}")
-    print("這個 ID 需要與您的環境變數中的產品 ID 匹配！")
-
+    # 步驟 1：檢查環境
+    access_token, webhook_secret, webhook_base_url = step1_check_environment()
+    
+    if not access_token:
+        print("❌ 請先設置 GUMROAD_ACCESS_TOKEN")
+        return
+    
+    if not webhook_secret:
+        print("❌ 請先設置 GUMROAD_WEBHOOK_SECRET")
+        return
+    
+    # 建構 webhook URL
+    if not webhook_base_url:
+        webhook_base_url = "https://scrilab.onrender.com"
+    
+    if not webhook_base_url.startswith('http'):
+        webhook_base_url = f"https://{webhook_base_url}"
+    
+    webhook_url = f"{webhook_base_url.rstrip('/')}/gumroad/webhook"
+    print(f"🔗 Webhook URL: {webhook_url}")
+    print()
+    
+    # 詢問是否繼續
+    confirm = input("確定要繼續設置嗎？(y/N): ").strip().lower()
+    if confirm != 'y':
+        print("❌ 設置已取消")
+        return
+    
+    print()
+    
+    # 步驟 2：移除舊設置
+    step2_remove_ping_endpoint(access_token)
+    
+    # 步驟 3：設置新的 Resource Subscriptions
+    success = step3_setup_resource_subscriptions(access_token, webhook_url)
+    
+    if success:
+        # 步驟 4：測試
+        step4_test_webhook(webhook_url, webhook_secret)
+        
+        # 步驟 5：驗證
+        step5_verify_setup(access_token)
+        
+        print("🎉 設置完成！")
+        print()
+        print("接下來：")
+        print("1. 重新部署您的應用")
+        print("2. 進行一次測試購買")
+        print("3. 檢查日誌確認簽名驗證成功")
+    else:
+        print("❌ 設置失敗，請檢查錯誤訊息")
 
 if __name__ == "__main__":
-    debug_gumroad_products()
-    print()
-    test_webhook_payload()
+    main()
