@@ -1005,7 +1005,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">體驗服務</div>
                         <div class="service-subtitle">適合新手玩家體驗</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>150
+                            <span class="currency">NT$</span>300
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
@@ -1053,7 +1053,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">標準服務</div>
                         <div class="service-subtitle">最佳性價比選擇</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>899
+                            <span class="currency">NT$</span>549
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
@@ -1100,7 +1100,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">最佳服務</div>
                         <div class="service-subtitle">長期使用最划算</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>2,399
+                            <span class="currency">NT$</span>1,499
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
