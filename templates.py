@@ -1175,25 +1175,21 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
             <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Gumroad 安全付款</h3>
+            
             <div id="selected-plan-info" class="plan-info">
                 <!-- Plan info will be inserted here -->
             </div>
+            
             <div class="gumroad-notice">
                 <i class="fas fa-shield-alt"></i>
-                <span>將跳轉至 Gumroad 完成安全付款，支援 PayPal 和信用卡(以USD計算價格)</span>
+                <span>將跳轉至 Gumroad 完成安全付款，您的購買信息將在 Gumroad 填寫</span>
             </div>
-            <div class="form-group">
-                <label for="user-name">用戶名稱</label>
-                <input type="text" id="user-name" placeholder="請輸入您的用戶名稱(暱稱)" class="form-input" required>
+            
+            <div class="gumroad-notice" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--accent-green);">
+                <i class="fas fa-info-circle"></i>
+                <span>購買完成後，序號將自動發送至您在 Gumroad 填寫的信箱</span>
             </div>
-            <div class="form-group">
-                <label for="contact-email">聯絡信箱</label>
-                <input type="email" id="contact-email" placeholder="請輸入用於接收序號的信箱" class="form-input" required>
-            </div>
-            <div class="form-group">
-                <label for="contact-phone">備用信箱（選填）</label>
-                <input type="email" id="contact-phone" placeholder="請輸入備用信箱" class="form-input">
-            </div>
+            
             <div class="form-group" style="text-align: left;">
                 <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
                     <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
@@ -1203,6 +1199,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     </span>
                 </label>
             </div>
+            
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="closeModal()">取消</button>
                 <button class="btn-primary" onclick="submitPayment()" id="payment-btn">
@@ -1311,30 +1308,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         function closeModal() {
             document.getElementById('purchase-modal').style.display = 'none';
-            // Clear form
-            document.getElementById('user-name').value = '';
-            document.getElementById('contact-email').value = '';
-            document.getElementById('contact-phone').value = '';
+            // 清理表單
             document.getElementById('agree-terms').checked = false;
-            // Reset button
+            // 重置按鈕
             resetPaymentButton();
         }
 
         function submitPayment() {
-            const userName = document.getElementById('user-name').value.trim();
-            const contactEmail = document.getElementById('contact-email').value.trim();
-            const contactPhone = document.getElementById('contact-phone').value.trim();
             const agreeTerms = document.getElementById('agree-terms').checked;
-            
-            if (!userName || !contactEmail) {
-                alert('請填寫必要資訊（姓名、聯絡信箱）');
-                return;
-            }
-            
-            if (!validateEmail(contactEmail)) {
-                alert('請輸入有效的電子郵件地址');
-                return;
-            }
             
             if (!agreeTerms) {
                 alert('請先閱讀並同意免責聲明與服務條款');
@@ -1345,12 +1326,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             document.getElementById('payment-btn-text').style.display = 'none';
             document.getElementById('payment-loading').style.display = 'inline-block';
             
-            // 提交 Gumroad 付款
-            submitGumroadPayment(userName, contactEmail, contactPhone);
+            // 直接提交 Gumroad 付款，不需要用戶信息
+            submitGumroadPayment();
         }
 
         // Gumroad 付款提交
-        async function submitGumroadPayment(userName, contactEmail, contactPhone) {
+        async function submitGumroadPayment() {
             try {
                 const response = await fetch('/gumroad/create-payment', {
                     method: 'POST',
@@ -1358,9 +1339,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     body: JSON.stringify({
                         plan_id: selectedPlan,
                         user_info: {
-                            name: userName,
-                            email: contactEmail,
-                            phone: contactPhone
+                            name: 'Gumroad User',  // 占位符，實際會使用 Gumroad 的信息
+                            email: 'gumroad@placeholder.com',  // 占位符
+                            phone: ''
                         }
                     })
                 });
