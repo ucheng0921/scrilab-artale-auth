@@ -71,8 +71,8 @@ class GumroadService:
             'trial_7': {
                 'name': '體驗服務',
                 'name_en': 'Scrilab Artale Trial Service',
-                'price_twd': 150,
-                'price_usd': 5.00,
+                'price_twd': 300,
+                'price_usd': 10.21,
                 'period': '7天',
                 'period_en': '7 days',
                 'description': '適合新手玩家體驗的基礎技術服務',
@@ -83,8 +83,8 @@ class GumroadService:
             'monthly_30': {
                 'name': '標準服務',
                 'name_en': 'Scrilab Artale Standard Service',
-                'price_twd': 899,
-                'price_usd': 29.99,
+                'price_twd': 549,
+                'price_usd': 18.68,
                 'period': '30天',
                 'period_en': '30 days',
                 'description': '最受歡迎的完整技術服務方案',
@@ -95,8 +95,8 @@ class GumroadService:
             'quarterly_90': {
                 'name': '季度服務',
                 'name_en': 'Scrilab Artale Quarterly Service',
-                'price_twd': 2399,
-                'price_usd': 79.99,
+                'price_twd': 1499,
+                'price_usd': 51.02,
                 'period': '90天',
                 'period_en': '90 days',
                 'description': '長期使用最划算的全功能技術服務',
