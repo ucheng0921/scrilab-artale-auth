@@ -1171,76 +1171,70 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     </footer>
 
     <!-- Purchase Modal -->
-    <div id="purchase-modal" class="modal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Gumroad 安全付款</h3>
-            
-            <div id="selected-plan-info" class="plan-info">
-                <!-- Plan info will be inserted here -->
-            </div>
-            
-            <div class="gumroad-notice">
-                <i class="fas fa-shield-alt"></i>
-                <span>將跳轉至 Gumroad 完成安全付款，您的購買信息將在 Gumroad 填寫</span>
-            </div>
-            
-            <div class="gumroad-notice" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--accent-green);">
-                <i class="fas fa-info-circle"></i>
-                <span>購買完成後，序號將自動發送至您在 Gumroad 填寫的信箱</span>
-            </div>
-            
-            <div class="form-group" style="text-align: left;">
-                <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
-                    <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
-                    <span style="font-size: 0.95rem; line-height: 1.5;">
-                        我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-blue); text-decoration: none;">免責聲明與服務條款</a>，
-                        理解使用本服務的風險，並自願承擔相關責任。
-                    </span>
-                </label>
-            </div>
-            
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeModal()">取消</button>
-                <button class="btn-primary" onclick="submitPayment()" id="payment-btn">
-                    <span id="payment-btn-text">
-                        <i class="fas fa-shield-alt"></i>
-                        前往 Gumroad 付款
-                    </span>
-                    <div class="loading" id="payment-loading" style="display: none;"></div>
-                </button>
+        <div id="purchase-modal" class="modal">
+            <div class="modal-content">
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Gumroad 安全付款</h3>
+                <div id="selected-plan-info" class="plan-info">
+                    <!-- Plan info will be inserted here -->
+                </div>
+                <div class="gumroad-notice">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>將跳轉至 Gumroad 完成安全付款，支援 PayPal 和信用卡</span>
+                </div>
+                <div class="gumroad-notice" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--accent-green);">
+                    <i class="fas fa-info-circle"></i>
+                    <span>購買完成後，序號將自動發送至您填寫的信箱</span>
+                </div>
+                <div class="form-group" style="text-align: left;">
+                    <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
+                        <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
+                        <span style="font-size: 0.95rem; line-height: 1.5;">
+                            我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-blue); text-decoration: none;">免責聲明與服務條款</a>，
+                            理解使用本服務的風險，並自願承擔相關責任。
+                        </span>
+                    </label>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="closeModal()">取消</button>
+                    <button class="btn-primary" onclick="submitPayment()" id="payment-btn">
+                        <span id="payment-btn-text">
+                            <i class="fas fa-shield-alt"></i>
+                            前往 Gumroad 付款
+                        </span>
+                        <div class="loading" id="payment-loading" style="display: none;"></div>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
     <script>
         // Service plans data
         const servicePlans = {
             'trial_7': {
                 name: '體驗服務',
-                price_twd: 300,
-                price_usd: 10.21,
+                price_twd: 49,
+                price_usd: 1.67,
                 period: '7天',
                 description: '適合新手玩家體驗的基礎技術服務'
             },
             'monthly_30': {
                 name: '標準服務',
-                price_twd: 549,
-                price_usd: 18.68,
+                price_twd: 599,
+                price_usd: 19.99,
                 period: '30天',
                 description: '最受歡迎的完整技術服務方案'
             },
             'quarterly_90': {
                 name: '季度服務',
                 price_twd: 1499,
-                price_usd: 51.02,
+                price_usd: 49.99,
                 period: '90天',
                 description: '長期使用最划算的全功能技術服務'
             }
         };
 
         let selectedPlan = null;
-        let currentPaymentId = null;
 
         // Game Selection
         function showGamePlans(gameId) {
@@ -1312,8 +1306,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     body: JSON.stringify({
                         plan_id: selectedPlan,
                         user_info: {
-                            name: 'Gumroad User',  // 占位符，實際會使用 Gumroad 的信息
-                            email: 'gumroad@placeholder.com',  // 占位符
+                            name: 'Gumroad User',
+                            email: 'gumroad@placeholder.com',
                             phone: ''
                         }
                     })
@@ -1322,15 +1316,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 儲存付款 ID
-                    currentPaymentId = data.payment_id;
-                    
-                    // 重定向到 Gumroad 付款頁面
-                    window.open(data.purchase_url, '_blank');
+                    // 直接跳轉到 Gumroad，不保存 payment_id
+                    window.location.href = data.purchase_url;  // 改為 location.href 而不是 window.open
                     closeModal();
                     
-                    // 顯示付款指示
-                    showPaymentInstructions(data.payment_id);
+                    // 移除 showPaymentInstructions 調用
+                    // showPaymentInstructions(data.payment_id);  // 刪除這行
                 } else {
                     alert('付款創建失敗: ' + data.error);
                     resetPaymentButton();
@@ -1339,62 +1330,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 alert('系統錯誤: ' + error.message);
                 resetPaymentButton();
             }
-        }
-
-        // 顯示付款指示
-        function showPaymentInstructions(paymentId) {
-            document.getElementById('payment-id-text').textContent = `付款 ID: ${paymentId}`;
-            document.getElementById('instructions-modal').style.display = 'flex';
-        }
-
-        // 檢查付款狀態
-        async function checkPaymentStatus() {
-            if (!currentPaymentId) {
-                alert('找不到付款 ID');
-                return;
-            }
-            
-            const checkBtn = document.getElementById('check-status-btn');
-            const originalText = checkBtn.innerHTML;
-            checkBtn.innerHTML = '<div class="loading"></div> 檢查中...';
-            checkBtn.disabled = true;
-            
-            try {
-                const response = await fetch('/gumroad/check-status', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ payment_id: currentPaymentId })
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    if (data.status === 'completed') {
-                        alert('付款成功！您將收到包含序號的確認郵件。');
-                        closeInstructionModal();
-                        
-                        // 可選：重定向到成功頁面
-                        if (data.user_uuid) {
-                            window.location.href = `/payment/success?provider=gumroad&payment_id=${currentPaymentId}`;
-                        }
-                    } else {
-                        alert('付款尚未完成，請完成 Gumroad 付款流程。');
-                    }
-                } else {
-                    alert('無法檢查付款狀態: ' + data.error);
-                }
-            } catch (error) {
-                alert('檢查狀態時發生錯誤: ' + error.message);
-            } finally {
-                checkBtn.innerHTML = originalText;
-                checkBtn.disabled = false;
-            }
-        }
-
-        // 關閉指示模態框
-        function closeInstructionModal() {
-            document.getElementById('instructions-modal').style.display = 'none';
-            currentPaymentId = null;
         }
 
         function resetPaymentButton() {
@@ -1440,17 +1375,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             }
         });
 
-        document.getElementById('instructions-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeInstructionModal();
-            }
-        });
-
         // Escape key to close modal
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeModal();
-                closeInstructionModal();
             }
         });
 
