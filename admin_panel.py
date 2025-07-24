@@ -27,7 +27,7 @@ HTML_HEAD = """
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
             padding: 20px; 
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); 
+            background: #0a0a0a; 
             min-height: 100vh;
             color: #ffffff;
         }
@@ -43,12 +43,13 @@ HTML_HEAD = """
         .header h1 { margin: 0; font-size: 2.2em; font-weight: 600; }
         .header p { margin: 10px 0 0 0; opacity: 0.9; }
         .section { 
-            background: white; 
+            background: #1e1e1e; 
+            color: #ffffff;
             padding: 25px; 
             border-radius: 12px; 
             margin-bottom: 25px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
-            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
+            border: 1px solid #333333;
         }
 """
 
@@ -57,26 +58,27 @@ HTML_STYLES = """
             width: 100%; 
             border-collapse: collapse; 
             font-size: 13px;
-            background: white;
+            background: #1e1e1e;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         .user-table th, .user-table td { 
-            border: 1px solid #e0e0e0; 
+            border: 1px solid #333333; 
             padding: 12px 8px; 
             text-align: left; 
+            color: #ffffff;
         }
         .user-table th { 
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
+            background: linear-gradient(135deg, #00d4ff 0%, #1976d2 100%); 
             color: white; 
             font-weight: 600;
             position: sticky;
             top: 0;
             z-index: 10;
         }
-        .user-table tr:nth-child(even) { background-color: #f8f9fa; }
-        .user-table tr:hover { background-color: #e3f2fd; }
+        .user-table tr:nth-child(even) { background-color: #2a2a2a; }
+        .user-table tr:hover { background-color: #333333; }
         .btn { 
             background: linear-gradient(135deg, #00d4ff 0%, #0088cc 100%); 
             color: white; 
@@ -92,12 +94,12 @@ HTML_STYLES = """
         }
         .btn:hover { 
             transform: translateY(-2px); 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,212,255,0.3);
         }
         .btn-danger { background: linear-gradient(135deg, #f44336 0%, #da190b 100%); }
-        .btn-warning { background: linear-gradient(135deg, #ff9800 0%, #e68900 100%); }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #e68900 100%); }
         .btn-info { background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); }
-        .btn-success { background: linear-gradient(135deg, #4CAF50 0%, #388e3c 100%); }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
 """
 
 HTML_FORM_STYLES = """
@@ -106,45 +108,48 @@ HTML_FORM_STYLES = """
             display: block; 
             margin-bottom: 5px; 
             font-weight: 600; 
-            color: #333;
+            color: #ffffff;
         }
         .form-group input, .form-group select { 
             width: 100%; 
             padding: 12px; 
-            border: 2px solid #e0e0e0; 
+            border: 2px solid #333333; 
             border-radius: 6px; 
             box-sizing: border-box; 
             transition: border-color 0.3s ease;
+            background: #2a2a2a;
+            color: #ffffff;
         }
         .form-group input:focus, .form-group select:focus {
-            border-color: #4CAF50;
+            border-color: #00d4ff;
             outline: none;
+            background: #333333;
         }
-        .status-active { color: #4CAF50; font-weight: bold; }
+        .status-active { color: #10b981; font-weight: bold; }
         .status-inactive { color: #f44336; font-weight: bold; }
-        .status-refunded { color: #ff9800; font-weight: bold; }
+        .status-refunded { color: #f59e0b; font-weight: bold; }
         .stats { display: flex; gap: 20px; margin-bottom: 25px; flex-wrap: wrap; }
         .stat-card { 
-            background: white; 
+            background: #1e1e1e; 
             padding: 25px; 
             border-radius: 12px; 
             text-align: center; 
             flex: 1; 
             min-width: 200px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
-            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
+            border: 1px solid #333333;
             transition: transform 0.3s ease;
         }
         .stat-card:hover { transform: translateY(-5px); }
         .stat-card h3 { 
             margin: 0; 
             font-size: 2.5em; 
-            color: #1976d2; 
+            color: #00d4ff; 
             font-weight: 700;
         }
         .stat-card p { 
             margin: 10px 0 0 0; 
-            color: #666; 
+            color: #b3b3b3; 
             font-weight: 500;
         }
 """
@@ -155,70 +160,81 @@ HTML_ADDITIONAL_STYLES = """
         .search-box { 
             width: 300px; 
             padding: 12px; 
-            border: 2px solid #e0e0e0; 
+            border: 2px solid #333333; 
             border-radius: 6px; 
             margin-left: 10px; 
+            background: #2a2a2a;
+            color: #ffffff;
+        }
+        .search-box:focus {
+            border-color: #00d4ff;
+            outline: none;
         }
         .tabs { 
             display: flex; 
-            background: #f1f1f1; 
+            background: #2a2a2a; 
             border-radius: 12px; 
             margin-bottom: 25px; 
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         .tab { 
             padding: 15px 30px; 
             cursor: pointer; 
-            background: #e0e0e0; 
+            background: #333333; 
             transition: all 0.3s ease;
             border: none;
             font-weight: 600;
+            color: #b3b3b3;
         }
         .tab.active { 
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
+            background: linear-gradient(135deg, #00d4ff 0%, #1976d2 100%); 
             color: white;
         }
-        .tab:hover:not(.active) { background: #d0d0d0; }
+        .tab:hover:not(.active) { 
+            background: #404040; 
+            color: #ffffff;
+        }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .uuid-generator { 
-            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); 
+            background: #1e1e1e; 
             padding: 20px; 
             border-radius: 12px; 
             margin-bottom: 20px; 
-            border: 2px solid #4CAF50;
+            border: 2px solid #00d4ff;
         }
         .uuid-preview { 
-            background: #2d2d2d; 
-            color: #00ff00; 
+            background: #2a2a2a; 
+            color: #00d4ff; 
             padding: 15px; 
             border-radius: 8px; 
             font-family: 'Courier New', monospace; 
             margin: 15px 0; 
             font-size: 16px;
             font-weight: bold;
+            border: 1px solid #333333;
         }
 """
 
 HTML_MODAL_STYLES = """
         .payment-section { 
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); 
-            border: 2px solid #ffc107; 
+            background: #1e1e1e; 
+            border: 2px solid #f59e0b; 
             border-radius: 12px; 
             padding: 25px; 
             margin-bottom: 25px; 
         }
         .payment-info { 
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); 
-            border: 2px solid #28a745; 
+            background: #1e1e1e; 
+            border: 2px solid #10b981; 
             border-radius: 8px; 
             padding: 20px; 
             margin-bottom: 20px; 
         }
         .login-prompt { 
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); 
-            border: 2px solid #ffc107; 
+            background: #1e1e1e; 
+            border: 2px solid #f59e0b; 
             border-radius: 12px; 
             padding: 30px; 
             margin: 25px 0; 
@@ -229,8 +245,14 @@ HTML_MODAL_STYLES = """
             width: 100%; 
             padding: 15px; 
             margin: 15px 0; 
-            border: 2px solid #ddd; 
+            border: 2px solid #333333; 
             border-radius: 8px; 
+            background: #2a2a2a;
+            color: #ffffff;
+        }
+        .login-form input:focus {
+            border-color: #00d4ff;
+            outline: none;
         }
         .modal {
             display: none;
@@ -240,43 +262,45 @@ HTML_MODAL_STYLES = """
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0,0,0,0.8);
             backdrop-filter: blur(5px);
         }
         .modal-content {
-            background-color: white;
+            background-color: #1e1e1e;
             margin: 5% auto;
             padding: 30px;
             border-radius: 12px;
             width: 90%;
             max-width: 600px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 1px solid #333333;
+            color: #ffffff;
         }
         .close {
-            color: #aaa;
+            color: #b3b3b3;
             float: right;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
         }
-        .close:hover { color: #000; }
+        .close:hover { color: #ffffff; }
 """
 
 HTML_FINAL_STYLES = """
         .refund-form {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
+            background: #1e1e1e;
+            border: 2px solid #f59e0b;
             border-radius: 8px;
             padding: 20px;
             margin: 20px 0;
         }
         .refund-warning {
-            background: #f8d7da;
-            border: 2px solid #dc3545;
+            background: #2a1a1a;
+            border: 2px solid #f44336;
             border-radius: 8px;
             padding: 15px;
             margin: 15px 0;
-            color: #721c24;
+            color: #f44336;
         }
         .action-buttons {
             display: flex;
@@ -289,8 +313,8 @@ HTML_FINAL_STYLES = """
             padding: 20px;
         }
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border: 4px solid #333333;
+            border-top: 4px solid #00d4ff;
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -309,6 +333,23 @@ HTML_FINAL_STYLES = """
             .stats { flex-direction: column; }
             .user-table { font-size: 11px; }
             .user-table th, .user-table td { padding: 8px 4px; }
+        }
+        
+        /* 新增：修復輸入框和選擇框的樣式 */
+        input, select, textarea {
+            background: #2a2a2a !important;
+            color: #ffffff !important;
+            border: 2px solid #333333 !important;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            background: #333333 !important;
+            border-color: #00d4ff !important;
+        }
+        
+        option {
+            background: #2a2a2a !important;
+            color: #ffffff !important;
         }
     </style>
 </head>
