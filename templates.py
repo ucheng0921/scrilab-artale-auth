@@ -1213,33 +1213,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         </div>
     </div>
 
-    <!-- Payment Instructions Modal -->
-    <div id="instructions-modal" class="modal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeInstructionModal()">&times;</button>
-            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">付款進行中</h3>
-            <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
-                我們已為您開啟 Gumroad 付款頁面。完成付款後，您將收到包含序號的確認郵件。
-            </p>
-            <div id="payment-id-info" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
-                <p style="color: var(--accent-green); margin: 0; font-size: 0.9rem;">
-                    <i class="fas fa-info-circle"></i>
-                    <span id="payment-id-text">付款 ID: </span>
-                </p>
-            </div>
-            <div style="display: flex; gap: 1rem; justify-content: center;">
-                <button onclick="checkPaymentStatus()" class="btn-primary" id="check-status-btn">
-                    <i class="fas fa-sync"></i>
-                    檢查付款狀態
-                </button>
-                <button onclick="closeInstructionModal()" class="btn-secondary">
-                    <i class="fas fa-times"></i>
-                    關閉
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
         // Service plans data
         const servicePlans = {
