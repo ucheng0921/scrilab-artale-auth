@@ -1182,6 +1182,18 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <i class="fas fa-shield-alt"></i>
                 <span>將跳轉至 Gumroad 完成安全付款，支援 PayPal 和信用卡(以USD計算價格)</span>
             </div>
+            <div class="form-group">
+                <label for="user-name">用戶名稱</label>
+                <input type="text" id="user-name" placeholder="請輸入您的用戶名稱(暱稱)" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label for="contact-email">聯絡信箱</label>
+                <input type="email" id="contact-email" placeholder="請輸入用於接收序號的信箱" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label for="contact-phone">備用信箱（選填）</label>
+                <input type="email" id="contact-phone" placeholder="請輸入備用信箱" class="form-input">
+            </div>
             <div class="form-group" style="text-align: left;">
                 <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
                     <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
