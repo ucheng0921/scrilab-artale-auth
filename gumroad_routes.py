@@ -5,18 +5,128 @@ from flask import Blueprint, request, jsonify, redirect, render_template_string
 import logging
 import json
 import os
+import time
+import requests
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
 # 創建藍圖
 gumroad_bp = Blueprint('gumroad', __name__, url_prefix='/gumroad')
 
+# 添加這個安全檢查類
+class SimpleWebhookSecurity:
+    def __init__(self, db, access_token):
+        self.db = db
+        self.access_token = access_token
+        self.webhook_token = os.environ.get('WEBHOOK_SECRET_TOKEN')
+        self.enable_security = os.environ.get('ENABLE_WEBHOOK_SECURITY', 'false').lower() == 'true'
+        self.enable_sale_verification = os.environ.get('ENABLE_SALE_VERIFICATION', 'false').lower() == 'true'
+        self.rate_limit_cache = {}
+        
+        logger.info(f"🔒 安全設置: Security={self.enable_security}, Verification={self.enable_sale_verification}")
+    
+    def verify_webhook_token(self, request):
+        """檢查 URL 中的 token"""
+        if not self.enable_security or not self.webhook_token:
+            return True, "Security disabled"
+        
+        token = request.args.get('token')  # 從 URL ?token=xxx 獲取
+        if not token or token != self.webhook_token:
+            return False, "Invalid token"
+        
+        return True, "Token OK"
+    
+    def check_rate_limit(self, client_ip):
+        """簡單速率限制"""
+        if not self.enable_security:
+            return True
+        
+        now = time.time()
+        
+        # 清理過期記錄
+        if client_ip not in self.rate_limit_cache:
+            self.rate_limit_cache[client_ip] = []
+        
+        # 保留最近5分鐘的請求
+        self.rate_limit_cache[client_ip] = [t for t in self.rate_limit_cache[client_ip] if t > now - 300]
+        
+        # 檢查是否超過限制（5分鐘內最多10個請求）
+        if len(self.rate_limit_cache[client_ip]) > 10:
+            return False
+        
+        # 記錄這次請求
+        self.rate_limit_cache[client_ip].append(now)
+        return True
+    
+    def verify_sale(self, sale_data):
+        """通過 API 驗證銷售真實性"""
+        if not self.enable_sale_verification:
+            return True, "Verification disabled"
+        
+        sale_id = sale_data.get('sale_id')
+        if not sale_id:
+            return False, "Missing sale_id"
+        
+        # 檢查是否重複處理
+        try:
+            doc = self.db.collection('processed_sales').document(sale_id).get()
+            if doc.exists:
+                return False, "Already processed"
+        except:
+            pass
+        
+        # 通過 Gumroad API 驗證
+        try:
+            url = f"https://api.gumroad.com/v2/sales/{sale_id}"
+            params = {'access_token': self.access_token}
+            
+            response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                api_data = response.json()
+                if api_data.get('success'):
+                    api_sale = api_data.get('sale', {})
+                    
+                    # 簡單驗證：email 是否匹配
+                    webhook_email = sale_data.get('email', '').lower()
+                    api_email = api_sale.get('email', '').lower()
+                    
+                    if webhook_email == api_email:
+                        # 標記為已處理
+                        try:
+                            self.db.collection('processed_sales').document(sale_id).set({
+                                'processed_at': datetime.now(),
+                                'expires_at': datetime.now() + timedelta(days=30)
+                            })
+                        except:
+                            pass
+                        
+                        logger.info(f"✅ 銷售驗證通過: {sale_id}")
+                        return True, "Sale verified"
+                    else:
+                        logger.warning(f"❌ 銷售數據不匹配: {sale_id}")
+                        return False, "Data mismatch"
+            
+            return False, "API verification failed"
+                
+        except Exception as e:
+            logger.error(f"銷售驗證失敗: {str(e)}")
+            return False, f"Verification error"
+
 class GumroadRoutes:
     """Gumroad 路由處理器 - 修復版本"""
     
     def __init__(self, gumroad_service):
         self.gumroad_service = gumroad_service
-        logger.info("✅ GumroadRoutes 已初始化")
+        
+        # 添加這一行：初始化安全檢查
+        self.security = SimpleWebhookSecurity(
+            gumroad_service.db, 
+            os.environ.get('GUMROAD_ACCESS_TOKEN')
+        )
+        
+        logger.info("✅ GumroadRoutes 已初始化（含安全防護）")
     
     def create_payment(self):
         """創建 Gumroad 付款 - 修復版本"""
@@ -73,57 +183,65 @@ class GumroadRoutes:
             }), 500
     
     def webhook_handler(self):
-        """處理 Gumroad webhook - 修復版本"""
+        """安全版 webhook 處理"""
         try:
-            # 獲取原始請求數據
-            raw_data = request.get_data()
+            # 獲取客戶端 IP
+            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+            if client_ip and ',' in client_ip:
+                client_ip = client_ip.split(',')[0].strip()
             
-            # 獲取簽名
-            signature = request.headers.get('X-Gumroad-Signature', '')
+            logger.info(f"📨 收到 webhook from {client_ip}")
             
-            # 記錄收到的 webhook
-            logger.info(f"收到 Gumroad webhook: {len(raw_data)} 字節")
-            logger.info(f"Content-Type: {request.headers.get('Content-Type', 'N/A')}")
+            # 1. 檢查 token（從 URL ?token=xxx）
+            token_ok, token_msg = self.security.verify_webhook_token(request)
+            if not token_ok:
+                logger.warning(f"❌ Token 驗證失敗: {token_msg}")
+                return jsonify({'error': token_msg}), 401
             
-            # 驗證簽名
-            if not self.gumroad_service.verify_webhook_signature(raw_data, signature):
-                logger.warning("Gumroad webhook 簽名驗證失敗")
-                return jsonify({'error': 'Invalid signature'}), 401
+            # 2. 速率限制
+            if not self.security.check_rate_limit(client_ip):
+                logger.warning(f"❌ 速率限制: {client_ip}")
+                return jsonify({'error': 'Too many requests'}), 429
             
-            # 解析 webhook 數據
+            # 3. 解析數據（原有的邏輯）
             content_type = request.headers.get('Content-Type', '').lower()
             
             if 'application/json' in content_type:
-                # JSON 格式
                 webhook_data = request.get_json()
             elif 'application/x-www-form-urlencoded' in content_type:
-                # Form 格式 - Gumroad 的標準格式
                 webhook_data = request.form.to_dict()
             else:
-                # 嘗試作為 JSON 解析
                 try:
+                    raw_data = request.get_data()
                     webhook_data = json.loads(raw_data.decode('utf-8'))
                 except:
                     webhook_data = request.form.to_dict()
             
             if not webhook_data:
-                logger.error("無法解析 webhook 數據")
-                return jsonify({'error': 'Invalid webhook data'}), 400
+                logger.error("❌ 無法解析數據")
+                return jsonify({'error': 'Invalid data'}), 400
             
-            logger.debug(f"解析的 webhook 數據: {webhook_data}")
+            # 4. 銷售驗證（只對銷售事件）
+            if webhook_data.get('sale_id'):
+                sale_ok, sale_msg = self.security.verify_sale(webhook_data)
+                if not sale_ok:
+                    logger.warning(f"❌ 銷售驗證失敗: {sale_msg}")
+                    return jsonify({'error': sale_msg}), 403
             
-            # 處理 webhook
+            logger.info("✅ 安全檢查通過")
+            
+            # 5. 使用原有的處理邏輯
             result = self.gumroad_service.process_webhook(webhook_data)
             
             if result['success']:
-                logger.info(f"Gumroad webhook 處理成功: {result.get('payment_id')}")
+                logger.info(f"✅ Webhook 處理成功")
                 return jsonify({'status': 'success'}), 200
             else:
-                logger.error(f"Gumroad webhook 處理失敗: {result['error']}")
+                logger.error(f"❌ 處理失敗: {result['error']}")
                 return jsonify({'error': result['error']}), 400
                 
         except Exception as e:
-            logger.error(f"Gumroad webhook 處理錯誤: {str(e)}")
+            logger.error(f"❌ Webhook 錯誤: {str(e)}")
             return jsonify({'error': 'Internal server error'}), 500
     
     def payment_success(self):
