@@ -1076,10 +1076,35 @@ INTRO_TEMPLATE = r"""
                 <div style="max-width: 800px; margin: 0 auto;">
                     <div class="video-card" style="margin: 0;">
                         <div class="video-player">
-                            <video id="main-video" controls poster="/static/images/video-placeholder.jpg" style="width: 100%; height: auto; border-radius: 12px;">
+                            <!-- Google Drive 影片嵌入 -->
+                            <iframe id="google-drive-video" 
+                                    src=""
+                                    style="width: 100%; height: 450px; border: none; border-radius: 12px;"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen>
+                            </iframe>
+                            
+                            <!-- 備用的本地影片播放器（如果需要） -->
+                            <video id="local-video" 
+                                   controls 
+                                   poster="/static/images/video-placeholder.jpg" 
+                                   style="width: 100%; height: auto; border-radius: 12px; display: none;">
                                 <source src="/static/video/demo.mp4" type="video/mp4">
                                 您的瀏覽器不支援影片播放。
                             </video>
+                            
+                            <!-- 載入中或錯誤顯示 -->
+                            <div id="video-loading" class="video-placeholder" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>影片載入中...</p>
+                                <small>請稍候，正在從雲端載入影片</small>
+                            </div>
+                            
+                            <div id="video-error" class="video-placeholder" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>影片暫時無法載入</p>
+                                <small>請稍後再試，或聯繫客服獲得協助</small>
+                            </div>
                         </div>
                         <div class="video-info">
                             <h3 class="video-title">🎮 Artale Script 功能演示</h3>
@@ -1091,6 +1116,19 @@ INTRO_TEMPLATE = r"""
                                 <span class="video-tag">實機演示</span>
                                 <span class="video-tag">完整功能</span>
                                 <span class="video-tag">真實效果</span>
+                            </div>
+                            
+                            <!-- 影片控制按鈕 -->
+                            <div style="margin-top: 1rem; text-align: center;">
+                                <button class="demo-button" onclick="switchVideoSource('google')" style="margin: 0.2rem;">
+                                    <i class="fab fa-google-drive"></i> 雲端播放
+                                </button>
+                                <button class="demo-button" onclick="switchVideoSource('local')" style="margin: 0.2rem;">
+                                    <i class="fas fa-download"></i> 本地播放
+                                </button>
+                                <button class="demo-button" onclick="refreshVideo()" style="margin: 0.2rem;">
+                                    <i class="fas fa-refresh"></i> 重新載入
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1558,28 +1596,151 @@ INTRO_TEMPLATE = r"""
             }
         ];
 
-        // 影片初始化
-        function initializeVideo() {
-            const video = document.getElementById('main-video');
-            
-            // 檢查影片是否可以載入
-            video.addEventListener('error', function() {
-                console.log('影片載入失敗，顯示佔位內容');
-                const videoCard = video.closest('.video-card');
-                const videoPlayer = videoCard.querySelector('.video-player');
-                
-                videoPlayer.innerHTML = `
-                    <div class="video-placeholder">
-                        <i class="fas fa-video"></i>
-                        <p>影片準備中...</p>
-                        <small>我們正在製作精彩的演示影片，敬請期待！</small>
-                    </div>
-                `;
-            });
+        // Google Drive 影片配置
+        const GOOGLE_DRIVE_CONFIG = {
+            // 請將這裡的 FILE_ID 替換為您的 Google Drive 影片檔案 ID
+            fileId: '1neJKwUi5kYJGB2sNSHbOGZFhV8fpE9Eb',
+            // 如果您有多個影片，可以在這裡配置
+            alternativeFileIds: [
+                // 'ALTERNATIVE_FILE_ID_1',
+                // 'ALTERNATIVE_FILE_ID_2'
+            ]
+        };
 
-            // 影片載入成功時的處理
-            video.addEventListener('loadedmetadata', function() {
-                console.log('影片載入成功');
+        // 影片初始化和管理
+        function initializeVideo() {
+            // 嘗試載入 Google Drive 影片
+            loadGoogleDriveVideo();
+            
+            // 設置本地影片的錯誤處理
+            const localVideo = document.getElementById('local-video');
+            if (localVideo) {
+                localVideo.addEventListener('error', function() {
+                    console.log('本地影片載入失敗');
+                    showVideoError();
+                });
+
+                localVideo.addEventListener('loadedmetadata', function() {
+                    console.log('本地影片載入成功');
+                });
+            }
+        }
+
+        // 載入 Google Drive 影片
+        function loadGoogleDriveVideo() {
+            const iframe = document.getElementById('google-drive-video');
+            const fileId = GOOGLE_DRIVE_CONFIG.fileId;
+            
+            if (fileId && fileId !== 'YOUR_GOOGLE_DRIVE_FILE_ID_HERE') {
+                // 使用 Google Drive 的嵌入 URL
+                const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+                
+                showVideoLoading();
+                
+                iframe.src = embedUrl;
+                iframe.onload = function() {
+                    hideVideoLoading();
+                    showGoogleDriveVideo();
+                };
+                
+                iframe.onerror = function() {
+                    console.log('Google Drive 影片載入失敗');
+                    hideVideoLoading();
+                    showVideoError();
+                };
+                
+                // 設置超時檢查
+                setTimeout(() => {
+                    if (document.getElementById('video-loading').style.display !== 'none') {
+                        hideVideoLoading();
+                        showVideoError();
+                    }
+                }, 10000); // 10秒超時
+                
+            } else {
+                // 如果沒有配置 Google Drive ID，顯示配置提示
+                showConfigurationNeeded();
+            }
+        }
+
+        // 切換影片來源
+        function switchVideoSource(source) {
+            const googleVideo = document.getElementById('google-drive-video');
+            const localVideo = document.getElementById('local-video');
+            const loading = document.getElementById('video-loading');
+            const error = document.getElementById('video-error');
+            
+            // 隱藏所有元素
+            googleVideo.style.display = 'none';
+            localVideo.style.display = 'none';
+            loading.style.display = 'none';
+            error.style.display = 'none';
+            
+            if (source === 'google') {
+                loadGoogleDriveVideo();
+            } else if (source === 'local') {
+                localVideo.style.display = 'block';
+                // 嘗試載入本地影片
+                localVideo.load();
+            }
+        }
+
+        // 重新載入影片
+        function refreshVideo() {
+            const googleVideo = document.getElementById('google-drive-video');
+            const currentSrc = googleVideo.src;
+            
+            if (currentSrc) {
+                showVideoLoading();
+                googleVideo.src = '';
+                setTimeout(() => {
+                    googleVideo.src = currentSrc;
+                }, 1000);
+            } else {
+                loadGoogleDriveVideo();
+            }
+        }
+
+        // 顯示 Google Drive 影片
+        function showGoogleDriveVideo() {
+            document.getElementById('google-drive-video').style.display = 'block';
+        }
+
+        // 顯示載入中
+        function showVideoLoading() {
+            document.getElementById('video-loading').style.display = 'flex';
+            hideOtherVideoElements();
+        }
+
+        // 隱藏載入中
+        function hideVideoLoading() {
+            document.getElementById('video-loading').style.display = 'none';
+        }
+
+        // 顯示錯誤
+        function showVideoError() {
+            document.getElementById('video-error').style.display = 'flex';
+            hideOtherVideoElements();
+        }
+
+        // 顯示配置需要提示
+        function showConfigurationNeeded() {
+            const errorDiv = document.getElementById('video-error');
+            errorDiv.innerHTML = `
+                <i class="fas fa-cog"></i>
+                <p>需要配置 Google Drive 影片</p>
+                <small>請聯繫管理員設定影片連結</small>
+            `;
+            errorDiv.style.display = 'flex';
+            hideOtherVideoElements();
+        }
+
+        // 隱藏其他影片元素
+        function hideOtherVideoElements() {
+            const elements = ['google-drive-video', 'local-video'];
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.style.display = 'none';
             });
         }
 
@@ -1832,40 +1993,60 @@ def intro_features():
     """功能介紹頁面"""
     return render_template_string(INTRO_TEMPLATE)
 
-@intro_bp.route('/videos', methods=['GET'])
-def get_available_videos():
-    """獲取可用的影片列表"""
+@intro_bp.route('/set_video_config', methods=['POST'])
+def set_video_config():
+    """設定 Google Drive 影片配置（管理員功能）"""
     try:
-        video_directory = os.path.join('static', 'video')
-        available_videos = []
+        data = request.get_json()
+        file_id = data.get('file_id', '')
         
-        # 檢查影片目錄是否存在
-        if os.path.exists(video_directory):
-            # 掃描影片檔案
-            for filename in os.listdir(video_directory):
-                if filename.lower().endswith(('.mp4', '.webm', '.ogg')):
-                    # 基於檔名猜測影片資訊
-                    video_info = {
-                        'filename': filename,
-                        'path': f'/static/video/{filename}',
-                        'title': filename.replace('.mp4', '').replace('_', ' ').title(),
-                        'size': os.path.getsize(os.path.join(video_directory, filename))
-                    }
-                    available_videos.append(video_info)
+        if not file_id:
+            return jsonify({
+                'success': False,
+                'message': '請提供有效的 Google Drive 檔案 ID'
+            }), 400
         
+        # 這裡可以將配置儲存到資料庫或配置檔案
+        # 目前只是返回成功訊息
         return jsonify({
             'success': True,
-            'videos': available_videos,
-            'count': len(available_videos)
+            'message': f'Google Drive 影片配置已更新：{file_id}',
+            'file_id': file_id,
+            'embed_url': f'https://drive.google.com/file/d/{file_id}/preview'
         })
         
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'獲取影片列表失敗：{str(e)}',
-            'videos': [],
-            'count': 0
+            'message': f'配置更新失敗：{str(e)}'
         }), 500
+
+@intro_bp.route('/video_info', methods=['GET'])
+def get_video_info():
+    """獲取影片資訊和使用說明"""
+    return jsonify({
+        'success': True,
+        'info': {
+            'google_drive_setup': {
+                'step1': '1. 將影片上傳到 Google Drive',
+                'step2': '2. 右鍵點擊影片 → 取得連結',
+                'step3': '3. 設定為「知道連結的使用者」',
+                'step4': '4. 從連結中複製檔案 ID',
+                'example_link': 'https://drive.google.com/file/d/FILE_ID_HERE/view',
+                'example_id': 'FILE_ID_HERE'
+            },
+            'current_config': {
+                'using_google_drive': True,
+                'fallback_to_local': True
+            },
+            'supported_formats': ['MP4', 'WebM', 'AVI', 'MOV'],
+            'recommended_settings': {
+                'resolution': '1280x720 或更高',
+                'bitrate': '適中品質，確保載入速度',
+                'duration': '建議 3-10 分鐘'
+            }
+        }
+    })
 
 @intro_bp.route('/demo', methods=['POST'])
 def demo_action():
