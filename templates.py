@@ -909,10 +909,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         <div class="hero-content">
             <div class="hero-badge">
                 <i class="fas fa-shield-alt"></i>
-                <span>支援 Gumroad 安全付款</span>
+                <span>臺灣製造</span>
             </div>
             <h1>自動化<span class="highlight">遊戲技術服務</span><br>與個人化方案</h1>
-            <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。現在支援 Gumroad 安全付款，讓購買更加便利。</p>
+            <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。</p>
             <div class="hero-buttons">
                 <a href="#games" class="btn-primary">
                     <i class="fas fa-gamepad"></i>
@@ -947,7 +947,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <div class="game-info">
                         <h3>MapleStory Worlds - Artale</h3>
                         <p class="game-subtitle">繁體中文版</p>
-                        <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案，透過 Gumroad 安全付款</p>
+                        <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案。</p>
                         <div class="game-status">
                             <span class="status-badge active">服務中</span>
                             <div class="game-buttons">
@@ -995,7 +995,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 </button>
                 <div class="section-badge">服務方案</div>
                 <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale 專屬方案</h2>
-                <p class="section-description">透過 Gumroad 安全付款，支援多種付款方式</p>
+                <p class="section-description">透過 Gumroad 付款，支援多種付款方式</p>
             </div>
             
             <div class="services-grid">
@@ -1009,7 +1009,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
-                            <span>透過 Gumroad 安全付款</span>
+                            <span>透過 Gumroad 付款</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1057,7 +1057,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
-                            <span>透過 Gumroad 安全付款</span>
+                            <span>透過 Gumroad 付款</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1104,7 +1104,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
-                            <span>透過 Gumroad 安全付款</span>
+                            <span>透過 Gumroad 付款</span>
                         </div>
                     </div>
                     <div class="service-body">
