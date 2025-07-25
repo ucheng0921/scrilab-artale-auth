@@ -881,6 +881,96 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 justify-content: flex-start;
             }
         }
+
+        /* 添加到你的 CSS 中，或者放在 <style> 標籤內 */
+
+        /* 期限顯示樣式 */
+        .service-price .period {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-left: 5px;
+        }
+
+        /* 原價顯示（被劃掉的價格） */
+        .original-price {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .original-amount {
+            font-size: 1.2rem;
+            color: #999;
+            text-decoration: line-through;
+            font-weight: 500;
+        }
+
+        .original-period {
+            font-size: 0.9rem;
+            color: #999;
+            margin-left: 3px;
+        }
+
+        /* 現在價格樣式 */
+        .current-price {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        /* 折扣標籤 */
+        .discount-badge {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-top: 8px;
+            box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3);
+            animation: pulse-glow 2s infinite;
+        }
+
+        /* 折扣標籤發光動畫 */
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 4px 15px rgba(255, 65, 108, 0.5);
+                transform: scale(1.02);
+            }
+        }
+
+        /* 讓有折扣的卡片更突出 */
+        .service-card:has(.discount-badge) {
+            border: 2px solid transparent;
+            background-image: linear-gradient(white, white), 
+                            linear-gradient(135deg, #ff416c, #ff4b2b);
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+            animation: card-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes card-glow {
+            0%, 100% {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            }
+            50% {
+                box-shadow: 0 8px 30px rgba(255, 65, 108, 0.2);
+            }
+        }
+
+        /* 體驗方案（沒有折扣）的價格樣式調整 */
+        .service-card:first-child .service-price {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+        }
+
     </style>
 </head>
 <body>
