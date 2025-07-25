@@ -1284,11 +1284,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 </div>
                 <div class="gumroad-notice">
                     <i class="fas fa-shield-alt"></i>
-                    <span>將跳轉至 Gumroad 完成安全付款，支援 PayPal 和信用卡</span>
+                    <span>將跳轉至 Gumroad 完成付款，支援 PayPal、信用卡、apple pay及google pay</span>
                 </div>
                 <div class="gumroad-notice" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--accent-green);">
                     <i class="fas fa-info-circle"></i>
-                    <span>購買完成後，序號將自動發送至您填寫的信箱</span>
+                    <span>購買完成後，序號將自動發送至您的信箱(請同時檢查垃圾郵件)</span>
                 </div>
                 <div class="form-group" style="text-align: left;">
                     <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
