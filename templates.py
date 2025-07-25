@@ -1640,8 +1640,139 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 90% { opacity: 0.3; } 
                 100% { transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px); opacity: 0; } 
             }
+            /* 截圖辨識視覺效果 */
+            .screenshot-overlay {
+                position: fixed;
+                top: 10%;
+                right: 5%;
+                width: 40%;
+                height: 80%;
+                pointer-events: none;
+                z-index: 1;
+                opacity: 0.08;
+                overflow: hidden;
+            }
+
+            .detection-box {
+                position: absolute;
+                border: 2px solid #00d4ff;
+                background: rgba(0, 212, 255, 0.05);
+                animation: scan-box 3s ease-in-out infinite;
+            }
+
+            .target-marker {
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                border: 2px solid #10b981;
+                border-radius: 50%;
+                background: rgba(16, 185, 129, 0.1);
+                animation: pulse-target 2s ease-in-out infinite;
+            }
+
+            .scan-line {
+                position: absolute;
+                width: 100%;
+                height: 2px;
+                background: linear-gradient(
+                    90deg, 
+                    transparent 0%, 
+                    #00d4ff 30%, 
+                    #8b5cf6 70%, 
+                    transparent 100%
+                );
+                animation: scan-sweep 4s linear infinite;
+            }
+
+            @keyframes scan-box {
+                0%, 100% { 
+                    transform: scale(1); 
+                    opacity: 0.3; 
+                    border-color: #00d4ff; 
+                }
+                50% { 
+                    transform: scale(1.05); 
+                    opacity: 0.6; 
+                    border-color: #10b981; 
+                }
+            }
+
+            @keyframes pulse-target {
+                0%, 100% { 
+                    transform: scale(1); 
+                    border-color: #10b981; 
+                    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3); 
+                }
+                50% { 
+                    transform: scale(1.2); 
+                    border-color: #00d4ff; 
+                    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); 
+                }
+            }
+
+            @keyframes scan-sweep {
+                0% { 
+                    top: 0%; 
+                    opacity: 0; 
+                }
+                10% { 
+                    opacity: 0.8; 
+                }
+                90% { 
+                    opacity: 0.8; 
+                }
+                100% { 
+                    top: 100%; 
+                    opacity: 0; 
+                }
+            }
         `;
         document.head.appendChild(particleStyle);
+
+        function createScreenshotDetection() {
+            const detectionContainer = document.createElement('div');
+            detectionContainer.className = 'screenshot-overlay';
+            
+            // 創建多個檢測框
+            for (let i = 0; i < 5; i++) {
+                const detectionBox = document.createElement('div');
+                detectionBox.className = 'detection-box';
+                detectionBox.style.cssText = `
+                    left: ${Math.random() * 70}%;
+                    top: ${Math.random() * 80}%;
+                    width: ${80 + Math.random() * 120}px;
+                    height: ${60 + Math.random() * 80}px;
+                    animation-delay: ${Math.random() * 3}s;
+                `;
+                detectionContainer.appendChild(detectionBox);
+            }
+            
+            // 創建目標標記
+            for (let i = 0; i < 8; i++) {
+                const targetMarker = document.createElement('div');
+                targetMarker.className = 'target-marker';
+                targetMarker.style.cssText = `
+                    left: ${Math.random() * 90}%;
+                    top: ${Math.random() * 90}%;
+                    animation-delay: ${Math.random() * 2}s;
+                `;
+                detectionContainer.appendChild(targetMarker);
+            }
+            
+            // 創建掃描線
+            for (let i = 0; i < 3; i++) {
+                const scanLine = document.createElement('div');
+                scanLine.className = 'scan-line';
+                scanLine.style.cssText = `
+                    left: ${Math.random() * 30}%;
+                    width: ${60 + Math.random() * 40}%;
+                    animation-delay: ${Math.random() * 4}s;
+                `;
+                detectionContainer.appendChild(scanLine);
+            }
+            
+            document.body.appendChild(detectionContainer);
+        }
 
         // 初始化背景效果
         document.addEventListener('DOMContentLoaded', function() {
@@ -1657,6 +1788,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         } else {
             createCodeBackground();
             createFloatingParticles();
+            createScreenshotDetection();
         }
 
         // 讓密碼輸入框支援 Enter 鍵
