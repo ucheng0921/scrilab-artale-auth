@@ -1079,7 +1079,7 @@ INTRO_TEMPLATE = r"""
                             <!-- Google Drive 影片嵌入 -->
                             <iframe id="google-drive-video" 
                                     src=""
-                                    style="width: 100%; height: 600px; border: none; border-radius: 12px;"
+                                    style="width: 100%; height: 720px; border: none; border-radius: 12px;"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                     allowfullscreen>
                             </iframe>
