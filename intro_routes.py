@@ -1,14 +1,15 @@
 """
-intro_routes.py - 基本介紹路由處理（幽默版）
+intro_routes.py - 基本介紹路由處理（幽默版 + 影片展示）
 """
 from flask import Blueprint, render_template_string, request, jsonify
 import random
 import time
+import os
 
 # 創建介紹頁面藍圖
 intro_bp = Blueprint('intro', __name__, url_prefix='/intro')
 
-# 幽默介紹頁面模板
+# 幽默介紹頁面模板（含影片展示）
 INTRO_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -239,6 +240,157 @@ INTRO_TEMPLATE = r"""
         @keyframes float {
             0%, 100% { transform: translateY(0px) rotate(0deg); }
             50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        /* 影片展示區域 */
+        .video-section {
+            margin-bottom: 4rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 3rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(0, 212, 255, 0.05), rgba(139, 92, 246, 0.05));
+            z-index: 0;
+        }
+
+        .video-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .video-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .video-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .video-player {
+            width: 100%;
+            height: 250px;
+            background: #000;
+            position: relative;
+        }
+
+        .video-player video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .video-overlay:hover {
+            opacity: 1;
+        }
+
+        .play-button {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            transform: scale(0.9);
+            transition: var(--transition);
+        }
+
+        .video-overlay:hover .play-button {
+            transform: scale(1.1);
+        }
+
+        .video-info {
+            padding: 1.5rem;
+        }
+
+        .video-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .video-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .video-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .video-tag {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--accent-blue);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .video-placeholder {
+            width: 100%;
+            height: 250px;
+            background: var(--bg-tertiary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .video-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
         }
 
         /* 特色卡片 */
@@ -735,6 +887,11 @@ INTRO_TEMPLATE = r"""
             color: var(--bg-primary);
         }
 
+        /* 系統需求樣式 */
+        .manual-section {
+            margin-bottom: 4rem;
+        }
+
         /* 響應式設計 */
         @media (max-width: 768px) {
             .container {
@@ -765,6 +922,14 @@ INTRO_TEMPLATE = r"""
 
             .expectation-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .video-player {
+                height: 200px;
             }
         }
 
@@ -798,6 +963,63 @@ INTRO_TEMPLATE = r"""
         .delay-2 { animation-delay: 0.4s; }
         .delay-3 { animation-delay: 0.6s; }
         .delay-4 { animation-delay: 0.8s; }
+
+        /* 全螢幕影片模態 */
+        .video-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .video-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .video-modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .video-modal video {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+            border-radius: 12px;
+        }
+
+        .video-modal-close {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+
+        .video-modal-close:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
@@ -811,6 +1033,7 @@ INTRO_TEMPLATE = r"""
                 <span>Artale Script</span>
             </a>
             <ul class="nav-links">
+                <li><a href="#video">影片介紹</a></li>
                 <li><a href="#features">功能特色</a></li>
                 <li><a href="#technical">技術說明</a></li>
                 <li><a href="#comparison">使用對比</a></li>
@@ -840,6 +1063,20 @@ INTRO_TEMPLATE = r"""
                 台灣製造，專為 MapleStory Worlds - Artale 打造的專業技術服務。<br>
                 採用最先進的電腦視覺技術，提供安全、穩定、高效的遊戲體驗！ ✨
             </p>
+        </section>
+
+        <!-- 影片展示區域 -->
+        <section id="video" class="video-section fade-in-up">
+            <div class="video-container">
+                <h2 class="section-title">🎬 產品影片介紹</h2>
+                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
+                    透過影片快速了解 Artale Script 的強大功能！
+                </p>
+                
+                <div class="video-grid" id="video-grid">
+                    <!-- 影片將透過 JavaScript 動態載入 -->
+                </div>
+            </div>
         </section>
 
         <!-- 功能特色 -->
@@ -1191,43 +1428,43 @@ INTRO_TEMPLATE = r"""
             </div>
         </section>
 
-                <!-- 系統需求說明 -->
-                <section class="manual-section">
-                    <h2 class="section-title">💻 系統配置需求</h2>
-                    
-                    <div class="feature-card" style="max-width: 100%; margin: 0;">
-                        <div class="feature-description" style="text-align: left;">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
-                                <div>
-                                    <h4 style="color: var(--accent-green); margin-bottom: 0.8rem;">✅ 最低配置</h4>
-                                    <ul style="list-style: none; padding: 0;">
-                                        <li style="margin-bottom: 0.5rem;">• CPU: Intel i3 / AMD 同級</li>
-                                        <li style="margin-bottom: 0.5rem;">• 記憶體: 4GB RAM</li>
-                                        <li style="margin-bottom: 0.5rem;">• 硬碟: 1GB 可用空間</li>
-                                        <li style="margin-bottom: 0.5rem;">• 作業系統: Windows 10</li>
-                                        <li style="margin-bottom: 0.5rem;">• 網路: 穩定網路連接</li>
-                                    </ul>
-                                </div>
-                                <div>
-                                    <h4 style="color: var(--accent-blue); margin-bottom: 0.8rem;">⭐ 建議配置</h4>
-                                    <ul style="list-style: none; padding: 0;">
-                                        <li style="margin-bottom: 0.5rem;">• CPU: Intel i5 / AMD 同級以上</li>
-                                        <li style="margin-bottom: 0.5rem;">• 記憶體: 8GB RAM 以上</li>
-                                        <li style="margin-bottom: 0.5rem;">• 硬碟: SSD 固態硬碟</li>
-                                        <li style="margin-bottom: 0.5rem;">• 作業系統: Windows 10/11</li>
-                                        <li style="margin-bottom: 0.5rem;">• 網路: 穩定寬頻連接</li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--accent-orange); border-radius: 6px;">
-                                <strong style="color: var(--accent-orange);">⚠️ 重要提醒：</strong><br>
-                                • 軟體資料夾必須放在<strong>英文路徑</strong>中（不可包含中文）<br>
-                                • 配置過低可能導致截圖分析延遲，影響使用體驗<br>
-                                • 建議關閉不必要的背景程式以提升效能
-                            </div>
+        <!-- 系統需求說明 -->
+        <section class="manual-section">
+            <h2 class="section-title">💻 系統配置需求</h2>
+            
+            <div class="feature-card" style="max-width: 100%; margin: 0;">
+                <div class="feature-description" style="text-align: left;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+                        <div>
+                            <h4 style="color: var(--accent-green); margin-bottom: 0.8rem;">✅ 最低配置</h4>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="margin-bottom: 0.5rem;">• CPU: Intel i3 / AMD 同級</li>
+                                <li style="margin-bottom: 0.5rem;">• 記憶體: 4GB RAM</li>
+                                <li style="margin-bottom: 0.5rem;">• 硬碟: 1GB 可用空間</li>
+                                <li style="margin-bottom: 0.5rem;">• 作業系統: Windows 10</li>
+                                <li style="margin-bottom: 0.5rem;">• 網路: 穩定網路連接</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 style="color: var(--accent-blue); margin-bottom: 0.8rem;">⭐ 建議配置</h4>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="margin-bottom: 0.5rem;">• CPU: Intel i5 / AMD 同級以上</li>
+                                <li style="margin-bottom: 0.5rem;">• 記憶體: 8GB RAM 以上</li>
+                                <li style="margin-bottom: 0.5rem;">• 硬碟: SSD 固態硬碟</li>
+                                <li style="margin-bottom: 0.5rem;">• 作業系統: Windows 10/11</li>
+                                <li style="margin-bottom: 0.5rem;">• 網路: 穩定寬頻連接</li>
+                            </ul>
                         </div>
                     </div>
-                </section>        
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--accent-orange); border-radius: 6px;">
+                        <strong style="color: var(--accent-orange);">⚠️ 重要提醒：</strong><br>
+                        • 軟體資料夾必須放在<strong>英文路徑</strong>中（不可包含中文）<br>
+                        • 配置過低可能導致截圖分析延遲，影響使用體驗<br>
+                        • 建議關閉不必要的背景程式以提升效能
+                    </div>
+                </div>
+            </div>
+        </section>        
 
         <!-- CTA 區域 -->
         <section class="cta-section">
@@ -1253,7 +1490,153 @@ INTRO_TEMPLATE = r"""
         </section>
     </div>
 
+    <!-- 全螢幕影片模態 -->
+    <div id="video-modal" class="video-modal">
+        <div class="video-modal-content">
+            <button class="video-modal-close" onclick="closeVideoModal()">&times;</button>
+            <video id="modal-video" controls></video>
+        </div>
+    </div>
+
     <script>
+        // 影片資料結構
+        const videoData = [
+            {
+                filename: 'demo1.mp4',
+                title: '🎯 基本功能演示',
+                description: '展示 Artale Script 的基本操作功能，包括怪物檢測、自動攻擊、血量監控等核心功能。',
+                tags: ['基本功能', '怪物檢測', '自動攻擊']
+            },
+            {
+                filename: 'demo2.mp4',
+                title: '🧗 地圖攀爬功能',
+                description: '演示腳本如何智能識別繩索並進行攀爬，適應不同的地圖結構和層次變化。',
+                tags: ['地圖攀爬', '繩索識別', '智能移動']
+            },
+            {
+                filename: 'demo3.mp4',
+                title: '👥 玩家檢測避讓',
+                description: '展示紅點檢測功能，當發現其他玩家時如何自動避讓或切換頻道，確保安全練功。',
+                tags: ['玩家檢測', '自動避讓', '頻道切換']
+            },
+            {
+                filename: 'setup.mp4',
+                title: '⚙️ 安裝設定教學',
+                description: '完整的軟體安裝和初始設定教學，從下載到第一次啟動的詳細步驟說明。',
+                tags: ['安裝教學', '初始設定', '新手指南']
+            },
+            {
+                filename: 'advanced.mp4',
+                title: '🔧 進階設定調整',
+                description: '深入了解各種參數設定，包括攻擊間隔、移動範圍、技能使用等進階功能調整。',
+                tags: ['進階設定', '參數調整', '自定義配置']
+            },
+            {
+                filename: 'troubleshooting.mp4',
+                title: '🛠️ 常見問題解決',
+                description: '針對使用過程中可能遇到的問題提供解決方案，讓您快速排除障礙。',
+                tags: ['問題排除', '故障排除', '技術支援']
+            }
+        ];
+
+        // 載入影片函數
+        function loadVideos() {
+            const videoGrid = document.getElementById('video-grid');
+            
+            videoData.forEach((video, index) => {
+                const videoCard = document.createElement('div');
+                videoCard.className = `video-card fade-in-up delay-${(index % 4) + 1}`;
+                
+                // 檢查影片檔案是否存在（這裡用預設的方式處理）
+                const videoPath = `/static/video/${video.filename}`;
+                
+                videoCard.innerHTML = `
+                    <div class="video-player">
+                        <video preload="metadata" poster="/static/images/video-placeholder.jpg">
+                            <source src="${videoPath}" type="video/mp4">
+                            您的瀏覽器不支援影片播放。
+                        </video>
+                        <div class="video-overlay" onclick="playVideo('${videoPath}', '${video.title}')">
+                            <div class="play-button">
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">${video.title}</h3>
+                        <p class="video-description">${video.description}</p>
+                        <div class="video-tags">
+                            ${video.tags.map(tag => `<span class="video-tag">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                videoGrid.appendChild(videoCard);
+            });
+
+            // 如果沒有影片檔案，顯示佔位符
+            if (videoData.length === 0) {
+                videoGrid.innerHTML = `
+                    <div class="video-card">
+                        <div class="video-placeholder">
+                            <i class="fas fa-video"></i>
+                            <p>影片準備中...</p>
+                            <small>我們正在製作精彩的介紹影片，敬請期待！</small>
+                        </div>
+                        <div class="video-info">
+                            <h3 class="video-title">📹 影片即將上線</h3>
+                            <p class="video-description">
+                                我們正在製作詳細的產品介紹影片，包括功能演示、安裝教學等內容。
+                                請先查看下方的功能介紹，或加入我們的 Discord 社群獲得最新消息！
+                            </p>
+                            <div class="video-tags">
+                                <span class="video-tag">敬請期待</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 播放影片函數
+        function playVideo(videoPath, title) {
+            const modal = document.getElementById('video-modal');
+            const modalVideo = document.getElementById('modal-video');
+            
+            modalVideo.src = videoPath;
+            modalVideo.load();
+            modal.classList.add('active');
+            
+            // 自動播放
+            modalVideo.play().catch(e => {
+                console.log('自動播放失敗，用戶需手動點擊播放', e);
+            });
+        }
+
+        // 關閉影片模態
+        function closeVideoModal() {
+            const modal = document.getElementById('video-modal');
+            const modalVideo = document.getElementById('modal-video');
+            
+            modalVideo.pause();
+            modalVideo.src = '';
+            modal.classList.remove('active');
+        }
+
+        // 點擊模態背景關閉
+        document.getElementById('video-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeVideoModal();
+            }
+        });
+
+        // ESC 鍵關閉模態
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeVideoModal();
+            }
+        });
+
         // FAQ 切換功能
         function toggleFAQ(element) {
             const faqItem = element.parentElement;
@@ -1367,6 +1750,9 @@ INTRO_TEMPLATE = r"""
 
         // 頁面載入完成後的初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 載入影片
+            loadVideos();
+            
             // 添加一些隨機的互動效果
             const features = document.querySelectorAll('.feature-card');
             features.forEach((card, index) => {
@@ -1389,6 +1775,7 @@ INTRO_TEMPLATE = r"""
             console.log('🎮 歡迎來到 Artale Script 的世界！');
             console.log('🤖 準備好讓你的角色變成練功機器了嗎？');
             console.log('💡 提示：記得先看完所有功能介紹再決定購買哦！');
+            console.log('🎬 別忘了觀看我們精心製作的介紹影片！');
         });
 
         // 有趣的彩蛋功能
@@ -1422,6 +1809,28 @@ INTRO_TEMPLATE = r"""
                 konamiCode = [];
             }
         });
+
+        // 影片錯誤處理
+        document.addEventListener('error', function(e) {
+            if (e.target.tagName === 'VIDEO') {
+                console.log('影片載入失敗:', e.target.src);
+                // 可以在這裡添加錯誤處理邏輯
+                const videoCard = e.target.closest('.video-card');
+                if (videoCard) {
+                    const overlay = videoCard.querySelector('.video-overlay');
+                    if (overlay) {
+                        overlay.innerHTML = `
+                            <div class="play-button" style="background: var(--accent-red);">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        `;
+                        overlay.onclick = null;
+                        overlay.style.opacity = '1';
+                        overlay.style.cursor = 'default';
+                    }
+                }
+            }
+        }, true);
     </script>
 </body>
 </html>
@@ -1437,6 +1846,41 @@ def intro_home():
 def intro_features():
     """功能介紹頁面"""
     return render_template_string(INTRO_TEMPLATE)
+
+@intro_bp.route('/videos', methods=['GET'])
+def get_available_videos():
+    """獲取可用的影片列表"""
+    try:
+        video_directory = os.path.join('static', 'video')
+        available_videos = []
+        
+        # 檢查影片目錄是否存在
+        if os.path.exists(video_directory):
+            # 掃描影片檔案
+            for filename in os.listdir(video_directory):
+                if filename.lower().endswith(('.mp4', '.webm', '.ogg')):
+                    # 基於檔名猜測影片資訊
+                    video_info = {
+                        'filename': filename,
+                        'path': f'/static/video/{filename}',
+                        'title': filename.replace('.mp4', '').replace('_', ' ').title(),
+                        'size': os.path.getsize(os.path.join(video_directory, filename))
+                    }
+                    available_videos.append(video_info)
+        
+        return jsonify({
+            'success': True,
+            'videos': available_videos,
+            'count': len(available_videos)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'獲取影片列表失敗：{str(e)}',
+            'videos': [],
+            'count': 0
+        }), 500
 
 @intro_bp.route('/demo', methods=['POST'])
 def demo_action():
@@ -1488,7 +1932,8 @@ def get_stats():
         'hours_saved': random.randint(10000, 99999),
         'happy_users': random.randint(1000, 9999),
         'coffee_cups_saved': random.randint(50000, 999999),
-        'sleep_hours_gained': random.randint(5000, 50000)
+        'sleep_hours_gained': random.randint(5000, 50000),
+        'videos_watched': random.randint(50000, 500000)
     }
     
     return jsonify({
@@ -1498,7 +1943,8 @@ def get_stats():
             '我們的腳本已經消滅了足夠的怪物來拯救一個虛擬王國！',
             '使用我們腳本節省的時間足夠看完所有的迪士尼電影！',
             '我們幫用戶省下的咖啡錢可以買一台新電腦！',
-            '我們的AI比大部分真人玩家反應還快（不是在開玩笑）！'
+            '我們的AI比大部分真人玩家反應還快（不是在開玩笑）！',
+            '我們的介紹影片被觀看的次數超過了某些網紅！'
         ])
     })
 
