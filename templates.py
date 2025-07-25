@@ -1778,12 +1778,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         document.addEventListener('DOMContentLoaded', function() {
             createCodeBackground();
             createFloatingParticles();
+            createScreenshotDetection();
         });
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
                 createCodeBackground();
                 createFloatingParticles();
+                createScreenshotDetection();
             });
         } else {
             createCodeBackground();
