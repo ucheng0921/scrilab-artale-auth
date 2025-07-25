@@ -493,7 +493,7 @@ class RouteHandlers:
     
     @rate_limit(max_requests=120, time_window=60)
     def validate_session(self):
-        """驗證會話令牌 - 高頻優化版本"""
+        """驗證會話令牌 - 修復權限同步問題版本"""
         start_time = time.time()
         
         try:
@@ -521,21 +521,87 @@ class RouteHandlers:
                     'code': 'MISSING_SESSION_TOKEN'
                 }), 400
             
-            # 驗證會話令牌（優化版本）
-            is_valid, user_data = self.verify_session_token_optimized(session_token)
+            # 驗證會話令牌
+            is_valid, session_data = self.session_manager.verify_session_token(session_token)
             
-            if is_valid:
-                return jsonify({
-                    'success': True,
-                    'user_data': user_data,
-                    'timestamp': datetime.now().isoformat()
-                })
-            else:
+            if not is_valid:
                 return jsonify({
                     'success': False,
                     'error': 'Invalid or expired session',
                     'code': 'INVALID_SESSION'
                 }), 401
+            
+            # 關鍵修復：重新從數據庫獲取最新的用戶權限
+            uuid = session_data.get('uuid')
+            if not uuid:
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid session data',
+                    'code': 'INVALID_SESSION_DATA'
+                }), 401
+            
+            try:
+                # 重新從數據庫獲取最新用戶數據
+                import hashlib
+                uuid_hash = hashlib.sha256(uuid.encode()).hexdigest()
+                user_ref = self.db.collection('authorized_users').document(uuid_hash)
+                user_doc = user_ref.get()
+                
+                if not user_doc.exists:
+                    logger.warning(f"Session validation: User {uuid[:8]}... not found in database")
+                    return jsonify({
+                        'success': False,
+                        'error': 'User not found',
+                        'code': 'USER_NOT_FOUND'
+                    }), 401
+                
+                fresh_user_data = user_doc.to_dict()
+                
+                # 檢查用戶狀態
+                if not fresh_user_data.get('active', False):
+                    logger.warning(f"Session validation: User {uuid[:8]}... is deactivated")
+                    return jsonify({
+                        'success': False,
+                        'error': 'Account deactivated',
+                        'code': 'ACCOUNT_DEACTIVATED'
+                    }), 401
+                
+                # 檢查有效期
+                if 'expires_at' in fresh_user_data:
+                    expires_at = fresh_user_data['expires_at']
+                    if isinstance(expires_at, str):
+                        expires_at = datetime.fromisoformat(expires_at.replace('Z', ''))
+                    elif hasattr(expires_at, 'timestamp'):
+                        expires_at = datetime.fromtimestamp(expires_at.timestamp())
+                    
+                    if datetime.now() > expires_at:
+                        logger.warning(f"Session validation: User {uuid[:8]}... account expired")
+                        return jsonify({
+                            'success': False,
+                            'error': 'Account expired',
+                            'code': 'ACCOUNT_EXPIRED'
+                        }), 401
+                
+                # 清除緩存中的過期數據（如果存在）
+                if hasattr(self, '_auth_cache'):
+                    self._auth_cache.pop(uuid_hash, None)
+                    self._cache_timestamps.pop(uuid_hash, None)
+                
+                logger.info(f"Session validation successful for {uuid[:8]}... with fresh permissions")
+                
+                return jsonify({
+                    'success': True,
+                    'user_data': fresh_user_data,  # 返回最新的用戶數據
+                    'timestamp': datetime.now().isoformat()
+                })
+                
+            except Exception as db_error:
+                logger.error(f"Database error during session validation: {str(db_error)}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Database error during validation',
+                    'code': 'DATABASE_ERROR'
+                }), 500
                 
         except Exception as e:
             logger.error(f"Session validation error: {str(e)}")

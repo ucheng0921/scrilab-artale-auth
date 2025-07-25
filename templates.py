@@ -1005,7 +1005,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">體驗服務</div>
                         <div class="service-subtitle">適合新手玩家體驗</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>300
+                            <span class="currency">NT$</span>299
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
@@ -1213,8 +1213,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         const servicePlans = {
             'trial_7': {
                 name: '體驗服務',
-                price_twd: 49,
-                price_usd: 1.67,
+                price_twd: 299,
+                price_usd: 9.99,
                 period: '7天',
                 description: '適合新手玩家體驗的基礎技術服務'
             },
