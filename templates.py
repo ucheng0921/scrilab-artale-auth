@@ -995,7 +995,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 </button>
                 <div class="section-badge">服務方案</div>
                 <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale 專屬方案</h2>
-                <p class="section-description">透過 Gumroad 付款，支援多種付款方式</p>
+                <p class="section-description">透過 Gumroad 付款，支援信用卡、apple pay、google pay等方式付款。</p>
             </div>
             
             <div class="services-grid">

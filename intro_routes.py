@@ -1428,18 +1428,6 @@ INTRO_TEMPLATE = r"""
 
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFAQ(this)">
-                    <span>🎮 遊戲視窗一定要保持前景嗎？</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
-                    是的，由於我們使用螢幕截圖技術進行分析，遊戲視窗必須保持可見且不被遮蔽。
-                    同時需要設定為 1280x720 視窗模式。這確實是個限制，
-                    但也是我們採用非侵入式技術必須付出的代價。如果想後台執行建議您可以使用虛擬機等設備。
-                </div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFAQ(this)">
                     <span>🧗 為什麼爬繩動作看起來不太流暢？</span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
