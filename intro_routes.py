@@ -1,6 +1,5 @@
 """
 intro_routes.py - 基本介紹路由處理（幽默版 + 影片展示）
-fileId: '1neJKwUi5kYJGB2sNSHbOGZFhV8fpE9Eb'
 """
 from flask import Blueprint, render_template_string, request, jsonify
 import random
@@ -1074,26 +1073,26 @@ INTRO_TEMPLATE = r"""
                     觀看實際操作演示，了解 Artale Script 如何運作！
                 </p>
                 
-                <div style="max-width: 800px; margin: 0 auto;">
+                <div style="max-width: 1000px; margin: 0 auto;">
                     <div class="video-card" style="margin: 0;">
                         <div class="video-player">
                             <!-- Google Drive 影片嵌入 -->
                             <iframe id="google-drive-video" 
                                     src=""
-                                    style="width: 100%; height: 450px; border: none; border-radius: 12px;"
+                                    style="width: 100%; height: 600px; border: none; border-radius: 12px;"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                     allowfullscreen>
                             </iframe>
                             
                             <!-- 載入中顯示 -->
-                            <div id="video-loading" class="video-placeholder" style="display: none;">
+                            <div id="video-loading" class="video-placeholder" style="display: none; height: 600px;">
                                 <i class="fas fa-spinner fa-spin"></i>
                                 <p>影片載入中...</p>
                                 <small>請稍候，正在從雲端載入影片</small>
                             </div>
                             
                             <!-- 錯誤或配置提示 -->
-                            <div id="video-error" class="video-placeholder" style="display: none;">
+                            <div id="video-error" class="video-placeholder" style="display: none; height: 600px;">
                                 <i class="fas fa-video"></i>
                                 <p>影片準備中...</p>
                                 <small>我們正在製作精彩的演示影片，敬請期待！</small>
