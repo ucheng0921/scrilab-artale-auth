@@ -1068,13 +1068,32 @@ INTRO_TEMPLATE = r"""
         <!-- 影片展示區域 -->
         <section id="video" class="video-section fade-in-up">
             <div class="video-container">
-                <h2 class="section-title">🎬 產品影片介紹</h2>
+                <h2 class="section-title">🎬 產品演示影片</h2>
                 <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
-                    透過影片快速了解 Artale Script 的強大功能！
+                    觀看實際操作演示，了解 Artale Script 如何運作！
                 </p>
                 
-                <div class="video-grid" id="video-grid">
-                    <!-- 影片將透過 JavaScript 動態載入 -->
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <div class="video-card" style="margin: 0;">
+                        <div class="video-player">
+                            <video id="main-video" controls poster="/static/images/video-placeholder.jpg" style="width: 100%; height: auto; border-radius: 12px;">
+                                <source src="/static/video/demo.mp4" type="video/mp4">
+                                您的瀏覽器不支援影片播放。
+                            </video>
+                        </div>
+                        <div class="video-info">
+                            <h3 class="video-title">🎮 Artale Script 功能演示</h3>
+                            <p class="video-description">
+                                完整展示腳本的核心功能，包括怪物檢測、自動攻擊、玩家避讓、
+                                地圖移動等實際操作過程。讓您在購買前就能清楚了解產品效果！
+                            </p>
+                            <div class="video-tags">
+                                <span class="video-tag">實機演示</span>
+                                <span class="video-tag">完整功能</span>
+                                <span class="video-tag">真實效果</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1539,63 +1558,29 @@ INTRO_TEMPLATE = r"""
             }
         ];
 
-        // 載入影片函數
-        function loadVideos() {
-            const videoGrid = document.getElementById('video-grid');
+        // 影片初始化
+        function initializeVideo() {
+            const video = document.getElementById('main-video');
             
-            videoData.forEach((video, index) => {
-                const videoCard = document.createElement('div');
-                videoCard.className = `video-card fade-in-up delay-${(index % 4) + 1}`;
+            // 檢查影片是否可以載入
+            video.addEventListener('error', function() {
+                console.log('影片載入失敗，顯示佔位內容');
+                const videoCard = video.closest('.video-card');
+                const videoPlayer = videoCard.querySelector('.video-player');
                 
-                // 檢查影片檔案是否存在（這裡用預設的方式處理）
-                const videoPath = `/static/video/${video.filename}`;
-                
-                videoCard.innerHTML = `
-                    <div class="video-player">
-                        <video preload="metadata" poster="/static/images/video-placeholder.jpg">
-                            <source src="${videoPath}" type="video/mp4">
-                            您的瀏覽器不支援影片播放。
-                        </video>
-                        <div class="video-overlay" onclick="playVideo('${videoPath}', '${video.title}')">
-                            <div class="play-button">
-                                <i class="fas fa-play"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="video-info">
-                        <h3 class="video-title">${video.title}</h3>
-                        <p class="video-description">${video.description}</p>
-                        <div class="video-tags">
-                            ${video.tags.map(tag => `<span class="video-tag">${tag}</span>`).join('')}
-                        </div>
+                videoPlayer.innerHTML = `
+                    <div class="video-placeholder">
+                        <i class="fas fa-video"></i>
+                        <p>影片準備中...</p>
+                        <small>我們正在製作精彩的演示影片，敬請期待！</small>
                     </div>
                 `;
-                
-                videoGrid.appendChild(videoCard);
             });
 
-            // 如果沒有影片檔案，顯示佔位符
-            if (videoData.length === 0) {
-                videoGrid.innerHTML = `
-                    <div class="video-card">
-                        <div class="video-placeholder">
-                            <i class="fas fa-video"></i>
-                            <p>影片準備中...</p>
-                            <small>我們正在製作精彩的介紹影片，敬請期待！</small>
-                        </div>
-                        <div class="video-info">
-                            <h3 class="video-title">📹 影片即將上線</h3>
-                            <p class="video-description">
-                                我們正在製作詳細的產品介紹影片，包括功能演示、安裝教學等內容。
-                                請先查看下方的功能介紹，或加入我們的 Discord 社群獲得最新消息！
-                            </p>
-                            <div class="video-tags">
-                                <span class="video-tag">敬請期待</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+            // 影片載入成功時的處理
+            video.addEventListener('loadedmetadata', function() {
+                console.log('影片載入成功');
+            });
         }
 
         // 播放影片函數
@@ -1750,8 +1735,8 @@ INTRO_TEMPLATE = r"""
 
         // 頁面載入完成後的初始化
         document.addEventListener('DOMContentLoaded', function() {
-            // 載入影片
-            loadVideos();
+            // 初始化影片
+            initializeVideo();
             
             // 添加一些隨機的互動效果
             const features = document.querySelectorAll('.feature-card');
@@ -1775,7 +1760,7 @@ INTRO_TEMPLATE = r"""
             console.log('🎮 歡迎來到 Artale Script 的世界！');
             console.log('🤖 準備好讓你的角色變成練功機器了嗎？');
             console.log('💡 提示：記得先看完所有功能介紹再決定購買哦！');
-            console.log('🎬 別忘了觀看我們精心製作的介紹影片！');
+            console.log('🎬 別忘了觀看我們精心製作的演示影片！');
         });
 
         // 有趣的彩蛋功能
