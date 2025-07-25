@@ -985,7 +985,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         </div>
     </section>
 
-    <!-- Services Section -->
+<!-- Services Section -->
     <section id="services" class="services" style="display: none;">
         <div class="container">
             <div class="section-header">
@@ -1006,6 +1006,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-subtitle">適合新手玩家體驗</div>
                         <div class="service-price">
                             <span class="currency">NT$</span>299
+                            <span class="period">/ 7天</span>
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
@@ -1036,7 +1037,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>24/7技術支援</span>
+                                <span>技術支援</span>
                             </li>
                         </ul>
                         <button class="service-button" onclick="selectPlan('trial_7')">
@@ -1053,7 +1054,15 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">標準服務</div>
                         <div class="service-subtitle">最佳性價比選擇</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>549
+                            <div class="original-price">
+                                <span class="original-amount">NT$1,285</span>
+                                <span class="original-period">/ 30天</span>
+                            </div>
+                            <div class="current-price">
+                                <span class="currency">NT$</span>549
+                                <span class="period">/ 30天</span>
+                            </div>
+                            <div class="discount-badge">省57%</div>
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
@@ -1084,7 +1093,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>24/7技術支援</span>
+                                <span>技術支援</span>
                             </li>
                         </ul>
                         <button class="service-button" onclick="selectPlan('monthly_30')">
@@ -1100,7 +1109,15 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">最佳服務</div>
                         <div class="service-subtitle">長期使用最划算</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>1,499
+                            <div class="original-price">
+                                <span class="original-amount">NT$3,855</span>
+                                <span class="original-period">/ 90天</span>
+                            </div>
+                            <div class="current-price">
+                                <span class="currency">NT$</span>1,499
+                                <span class="period">/ 90天</span>
+                            </div>
+                            <div class="discount-badge">省61%</div>
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
@@ -1131,7 +1148,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                             <li>
                                 <i class="fas fa-check feature-check"></i>
-                                <span>24/7技術支援</span>
+                                <span>技術支援</span>
                             </li>
                         </ul>
                         <button class="service-button" onclick="selectPlan('quarterly_90')">
