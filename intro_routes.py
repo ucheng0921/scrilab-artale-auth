@@ -1,5 +1,6 @@
 """
 intro_routes.py - 基本介紹路由處理（幽默版 + 影片展示）
+fileId: '1neJKwUi5kYJGB2sNSHbOGZFhV8fpE9Eb'
 """
 from flask import Blueprint, render_template_string, request, jsonify
 import random
@@ -1084,26 +1085,18 @@ INTRO_TEMPLATE = r"""
                                     allowfullscreen>
                             </iframe>
                             
-                            <!-- 備用的本地影片播放器（如果需要） -->
-                            <video id="local-video" 
-                                   controls 
-                                   poster="/static/images/video-placeholder.jpg" 
-                                   style="width: 100%; height: auto; border-radius: 12px; display: none;">
-                                <source src="/static/video/demo.mp4" type="video/mp4">
-                                您的瀏覽器不支援影片播放。
-                            </video>
-                            
-                            <!-- 載入中或錯誤顯示 -->
+                            <!-- 載入中顯示 -->
                             <div id="video-loading" class="video-placeholder" style="display: none;">
                                 <i class="fas fa-spinner fa-spin"></i>
                                 <p>影片載入中...</p>
                                 <small>請稍候，正在從雲端載入影片</small>
                             </div>
                             
+                            <!-- 錯誤或配置提示 -->
                             <div id="video-error" class="video-placeholder" style="display: none;">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <p>影片暫時無法載入</p>
-                                <small>請稍後再試，或聯繫客服獲得協助</small>
+                                <i class="fas fa-video"></i>
+                                <p>影片準備中...</p>
+                                <small>我們正在製作精彩的演示影片，敬請期待！</small>
                             </div>
                         </div>
                         <div class="video-info">
@@ -1116,19 +1109,6 @@ INTRO_TEMPLATE = r"""
                                 <span class="video-tag">實機演示</span>
                                 <span class="video-tag">完整功能</span>
                                 <span class="video-tag">真實效果</span>
-                            </div>
-                            
-                            <!-- 影片控制按鈕 -->
-                            <div style="margin-top: 1rem; text-align: center;">
-                                <button class="demo-button" onclick="switchVideoSource('google')" style="margin: 0.2rem;">
-                                    <i class="fab fa-google-drive"></i> 雲端播放
-                                </button>
-                                <button class="demo-button" onclick="switchVideoSource('local')" style="margin: 0.2rem;">
-                                    <i class="fas fa-download"></i> 本地播放
-                                </button>
-                                <button class="demo-button" onclick="refreshVideo()" style="margin: 0.2rem;">
-                                    <i class="fas fa-refresh"></i> 重新載入
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -1599,31 +1579,12 @@ INTRO_TEMPLATE = r"""
         // Google Drive 影片配置
         const GOOGLE_DRIVE_CONFIG = {
             // 請將這裡的 FILE_ID 替換為您的 Google Drive 影片檔案 ID
-            fileId: '1neJKwUi5kYJGB2sNSHbOGZFhV8fpE9Eb',
-            // 如果您有多個影片，可以在這裡配置
-            alternativeFileIds: [
-                // 'ALTERNATIVE_FILE_ID_1',
-                // 'ALTERNATIVE_FILE_ID_2'
-            ]
+            fileId: '1neJKwUi5kYJGB2sNSHbOGZFhV8fpE9Eb'
         };
 
-        // 影片初始化和管理
+        // 影片初始化
         function initializeVideo() {
-            // 嘗試載入 Google Drive 影片
             loadGoogleDriveVideo();
-            
-            // 設置本地影片的錯誤處理
-            const localVideo = document.getElementById('local-video');
-            if (localVideo) {
-                localVideo.addEventListener('error', function() {
-                    console.log('本地影片載入失敗');
-                    showVideoError();
-                });
-
-                localVideo.addEventListener('loadedmetadata', function() {
-                    console.log('本地影片載入成功');
-                });
-            }
         }
 
         // 載入 Google Drive 影片
@@ -1655,61 +1616,26 @@ INTRO_TEMPLATE = r"""
                         hideVideoLoading();
                         showVideoError();
                     }
-                }, 10000); // 10秒超時
+                }, 8000); // 8秒超時
                 
             } else {
-                // 如果沒有配置 Google Drive ID，顯示配置提示
-                showConfigurationNeeded();
-            }
-        }
-
-        // 切換影片來源
-        function switchVideoSource(source) {
-            const googleVideo = document.getElementById('google-drive-video');
-            const localVideo = document.getElementById('local-video');
-            const loading = document.getElementById('video-loading');
-            const error = document.getElementById('video-error');
-            
-            // 隱藏所有元素
-            googleVideo.style.display = 'none';
-            localVideo.style.display = 'none';
-            loading.style.display = 'none';
-            error.style.display = 'none';
-            
-            if (source === 'google') {
-                loadGoogleDriveVideo();
-            } else if (source === 'local') {
-                localVideo.style.display = 'block';
-                // 嘗試載入本地影片
-                localVideo.load();
-            }
-        }
-
-        // 重新載入影片
-        function refreshVideo() {
-            const googleVideo = document.getElementById('google-drive-video');
-            const currentSrc = googleVideo.src;
-            
-            if (currentSrc) {
-                showVideoLoading();
-                googleVideo.src = '';
-                setTimeout(() => {
-                    googleVideo.src = currentSrc;
-                }, 1000);
-            } else {
-                loadGoogleDriveVideo();
+                // 如果沒有配置 Google Drive ID，顯示準備中訊息
+                showVideoError();
             }
         }
 
         // 顯示 Google Drive 影片
         function showGoogleDriveVideo() {
             document.getElementById('google-drive-video').style.display = 'block';
+            document.getElementById('video-loading').style.display = 'none';
+            document.getElementById('video-error').style.display = 'none';
         }
 
         // 顯示載入中
         function showVideoLoading() {
             document.getElementById('video-loading').style.display = 'flex';
-            hideOtherVideoElements();
+            document.getElementById('google-drive-video').style.display = 'none';
+            document.getElementById('video-error').style.display = 'none';
         }
 
         // 隱藏載入中
@@ -1717,31 +1643,11 @@ INTRO_TEMPLATE = r"""
             document.getElementById('video-loading').style.display = 'none';
         }
 
-        // 顯示錯誤
+        // 顯示錯誤或準備中訊息
         function showVideoError() {
             document.getElementById('video-error').style.display = 'flex';
-            hideOtherVideoElements();
-        }
-
-        // 顯示配置需要提示
-        function showConfigurationNeeded() {
-            const errorDiv = document.getElementById('video-error');
-            errorDiv.innerHTML = `
-                <i class="fas fa-cog"></i>
-                <p>需要配置 Google Drive 影片</p>
-                <small>請聯繫管理員設定影片連結</small>
-            `;
-            errorDiv.style.display = 'flex';
-            hideOtherVideoElements();
-        }
-
-        // 隱藏其他影片元素
-        function hideOtherVideoElements() {
-            const elements = ['google-drive-video', 'local-video'];
-            elements.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) element.style.display = 'none';
-            });
+            document.getElementById('google-drive-video').style.display = 'none';
+            document.getElementById('video-loading').style.display = 'none';
         }
 
         // 播放影片函數
