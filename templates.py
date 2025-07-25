@@ -946,12 +946,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         /* 讓有折扣的卡片更突出 */
-        .service-card:has(.discount-badge) {
-            border: 2px solid transparent;
-            background-image: linear-gradient(white, white), 
-                            linear-gradient(135deg, #ff416c, #ff4b2b);
-            background-origin: border-box;
-            background-clip: content-box, border-box;
+        .service-card.discount-card {
+            border: 2px solid rgba(255, 65, 108, 0.3);
+            box-shadow: 0 0 20px rgba(255, 65, 108, 0.15);
             animation: card-glow 3s ease-in-out infinite;
         }
 
@@ -1138,7 +1135,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 </div>
 
                 <!-- 標準方案 -->
-                <div class="service-card">
+                <div class="service-card discount-card">
                     <div class="service-header">
                         <div class="popular-badge">最受歡迎</div>
                         <div class="service-title">標準服務</div>
@@ -1194,7 +1191,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 </div>
 
                 <!-- 季度方案 -->
-                <div class="service-card">
+                <div class="service-card discount-card">
                     <div class="service-header">
                         <div class="service-title">最佳服務</div>
                         <div class="service-subtitle">長期使用最划算</div>
