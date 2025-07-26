@@ -995,7 +995,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <section id="home" class="hero">
         <div class="hero-content">
             <div class="hero-badge">
-                <i class="fas fa-shield-alt"></i>
+                <i class="🇹🇼"></i>
                 <span>臺灣製造</span>
             </div>
             <h1>自動化<span class="highlight">遊戲技術服務</span><br>與個人化方案</h1>
@@ -1081,7 +1081,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <span>返回遊戲列表</span>
                 </button>
                 <div class="section-badge">服務方案</div>
-                <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale 專屬方案</h2>
+                <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale(繁體中文版)</h2>
                 <p class="section-description">透過 Gumroad 付款，支援信用卡、apple pay、google pay等方式付款。</p>
             </div>
             
