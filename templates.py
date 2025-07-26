@@ -995,9 +995,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <section id="home" class="hero">
         <div class="hero-content">
             <div class="hero-badge">
-                <i class="🇹🇼"></i>
+                <span>🇹🇼</span>
                 <span>臺灣製造</span>
             </div>
+        </div>
             <h1>自動化<span class="highlight">遊戲技術服務</span><br>與個人化方案</h1>
             <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。</p>
             <div class="hero-buttons">
