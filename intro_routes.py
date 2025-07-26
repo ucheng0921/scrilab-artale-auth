@@ -1030,7 +1030,7 @@ INTRO_TEMPLATE = r"""
                 <div class="logo-icon">
                     <i class="fas fa-gamepad"></i>
                 </div>
-                <span>Artale Script</span>
+                <span>Artale Fully automated script</span>
             </a>
             <ul class="nav-links">
                 <li><a href="#video">影片介紹</a></li>
