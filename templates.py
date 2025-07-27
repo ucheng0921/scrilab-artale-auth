@@ -1033,7 +1033,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     </div>
                     <div class="game-info">
                         <h3>MapleStory Worlds - Artale (繁體中文版)</h3>
-                        <p class="game-subtitle">Script</p>
+                        <p class="game-subtitle">Fully automated script</p>
                         <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案。</p>
                         <div class="game-status">
                             <span class="status-badge active">服務中</span>
