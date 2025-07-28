@@ -1506,9 +1506,9 @@ INTRO_TEMPLATE = r"""
                         <div>
                             <h4 style="color: var(--accent-green); margin-bottom: 0.8rem;">✅ 最低配置</h4>
                             <ul style="list-style: none; padding: 0;">
-                                <li style="margin-bottom: 0.5rem;">• CPU: Intel i3 / AMD 同級</li>
-                                <li style="margin-bottom: 0.5rem;">• 記憶體: 4GB RAM</li>
-                                <li style="margin-bottom: 0.5rem;">• 硬碟: 1GB 可用空間</li>
+                                <li style="margin-bottom: 0.5rem;">• CPU: Intel i5 / AMD 同級</li>
+                                <li style="margin-bottom: 0.5rem;">• 記憶體: 8GB RAM</li>
+                                <li style="margin-bottom: 0.5rem;">• 硬碟: 10GB 可用空間</li>
                                 <li style="margin-bottom: 0.5rem;">• 作業系統: Windows 10</li>
                                 <li style="margin-bottom: 0.5rem;">• 網路: 穩定網路連接</li>
                             </ul>
@@ -1517,7 +1517,7 @@ INTRO_TEMPLATE = r"""
                             <h4 style="color: var(--accent-blue); margin-bottom: 0.8rem;">⭐ 建議配置</h4>
                             <ul style="list-style: none; padding: 0;">
                                 <li style="margin-bottom: 0.5rem;">• CPU: Intel i5 / AMD 同級以上</li>
-                                <li style="margin-bottom: 0.5rem;">• 記憶體: 8GB RAM 以上</li>
+                                <li style="margin-bottom: 0.5rem;">• 記憶體: 16GB RAM 以上</li>
                                 <li style="margin-bottom: 0.5rem;">• 硬碟: SSD 固態硬碟</li>
                                 <li style="margin-bottom: 0.5rem;">• 作業系統: Windows 10/11</li>
                                 <li style="margin-bottom: 0.5rem;">• 網路: 穩定寬頻連接</li>
