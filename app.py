@@ -15,15 +15,15 @@ import schedule
 import time as time_module
 
 # 導入模組
-from admin_panel import admin_bp
-from manual_routes import manual_bp
-from disclaimer_routes import disclaimer_bp
-from session_manager import session_manager, init_session_manager
-from route_handlers import RouteHandlers
-from gumroad_service import GumroadService  # 修復後的 Gumroad 服務
-from gumroad_routes import gumroad_bp, init_gumroad_routes  # 修復後的 Gumroad 路由
-from templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
-from intro_routes import intro_bp
+from common.admin_panel import admin_bp
+from products.artale.manual_routes import manual_bp
+from common.disclaimer_routes import disclaimer_bp
+from core.session_manager import session_manager, init_session_manager
+from core.route_handlers import RouteHandlers
+from core.gumroad_service import GumroadService  # 修復後的 Gumroad 服務
+from core.gumroad_routes import gumroad_bp, init_gumroad_routes  # 修復後的 Gumroad 路由
+from common.templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
+from products.artale.intro_routes import intro_bp
 
 # 設置日誌
 logging.basicConfig(

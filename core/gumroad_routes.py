@@ -270,7 +270,7 @@ class GumroadRoutes:
             user_uuid = payment_record.get('user_uuid')
             
             # 導入成功頁面模板
-            from templates import PAYMENT_SUCCESS_TEMPLATE
+            from common.templates import PAYMENT_SUCCESS_TEMPLATE
             
             return render_template_string(
                 PAYMENT_SUCCESS_TEMPLATE,
