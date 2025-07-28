@@ -507,6 +507,19 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             color: white;
         }
 
+        .download-btn {
+            background: var(--gradient-success);
+            border: 1px solid var(--accent-green);
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: var(--accent-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
         /* Services Section */
         .services {
             padding: 8rem 2rem;
@@ -1046,6 +1059,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                                 <a href="/manual" class="manual-btn">
                                     <i class="fas fa-book"></i>
                                     操作手冊
+                                </a>
+                                <a href="/download" class="manual-btn download-btn">
+                                    <i class="fas fa-download"></i>
+                                    下載連結
                                 </a>
                             </div>
                         </div>

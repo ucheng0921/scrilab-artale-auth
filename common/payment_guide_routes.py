@@ -482,7 +482,7 @@ PAYMENT_GUIDE_TEMPLATE = r"""
                 <div class="step-number">1</div>
                 <h2 class="step-title">選擇服務方案</h2>
                 <p class="step-description">
-                    在我們的產品頁面中選擇適合您的服務方案。我們提供體驗版（7天）、標準版（30天）和季度版（90天）三種選擇，
+                    在我們的產品頁面中選擇適合您的服務方案，
                     每種方案都包含完整的遊戲技術服務功能。
                 </p>
                 <div class="info-box">
