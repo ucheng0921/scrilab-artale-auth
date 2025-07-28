@@ -245,13 +245,38 @@ def start_background_tasks():
 # ===== Flask 中間件 =====
 
 @app.before_request
-def force_https():
-    """強制 HTTPS（生產環境）"""
+def security_checks():
+    """安全檢查：HTTPS和管理員路由保護"""
+    # 1. 強制 HTTPS（生產環境）
     if (not request.is_secure and 
         request.headers.get('X-Forwarded-Proto') != 'https' and
         os.environ.get('FLASK_ENV') == 'production'):
-        from flask import redirect
         return redirect(request.url.replace('http://', 'https://'), code=301)
+    
+    # 2. 保護管理員路由
+    protected_paths = [
+        '/admin',
+        '/session-stats', 
+        '/cleanup-sessions',
+        '/system/status'
+    ]
+    
+    # 檢查是否是受保護的路徑
+    if any(request.path.startswith(path) for path in protected_paths):
+        # 檢查IP白名單
+        allowed_ips = os.environ.get('ADMIN_ALLOWED_IPS', '').split(',')
+        allowed_ips = [ip.strip() for ip in allowed_ips if ip.strip()]
+        
+        if allowed_ips:
+            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+            if client_ip and ',' in client_ip:
+                client_ip = client_ip.split(',')[0].strip()
+            
+            if client_ip not in allowed_ips:
+                logger.warning(f"未授權的管理員訪問嘗試: {client_ip} -> {request.path}")
+                return jsonify({'error': 'Not found'}), 404
+    
+    return None
 
 @app.after_request
 def after_request(response):
@@ -269,7 +294,17 @@ def after_request(response):
 
 @app.route('/', methods=['GET'])
 def root():
-    """根路徑端點"""
+    """根路徑端點 - 直接重定向到產品頁面"""
+    return redirect('/products', code=301)
+
+@app.route('/system/status/<secret_key>', methods=['GET'])
+def system_status(secret_key):
+    """隱藏的系統狀態端點"""
+    # 檢查密鑰
+    expected_secret = os.environ.get('SYSTEM_STATUS_SECRET', 'default-secret-change-me')
+    if secret_key != expected_secret:
+        return jsonify({'error': 'Not found'}), 404
+    
     if not firebase_initialized:
         # 嘗試重新初始化
         logger.info("嘗試重新初始化 Firebase...")
@@ -475,6 +510,17 @@ try:
         logger.error(f"❌ 應用初始化失敗")
 except Exception as e:
     logger.error(f"❌ 應用初始化異常: {str(e)}")
+
+# 錯誤處理
+@app.errorhandler(404)
+def not_found(error):
+    """統一的 404 處理"""
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(403)
+def forbidden(error):
+    """將 403 偽裝成 404"""
+    return jsonify({'error': 'Not found'}), 404
 
 # 如果作為主程式運行
 if __name__ == '__main__':
