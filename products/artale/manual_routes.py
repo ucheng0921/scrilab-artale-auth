@@ -1965,7 +1965,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <div class="config-param-card">
                             <div class="param-name">位移技能冷卻時間 (DASH_SKILL_COOLDOWN)</div>
                             <div class="param-range">預設值：3秒</div>
-                            <div class="param-desc">再次觸發的冷卻時間</div>
+                            <div class="param-desc">再次觸發位移技能移動的冷卻時間</div>
                         </div>
                         <div class="config-param-card">
                             <div class="param-name">啟用隨機下跳功能 (ENABLE_DOWN_JUMP)</div>
@@ -1975,12 +1975,12 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <div class="config-param-card">
                             <div class="param-name">下跳觸發機率 (DOWN_JUMP_CHANCE)</div>
                             <div class="param-range">範圍：0.0-1.0</div>
-                            <div class="param-desc">移動時觸發下跳的機率</div>
+                            <div class="param-desc">移動時觸發下跳的機率(目前判斷僅101地圖需要開啟)</div>
                         </div>
                         <div class="config-param-card">
                             <div class="param-name">下跳冷卻時間(秒) (ENABLE_JUMP_MOVEMENT)</div>
                             <div class="param-range">預設值：5秒</div>
-                            <div class="param-desc">觸發下跳的冷卻時間</div>
+                            <div class="param-desc">再次觸發下跳的冷卻時間</div>
                         </div>
                     </div>
                 </div>
@@ -1994,22 +1994,22 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <div class="config-param-card">
                             <div class="param-name">啟用爬繩功能 (ENABLE_ROPE_CLIMBING)</div>
                             <div class="param-range">選項：開啟/關閉</div>
-                            <div class="param-desc">啟用自動爬繩功能，清怪完畢後自動尋找並攀爬繩索</div>
+                            <div class="param-desc">啟用爬繩功能，清理周圍怪物完畢後自動攀爬繩索</div>
                         </div>
                         <div class="config-param-card">
                             <div class="param-name">起跳離繩索(最小距離) (ROPE_MIN_DISTANCE)</div>
-                            <div class="param-range">預設值：60</div>
-                            <div class="param-desc">該值依據自身跳躍與移動值做設定(60~65為無任何加成最佳設定)</div>
+                            <div class="param-range">預設值：55</div>
+                            <div class="param-desc">該值依據自身跳躍與移動值做設定(55~60為無任何加成最佳設定)</div>
                         </div>
                         <div class="config-param-card">
                             <div class="param-name">起跳離繩索(最大距離) (ROPE_MAX_DISTANCE)</div>
-                            <div class="param-range">預設值：65</div>
-                            <div class="param-desc">該值依據自身跳躍與移動值做設定(60~65為無任何加成最佳設定)</div>
+                            <div class="param-range">預設值：60</div>
+                            <div class="param-desc">該值依據自身跳躍與移動值做設定(55~60為無任何加成最佳設定)</div>
                         </div>
                         <div class="config-param-card">
                             <div class="param-name">爬繩冷卻時間 (ROPE_COOLDOWN_TIME)</div>
                             <div class="param-range">預設值：60秒</div>
-                            <div class="param-desc">爬繩與爬繩之間的冷卻時間，無論失敗與成功都會計算，多層地圖可將該值設小</div>
+                            <div class="param-desc">爬繩與爬繩之間的冷卻時間，無論失敗與成功都會計算，多層地圖可將該值設小(約5~10秒)</div>
                         </div>
                     </div>
                 </div>
@@ -2091,7 +2091,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <div class="config-param-card">
                             <div class="param-name">主循環檢測間隔 (ENABLE_HEALTH_MONITOR)</div>
                             <div class="param-range">預設值：0.01</div>
-                            <div class="param-desc">螢幕擷取畫面頻率，依據電腦效能設置，若太卡請設定0.05~</div>
+                            <div class="param-desc">螢幕擷取畫面頻率，依據電腦效能設置，效能不佳請設定0.05~</div>
                         </div>
                     </div>
                 </div>                
