@@ -645,7 +645,7 @@ DOWNLOAD_TEMPLATE = r"""
         <div class="download-header">
             <h1 class="download-title">Artale Script 下載中心</h1>
             <p class="download-subtitle">專業版軟體下載 - 僅供授權用戶使用</p>
-            <span class="version-badge">最新版本 v1.2.3</span>
+            <span class="version-badge">最新版本 v1.3.11</span>
         </div>
 
         <!-- Auth Section -->
@@ -734,7 +734,7 @@ DOWNLOAD_TEMPLATE = r"""
                             </div>
                             <div class="download-info">
                                 <h3>Artale Script 主程式</h3>
-                                <div class="download-version">版本 v1.2.3 | 檔案大小：~120MB</div>
+                                <div class="download-version">版本 v1.3.11 | 完整版本</div>
                             </div>
                         </div>
                         
@@ -751,70 +751,12 @@ DOWNLOAD_TEMPLATE = r"""
                             <li><i class="fas fa-check feature-check"></i> 血量監控系統</li>
                         </ul>
                         
-                        <button class="download-button" onclick="downloadFile('main')">
+                        <a href="https://drive.google.com/file/d/1vRhP8nHo9pXasToordPYduwSOaMOdtgJ/view?usp=drive_link" 
+                        target="_blank" 
+                        class="download-button">
                             <i class="fas fa-download"></i>
                             <span>下載主程式</span>
-                        </button>
-                    </div>
-
-                    <!-- 配置工具下載 -->
-                    <div class="download-card">
-                        <div class="download-card-header">
-                            <div class="download-icon">
-                                <i class="fas fa-tools"></i>
-                            </div>
-                            <div class="download-info">
-                                <h3>配置與工具集</h3>
-                                <div class="download-version">版本 v1.0.2 | 檔案大小：~25MB</div>
-                            </div>
-                        </div>
-                        
-                        <div class="download-description">
-                            額外的配置工具和預設配置檔案，方便快速設定和調整參數。
-                        </div>
-                        
-                        <ul class="download-features">
-                            <li><i class="fas fa-check feature-check"></i> 預設配置檔案模板</li>
-                            <li><i class="fas fa-check feature-check"></i> 角色定位工具</li>
-                            <li><i class="fas fa-check feature-check"></i> 繩索截圖工具</li>
-                            <li><i class="fas fa-check feature-check"></i> 配置檔案編輯器</li>
-                            <li><i class="fas fa-check feature-check"></i> 系統健康檢測工具</li>
-                        </ul>
-                        
-                        <button class="download-button" onclick="downloadFile('tools')">
-                            <i class="fas fa-download"></i>
-                            <span>下載工具集</span>
-                        </button>
-                    </div>
-
-                    <!-- 使用手冊下載 -->
-                    <div class="download-card">
-                        <div class="download-card-header">
-                            <div class="download-icon">
-                                <i class="fas fa-book"></i>
-                            </div>
-                            <div class="download-info">
-                                <h3>完整使用手冊</h3>
-                                <div class="download-version">PDF 格式 | 檔案大小：~8MB</div>
-                            </div>
-                        </div>
-                        
-                        <div class="download-description">
-                            詳細的使用說明文檔，包含圖文教學和常見問題解答。
-                        </div>
-                        
-                        <ul class="download-features">
-                            <li><i class="fas fa-check feature-check"></i> 完整安裝教學</li>
-                            <li><i class="fas fa-check feature-check"></i> 功能詳細說明</li>
-                            <li><i class="fas fa-check feature-check"></i> 參數設定指南</li>
-                            <li><i class="fas fa-check feature-check"></i> 故障排除方法</li>
-                            <li><i class="fas fa-check feature-check"></i> 最佳實踐建議</li>
-                        </ul>
-                        
-                        <button class="download-button" onclick="downloadFile('manual')">
-                            <i class="fas fa-download"></i>
-                            <span>下載手冊</span>
-                        </button>
+                        </a>
                     </div>
                 </div>
             </section>
