@@ -976,17 +976,17 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="#home" class="logo">
+            <div class="logo" onclick="scrollToHome()">
                 <div class="logo-icon">
                     <i class="fas fa-code"></i>
                 </div>
                 <span>Scrilab</span>
             </a>
             <ul class="nav-links">
-                <li><a href="#home">首頁</a></li>
-                <li><a href="#games">遊戲服務</a></li>
-                <li><a href="#contact">聯絡我們</a></li>
-                <li><a href="/disclaimer">免責聲明</a></li>
+                <li><a onclick="scrollToHome()">首頁</a></li>
+                <li><a onclick="scrollToGames()">遊戲服務</a></li>
+                <li><a onclick="scrollToContact()">聯絡我們</a></li>
+                <li><a onclick="navigateToDisclaimer()">免責聲明</a></li>
             </ul>
         </div>
     </nav>
@@ -1001,14 +1001,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             <h1>自動化<span class="highlight">遊戲技術服務</span><br>與個人化方案</h1>
             <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。</p>
             <div class="hero-buttons">
-                <a href="#games" class="btn-primary">
+                <button class="btn-primary" onclick="scrollToGames()">
                     <i class="fas fa-gamepad"></i>
                     <span>瀏覽遊戲服務</span>
-                </a>
-                <a href="#contact" class="btn-secondary">
+                </button>
+                <button class="btn-secondary" onclick="scrollToContact()">
                     <i class="fas fa-book"></i>
                     <span>聯絡我們</span>
-                </a>
+                </button>
             </div>
         </div>
     </section>
@@ -1038,14 +1038,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="game-status">
                             <span class="status-badge active">服務中</span>
                             <div class="game-buttons">
-                                <a href="/intro" class="manual-btn intro-btn">
+                                <button class="manual-btn intro-btn" onclick="navigateToIntro()">
                                     <i class="fas fa-info-circle"></i>
                                     基本介紹
-                                </a>
-                                <a href="/manual" class="manual-btn">
+                                </button>
+                                <button class="manual-btn" onclick="navigateToManual()">
                                     <i class="fas fa-book"></i>
                                     操作手冊
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1267,7 +1267,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             </div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 2rem; text-align: center; color: var(--text-muted);">
                 <p style="margin-bottom: 1rem;">
-                    <a href="/disclaimer" style="color: var(--text-muted); text-decoration: none; margin-right: 2rem; transition: color 0.3s ease;" onmouseover="this.style.color='var(--accent-blue)'" onmouseout="this.style.color='var(--text-muted)'">免責聲明</a>
+                    <a onclick="navigateToDisclaimer()" style="color: var(--text-muted); text-decoration: none; margin-right: 2rem; transition: color 0.3s ease; cursor: pointer;" onmouseover="this.style.color='var(--accent-blue)'" onmouseout="this.style.color='var(--text-muted)'">免責聲明</a>
                 </p>
                 <p>&copy; 2025 Scrilab. All rights reserved. Powered by Gumroad.</p>
             </div>
@@ -1294,7 +1294,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
                         <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
                         <span style="font-size: 0.95rem; line-height: 1.5;">
-                            我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-blue); text-decoration: none;">免責聲明與服務條款</a>，
+                            我已閱讀並同意 <a onclick="navigateToDisclaimer()" target="_blank" style="color: var(--accent-blue); text-decoration: none; cursor: pointer;">免責聲明與服務條款</a>，
                             理解使用本服務的風險，並自願承擔相關責任。
                         </span>
                     </label>
@@ -2186,6 +2186,33 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
     </div>
 
     <script>
+
+        // Navigation functions - 使用平滑滾動而不是修改 URL
+        function scrollToHome() {
+            document.getElementById('home').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function scrollToGames() {
+            document.getElementById('games').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function scrollToContact() {
+            document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 導航到其他頁面 - 使用 window.location 但不顯示路徑
+        function navigateToManual() {
+            window.location.href = '/manual';
+        }
+
+        function navigateToDisclaimer() {
+            window.location.href = '/disclaimer';
+        }
+
+        function navigateToIntro() {
+            window.location.href = '/intro';
+        }
+
         function copyUUID() {
             const uuid = "{{ user_uuid if user_uuid else '' }}";
             if (uuid) {
