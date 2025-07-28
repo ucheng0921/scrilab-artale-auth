@@ -985,6 +985,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             <ul class="nav-links">
                 <li><a href="#home">首頁</a></li>
                 <li><a href="#games">遊戲服務</a></li>
+                <li><a href="/payment-guide">付款說明</a></li>
                 <li><a href="#contact">聯絡我們</a></li>
                 <li><a href="/disclaimer">免責聲明</a></li>
             </ul>

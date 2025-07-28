@@ -24,6 +24,7 @@ from core.gumroad_service import GumroadService  # 修復後的 Gumroad 服務
 from core.gumroad_routes import gumroad_bp, init_gumroad_routes  # 修復後的 Gumroad 路由
 from common.templates import PROFESSIONAL_PRODUCTS_TEMPLATE, PAYMENT_CANCEL_TEMPLATE
 from products.artale.intro_routes import intro_bp
+from common.payment_guide_routes import payment_guide_bp
 
 # 設置日誌
 logging.basicConfig(
@@ -48,6 +49,7 @@ app.register_blueprint(manual_bp)
 app.register_blueprint(disclaimer_bp)
 app.register_blueprint(intro_bp)
 app.register_blueprint(gumroad_bp)
+app.register_blueprint(payment_guide_bp)
 
 # 全局變數
 db = None
