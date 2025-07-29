@@ -11,8 +11,8 @@ import time
 failed_attempts = defaultdict(list)  # IP -> [timestamp1, timestamp2, ...]
 # Google Drive 影片配置
 GOOGLE_DRIVE_CONFIG = {
-    'setup_video_id': '',  # 設定教學影片 ID
-    'demo_video_id': ''    # 演示影片 ID  
+    'setup_video_id': '1neJKwUi5kYJGB2sNSHbOGZFhV8fpE9Eb',  # 設定教學影片 ID
+    'demo_video_id': '1neJKwUi5kYJGB2sNSHbOGZFhV8fpE9Eb'    # 演示影片 ID  
 }
 
 def is_rate_limited(ip):
