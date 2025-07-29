@@ -432,7 +432,7 @@ DISCLAIMER_TEMPLATE = r"""
         <div class="disclaimer-header">
             <h1 class="disclaimer-title">免責聲明</h1>
             <p class="disclaimer-subtitle">服務條款與法律聲明</p>
-            <span class="last-updated">最後更新：2025年7月18日</span>
+            <span class="last-updated">最後更新：2025年7月29日</span>
         </div>
 
         <!-- 1. 軟體性質與技術說明 -->
@@ -511,7 +511,7 @@ DISCLAIMER_TEMPLATE = r"""
                         風險警告
                     </div>
                     <div class="box-content">
-                        任何第三方輔助軟體都存在被遊戲公司檢測並違反服務條款的風險。使用前請仔細評估個人風險承受能力。
+                        任何第三方輔助軟體都存在被遊戲工作室檢測並違反服務條款的風險。使用前請仔細評估個人風險承受能力。
                     </div>
                 </div>
 
@@ -519,8 +519,8 @@ DISCLAIMER_TEMPLATE = r"""
                 <p>使用者需明確了解並接受以下風險：</p>
                 <ul>
                     <li><strong>帳號處罰風險：</strong>可能面臨遊戲帳號被警告、暫停或永久封禁</li>
-                    <li><strong>服務條款違反：</strong>可能違反遊戲公司的使用者條款或服務協議</li>
-                    <li><strong>檢測技術進步：</strong>遊戲公司反作弊技術持續升級，檢測能力不斷增強</li>
+                    <li><strong>服務條款違反：</strong>可能違反遊戲工作室的使用者條款或服務協議</li>
+                    <li><strong>檢測技術進步：</strong>遊戲工作室反作弊技術持續升級，檢測能力不斷增強</li>
                     <li><strong>法律法規變化：</strong>相關法律法規可能隨時調整，影響軟體合法性</li>
                 </ul>
 
@@ -553,7 +553,7 @@ DISCLAIMER_TEMPLATE = r"""
                     <li>將軟體用於商業營利或大規模作弊行為</li>
                     <li>違反當地法律法規或社會公德的行為</li>
                 </ul>
-                <p>若因違反上述規定產生糾紛，本公司有權不經催告立即終止服務合約。</p>
+                <p>若因違反上述規定產生糾紛，本工作室有權不經催告立即終止服務合約。</p>
             </div>
         </section>
 
@@ -571,11 +571,11 @@ DISCLAIMER_TEMPLATE = r"""
                 <ul>
                     <li><strong>目標遊戲更新：</strong>遊戲版本升級導致軟體功能需要調整</li>
                     <li><strong>系統維護需求：</strong>遊戲官方進行系統維護或安全修復</li>
-                    <li><strong>反作弊升級：</strong>遊戲公司加強反作弊檢測機制</li>
+                    <li><strong>反作弊升級：</strong>遊戲工作室加強反作弊檢測機制</li>
                     <li><strong>技術改進：</strong>為提升功能穩定性和安全性進行升級</li>
                     <li><strong>法規遵循：</strong>配合法律法規要求進行調整</li>
                 </ul>
-                <p>上述情況可能導致軟體暫時或永久無法使用，更新處理需要時間，本公司將盡力減少服務中斷，但不保證服務的持續可用性。</p>
+                <p>上述情況可能導致軟體暫時或永久無法使用，更新處理需要時間，本工作室將盡力減少服務中斷，但不保證服務的持續可用性。</p>
 
                 <h4>數位內容交易特性</h4>
                 <div class="warning-box">
@@ -584,9 +584,18 @@ DISCLAIMER_TEMPLATE = r"""
                         退款政策聲明
                     </div>
                     <div class="box-content">
-                        根據消費者保護法第十九條第二項規定，本服務為數位內容或一經提供即為完成之線上服務，不適用七天鑑賞期。軟體售出後不提供退貨退款服務。
+                        根據消費者保護法第十九條第二項規定，本服務為數位內容或一經提供即為完成之線上服務，不適用七天鑑賞期。軟體售出後一般情況下不提供退貨退款服務。
                     </div>
                 </div>
+
+                <h4>特殊情況退款處理</h4>
+                <p>在以下特殊情況下，本工作室可能考慮提供退款：</p>
+                <ul>
+                    <li><strong>技術無法實現：</strong>因技術限制導致軟體完全無法運行</li>
+                    <li><strong>重大功能缺失：</strong>軟體核心功能與描述嚴重不符</li>
+                    <li><strong>服務提前終止：</strong>因不可抗力或工作室決策導致服務提前結束</li>
+                    <li><strong>系統相容性：</strong>軟體與使用者系統完全不相容且無法解決</li>
+                </ul>
 
                 <h4>價格與交易規範</h4>
                 <table class="content-table">
@@ -636,7 +645,7 @@ DISCLAIMER_TEMPLATE = r"""
                         權利行使方式
                     </div>
                     <div class="box-content">
-                        如需行使上述權利，請透過Email（scrilabstaff@gmail.com）或Discord社群聯繫我們，我們將在15個工作日內回應您的請求。
+                        如需行使上述權利，請透過Discord社群聯繫我們，我們將在15個工作日內回應您的請求。
                     </div>
                 </div>
             </div>
@@ -655,10 +664,10 @@ DISCLAIMER_TEMPLATE = r"""
                 <p>為提供服務品質並維護系統安全，我們可能收集以下資訊：</p>
                 <ul>
                     <li><strong>帳號資訊：</strong>使用者序號、顯示名稱、服務期限、註冊時間</li>
-                    <li><strong>聯絡資訊：</strong>Email地址、聯繫電話（選填）</li>
+                    <li><strong>聯絡資訊：</strong>Discord用戶資訊（選填）</li>
                     <li><strong>使用記錄：</strong>登入時間、使用頻率、功能使用統計</li>
                     <li><strong>技術資訊：</strong>IP位址、設備識別碼、作業系統版本</li>
-                    <li><strong>交易資訊：</strong>透過第三方支付平台處理的付款記錄</li>
+                    <li><strong>交易資訊：</strong>透過Gumroad平台處理的付款記錄</li>
                 </ul>
 
                 <h4>資料使用目的</h4>
@@ -729,15 +738,15 @@ DISCLAIMER_TEMPLATE = r"""
                         權利行使方式
                     </div>
                     <div class="box-content">
-                        如需行使上述權利，請透過Email（scrilabstaff@gmail.com）或Discord社群聯繫我們，我們將在15個工作日內回應您的請求。
+                        如需行使上述權利，請透過Discord社群聯繫我們，我們將在15個工作日內回應您的請求。
                     </div>
                 </div>
 
                 <h4>第三方服務整合</h4>
                 <p>本服務可能整合以下第三方服務，請注意其隱私政策：</p>
                 <ul>
-                    <li><strong>支付處理商：</strong>信用卡付款、第三方支付平台（如綠界、藍新）</li>
-                    <li><strong>通訊服務：</strong>Discord社群平台、Email服務提供商</li>
+                    <li><strong>支付處理商：</strong>Gumroad平台處理付款和交易</li>
+                    <li><strong>通訊服務：</strong>Discord社群平台</li>
                     <li><strong>分析工具：</strong>網站流量分析、使用行為統計（僅匿名資料）</li>
                     <li><strong>雲端服務：</strong>資料儲存、備份服務（均採用加密傳輸）</li>
                 </ul>
@@ -746,7 +755,6 @@ DISCLAIMER_TEMPLATE = r"""
                 <p>本隱私政策可能因法規變化或服務調整而修訂：</p>
                 <ol>
                     <li>重大修改將提前30天在官網顯著位置公告</li>
-                    <li>透過Email通知所有註冊使用者</li>
                     <li>在Discord社群發布更新通知</li>
                     <li>修改後的政策自公告日起生效</li>
                     <li>繼續使用服務視為同意修改後的隱私政策</li>
@@ -821,12 +829,6 @@ DISCLAIMER_TEMPLATE = r"""
                             <td>緊急技術問題、即時諮詢</td>
                         </tr>
                         <tr>
-                            <td>Email客服信箱</td>
-                            <td>24小時接收</td>
-                            <td>24小時內回覆</td>
-                            <td>詳細問題描述、正式申請</td>
-                        </tr>
-                        <tr>
                             <td>線上操作手冊</td>
                             <td>24小時開放</td>
                             <td>即時查閱</td>
@@ -842,7 +844,6 @@ DISCLAIMER_TEMPLATE = r"""
                     </div>
                     <div class="box-content">
                         <strong>Discord社群：</strong>https://discord.gg/HPzNrQmN（推薦使用，回應最快）<br>
-                        <strong>Email客服：</strong>scrilabstaff@gmail.com<br>
                         <strong>操作手冊：</strong>/manual（詳細使用說明文檔）
                     </div>
                 </div>
@@ -885,7 +886,7 @@ DISCLAIMER_TEMPLATE = r"""
                     <li><strong>虛擬資產損失：</strong>遊戲角色、裝備、貨幣、等級或其他虛擬財產的損失</li>
                     <li><strong>經濟損失：</strong>因服務中斷、帳號處罰等導致的直接或間接經濟損失</li>
                     <li><strong>法律糾紛：</strong>因使用本軟體而產生的任何法律爭議、訴訟或法律後果</li>
-                    <li><strong>第三方行為：</strong>遊戲公司、其他使用者或第三方的行為導致的損失</li>
+                    <li><strong>第三方行為：</strong>遊戲工作室、其他使用者或第三方的行為導致的損失</li>
                     <li><strong>技術風險：</strong>軟體bug、相容性問題或其他技術缺陷</li>
                 </ul>
 
@@ -951,7 +952,7 @@ DISCLAIMER_TEMPLATE = r"""
             </h2>
             <div class="section-content">
                 <h4>服務變更權利</h4>
-                <p>本公司保留隨時修改、暫停或終止全部或部分服務的權利，變更原因包括但不限於：</p>
+                <p>本工作室保留隨時修改、暫停或終止全部或部分服務的權利，變更原因包括但不限於：</p>
                 <ul>
                     <li><strong>技術升級需要：</strong>為提升服務品質、安全性或效能進行技術改進</li>
                     <li><strong>法規合規要求：</strong>配合法律法規變化或政府部門要求</li>
@@ -965,10 +966,8 @@ DISCLAIMER_TEMPLATE = r"""
                 <p>重大服務變更將透過以下方式提前通知使用者：</p>
                 <ol>
                     <li><strong>官方網站公告：</strong>在scrilab.com首頁發布重要通知</li>
-                    <li><strong>Email通知：</strong>向所有註冊使用者發送變更通知郵件</li>
                     <li><strong>Discord社群公告：</strong>在官方Discord伺服器置頂發布公告</li>
                     <li><strong>軟體內通知：</strong>透過軟體啟動時的通知功能告知使用者</li>
-                    <li><strong>簡訊通知：</strong>必要時透過簡訊方式緊急通知</li>
                 </ol>
 
                 <p>一般變更將提前7天通知，重大變更將提前30天通知，緊急安全變更可能無法提前通知。</p>
@@ -1052,7 +1051,7 @@ DISCLAIMER_TEMPLATE = r"""
                 <p>本免責聲明自使用者進行以下任一行為時即對其產生法律約束力：</p>
                 <ol>
                     <li><strong>網站訪問：</strong>訪問scrilab.com網站的任何頁面</li>
-                    <li><strong>軟體下載：</strong>下載本公司提供的任何軟體或相關檔案</li>
+                    <li><strong>軟體下載：</strong>下載本工作室提供的任何軟體或相關檔案</li>
                     <li><strong>試用體驗：</strong>使用任何形式的試用版本或演示功能</li>
                     <li><strong>購買行為：</strong>完成任何付款購買流程</li>
                     <li><strong>帳號註冊：</strong>註冊或建立使用者帳號</li>
@@ -1075,10 +1074,10 @@ DISCLAIMER_TEMPLATE = r"""
                 <h4>聲明修改與更新</h4>
                 <p>本免責聲明的修改程序和生效機制：</p>
                 <ol>
-                    <li><strong>修改權利：</strong>本公司保留隨時修改本聲明任何條款的權利</li>
+                    <li><strong>修改權利：</strong>本工作室保留隨時修改本聲明任何條款的權利</li>
                     <li><strong>重大修改通知：</strong>涉及使用者重要權益的修改將提前30天公告</li>
                     <li><strong>一般修改通知：</strong>文字調整、格式優化等一般修改將提前7天公告</li>
-                    <li><strong>公告管道：</strong>修改通知將透過官網、Email、Discord等多管道發布</li>
+                    <li><strong>公告管道：</strong>修改通知將透過官網、Discord等管道發布</li>
                     <li><strong>生效時間：</strong>修改後的聲明自公告指定日期起生效</li>
                     <li><strong>同意推定：</strong>繼續使用服務視為同意修改後的條款</li>
                     <li><strong>異議處理：</strong>不同意修改者可在生效前停止使用服務</li>
@@ -1120,9 +1119,8 @@ DISCLAIMER_TEMPLATE = r"""
                 </div>
 
                 <h4>聲明解釋權與聯繫方式</h4>
-                <p>本免責聲明的最終解釋權歸Scrilab所有。在法律允許的範圍內，本公司對聲明內容的解釋為最終解釋。如對本聲明有任何疑問或需要澄清，請透過以下方式聯繫我們：</p>
+                <p>本免責聲明的最終解釋權歸Scrilab所有。在法律允許的範圍內，本工作室對聲明內容的解釋為最終解釋。如對本聲明有任何疑問或需要澄清，請透過以下方式聯繫我們：</p>
                 <ul>
-                    <li><strong>法律事務諮詢：</strong>scrilabstaff@gmail.com</li>
                     <li><strong>一般服務問題：</strong>Discord社群 (https://discord.gg/HPzNrQmN)</li>
                     <li><strong>官方網站：</strong>https://scrilab.com</li>
                 </ul>
@@ -1138,15 +1136,11 @@ DISCLAIMER_TEMPLATE = r"""
                     <i class="fab fa-discord"></i>
                     <span>Discord 社群</span>
                 </a>
-                <a href="mailto:scrilabstaff@gmail.com" class="contact-link">
-                    <i class="fas fa-envelope"></i>
-                    <span>Email 客服</span>
-                </a>
             </div>
             <div class="contact-footer">
                 <p>
-                    <strong>最後更新：</strong>2025年1月18日 | 
-                    <strong>版本：</strong>v3.0 | 
+                    <strong>最後更新：</strong>2025年7月29日 | 
+                    <strong>版本：</strong>v3.1 | 
                     <strong>適用範圍：</strong>所有 Scrilab 服務
                 </p>
             </div>
