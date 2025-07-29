@@ -9,6 +9,11 @@ import time
 
 # 簡單的驗證失敗計數器
 failed_attempts = defaultdict(list)  # IP -> [timestamp1, timestamp2, ...]
+# Google Drive 影片配置
+GOOGLE_DRIVE_CONFIG = {
+    'setup_video_id': '',  # 設定教學影片 ID
+    'demo_video_id': ''    # 演示影片 ID  
+}
 
 def is_rate_limited(ip):
     """檢查是否超過速率限制"""
@@ -1255,6 +1260,108 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                 flex-wrap: wrap;
             }
         }
+
+        /* 教學影片區域樣式 */
+        .video-tutorial-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .video-grid-manual {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .video-tutorial-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .video-tutorial-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .video-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .video-tutorial-title {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 0.8rem;
+        }
+
+        .video-tutorial-desc {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .video-player-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            background: #000;
+        }
+
+        .tutorial-video-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .video-loading-overlay,
+        .video-error-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .video-loading-overlay i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-blue);
+        }
+
+        .video-error-overlay i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .video-grid-manual {
+                grid-template-columns: 1fr;
+            }
+            
+            .video-player-container {
+                height: 220px;
+            }
+        }
         
         # ===== CSS樣式添加到這裡結束 =====
     </style>
@@ -2492,6 +2599,9 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         document.getElementById('auth-section').style.display = 'none';
                         document.getElementById('authenticated-content').classList.add('show');
                         
+                        // 初始化教學影片
+                        initializeTutorialVideos();
+                        
                         // 更新導航狀態
                         updateNavigationLocks();
                         
@@ -2543,6 +2653,65 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         function hideMessages() {
             document.getElementById('error-message').style.display = 'none';
             document.getElementById('success-message').style.display = 'none';
+        }
+
+        // 教學影片初始化和載入功能
+        function initializeTutorialVideos() {
+            loadGoogleDriveVideo('setup-video', 'setup_video_id', 'setup-video-loading', 'setup-video-error');
+            loadGoogleDriveVideo('demo-video', 'demo_video_id', 'demo-video-loading', 'demo-video-error');
+        }
+
+        function loadGoogleDriveVideo(iframeId, configKey, loadingId, errorId) {
+            fetch('/manual/video_info')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.config[configKey]) {
+                        const iframe = document.getElementById(iframeId);
+                        const fileId = data.config[configKey];
+                        const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+                        
+                        showVideoLoading(loadingId, errorId);
+                        
+                        iframe.src = embedUrl;
+                        iframe.onload = function() {
+                            hideVideoLoading(iframeId, loadingId, errorId);
+                        };
+                        
+                        iframe.onerror = function() {
+                            showVideoError(iframeId, loadingId, errorId);
+                        };
+                        
+                        // 超時檢查
+                        setTimeout(() => {
+                            if (document.getElementById(loadingId).style.display !== 'none') {
+                                showVideoError(iframeId, loadingId, errorId);
+                            }
+                        }, 8000);
+                    } else {
+                        showVideoError(iframeId, loadingId, errorId);
+                    }
+                })
+                .catch(error => {
+                    console.error('影片配置載入失敗:', error);
+                    showVideoError(iframeId, loadingId, errorId);
+                });
+        }
+
+        function showVideoLoading(loadingId, errorId) {
+            document.getElementById(loadingId).style.display = 'flex';
+            document.getElementById(errorId).style.display = 'none';
+        }
+
+        function hideVideoLoading(iframeId, loadingId, errorId) {
+            document.getElementById(iframeId).style.display = 'block';
+            document.getElementById(loadingId).style.display = 'none';
+            document.getElementById(errorId).style.display = 'none';
+        }
+
+        function showVideoError(iframeId, loadingId, errorId) {
+            document.getElementById(iframeId).style.display = 'none';
+            document.getElementById(loadingId).style.display = 'none';
+            document.getElementById(errorId).style.display = 'flex';
         }
 
         // 動態更新導航欄鎖定狀態
@@ -2976,6 +3145,56 @@ def verify_uuid():
 def artale_manual():
     """Artale 專用操作手冊"""
     return render_template_string(MANUAL_TEMPLATE_WITH_AUTH)
+
+@manual_bp.route('/set_video_config', methods=['POST'])
+def set_video_config():
+    """設定 Google Drive 影片配置（管理員功能）"""
+    try:
+        data = request.get_json()
+        setup_id = data.get('setup_video_id', '')
+        demo_id = data.get('demo_video_id', '')
+        
+        if not setup_id and not demo_id:
+            return jsonify({
+                'success': False,
+                'message': '請提供至少一個影片 ID'
+            }), 400
+        
+        # 更新配置
+        if setup_id:
+            GOOGLE_DRIVE_CONFIG['setup_video_id'] = setup_id
+        if demo_id:
+            GOOGLE_DRIVE_CONFIG['demo_video_id'] = demo_id
+        
+        return jsonify({
+            'success': True,
+            'message': '影片配置已更新',
+            'config': GOOGLE_DRIVE_CONFIG
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'配置更新失敗：{str(e)}'
+        }), 500
+
+@manual_bp.route('/video_info', methods=['GET'])
+def get_video_info():
+    """獲取影片配置資訊"""
+    return jsonify({
+        'success': True,
+        'config': GOOGLE_DRIVE_CONFIG,
+        'info': {
+            'setup_video': {
+                'title': '正確執行步驟教學',
+                'description': '角色定位工具、怪物下載及繩子工具完整說明'
+            },
+            'demo_video': {
+                'title': '參數設定與實際演示',
+                'description': '相關參數設定調整與實際操作演示'
+            }
+        }
+    })
 
 # 確保正確導出
 __all__ = ['manual_bp']
