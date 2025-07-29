@@ -1777,6 +1777,79 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         <!-- 詳細教學內容 - 需要驗證後才能查看 -->
         <div class="authenticated-content" id="authenticated-content">
+
+            <!-- 教學影片區域 -->
+            <section class="video-tutorial-section">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    教學影片
+                </h2>
+                
+                <div class="video-grid-manual">
+                    <!-- 設定教學影片 -->
+                    <div class="video-tutorial-card">
+                        <div class="video-header">
+                            <h3 class="video-tutorial-title">
+                                <i class="fas fa-cog"></i>
+                                正確執行步驟教學
+                            </h3>
+                            <p class="video-tutorial-desc">
+                                完整演示角色定位工具、怪物下載系統及繩子工具的使用方法
+                            </p>
+                        </div>
+                        <div class="video-player-container">
+                            <iframe id="setup-video" 
+                                    src=""
+                                    class="tutorial-video-iframe"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen>
+                            </iframe>
+                            <div id="setup-video-loading" class="video-loading-overlay">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>影片載入中...</p>
+                            </div>
+                            <div id="setup-video-error" class="video-error-overlay">
+                                <i class="fas fa-video"></i>
+                                <p>影片準備中...</p>
+                                <small>精彩教學影片製作中，敬請期待！</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 演示影片 -->
+                    <div class="video-tutorial-card">
+                        <div class="video-header">
+                            <h3 class="video-tutorial-title">
+                                <i class="fas fa-play-circle"></i>
+                                參數設定與實際演示
+                            </h3>
+                            <p class="video-tutorial-desc">
+                                詳細說明各項參數設定調整方法與實際操作演示
+                            </p>
+                        </div>
+                        <div class="video-player-container">
+                            <iframe id="demo-video" 
+                                    src=""
+                                    class="tutorial-video-iframe"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen>
+                            </iframe>
+                            <div id="demo-video-loading" class="video-loading-overlay">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>影片載入中...</p>
+                            </div>
+                            <div id="demo-video-error" class="video-error-overlay">
+                                <i class="fas fa-video"></i>
+                                <p>影片準備中...</p>
+                                <small>精彩演示影片製作中，敬請期待！</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        
             <!-- Login Section -->
             <section id="login" class="manual-section">
                 <h2 class="section-title">
