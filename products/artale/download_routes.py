@@ -734,7 +734,7 @@ DOWNLOAD_TEMPLATE = r"""
                             </div>
                             <div class="download-info">
                                 <h3>Artale Script 主程式</h3>
-                                <div class="download-version">版本 v1.3.11 | 完整版本</div>
+                                <div class="download-version">版本 v1.4.2 | 完整版本</div>
                             </div>
                         </div>
                         
