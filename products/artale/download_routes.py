@@ -751,7 +751,7 @@ DOWNLOAD_TEMPLATE = r"""
                             <li><i class="fas fa-check feature-check"></i> 血量監控系統</li>
                         </ul>
                         
-                        <a href="https://drive.google.com/file/d/1vRhP8nHo9pXasToordPYduwSOaMOdtgJ/view?usp=drive_link" 
+                        <a href="https://drive.google.com/drive/folders/1Cm85uYGr2xaZmw4pRamAz_JAZ6WjUEfw?usp=drive_link" 
                         target="_blank" 
                         class="download-button">
                             <i class="fas fa-download"></i>
