@@ -910,7 +910,6 @@ JS_DEBUG_FUNCTIONS = """
                 loadRefunds();
             } else if (tabId === 'system-stats') {
                 loadSystemStats();
-            }
             } else if (tabId === 'online-users-tab') {
                 loadOnlineUsers();
             }
