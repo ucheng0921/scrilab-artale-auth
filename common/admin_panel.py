@@ -382,6 +382,14 @@ HTML_BODY_START = """
             <!-- 統計資訊 -->
             <div class="stats">
                 <div class="stat-card">
+                    <h3 id="total-users">-</h3>
+                    <p>總用戶數</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="online-users">-</h3>
+                    <p>目前在線</p>
+                </div>
+                <div class="stat-card">
                     <h3 id="total-revenue">-</h3>
                     <p>總收益 (NT$)</p>
                 </div>
@@ -394,6 +402,7 @@ HTML_BODY_START = """
             <!-- 分頁標籤 -->
             <div class="tabs">
                 <div class="tab active" onclick="switchTab('user-management')">👥 用戶管理</div>
+                <div class="tab" onclick="switchTab('online-users-tab')">🟢 在線用戶</div>
                 <div class="tab" onclick="switchTab('payment-management')">💳 付款記錄</div>
                 <div class="tab" onclick="switchTab('refund-management')">🔄 退款管理</div>
                 <div class="tab" onclick="switchTab('uuid-generator')">🔧 UUID 生成器</div>
@@ -460,6 +469,32 @@ HTML_USER_MANAGEMENT = """
                         </thead>
                         <tbody id="users-tbody">
                             <tr><td colspan="8" style="text-align: center;" id="loading-message">載入中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 在線用戶分頁 -->
+            <div id="online-users-tab" class="tab-content">
+                <div class="section">
+                    <h2>🟢 目前在線用戶</h2>
+                    <div style="margin-bottom: 15px;">
+                        <button onclick="loadOnlineUsers()" class="btn">🔄 刷新在線列表</button>
+                        <span id="last-online-update" style="color: var(--text-muted); margin-left: 1rem;"></span>
+                    </div>
+                    <table class="user-table" id="online-users-table">
+                        <thead>
+                            <tr>
+                                <th>顯示名稱</th>
+                                <th>完整 UUID</th>
+                                <th>最後活動</th>
+                                <th>活動類型</th>
+                                <th>IP 位址</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="online-users-tbody">
+                            <tr><td colspan="6" style="text-align: center;">載入中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -875,6 +910,8 @@ JS_DEBUG_FUNCTIONS = """
                 loadRefunds();
             } else if (tabId === 'system-stats') {
                 loadSystemStats();
+            } else if (tabId === 'online-users-tab') {
+                loadOnlineUsers();
             }
         }
 """
@@ -1743,6 +1780,94 @@ JS_USER_OPERATIONS = """
             }
         }
 
+        // 在線用戶相關函數 - 新增的部分
+        let allOnlineUsers = [];
+
+        async function loadOnlineUsers() {
+            if (!isLoggedIn) return;
+            
+            try {
+                const response = await fetch('/admin/online-users', {
+                    headers: { 'Admin-Token': ADMIN_TOKEN }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    allOnlineUsers = data.online_users;
+                    renderOnlineUsers(allOnlineUsers);
+                    
+                    // 更新在線人數統計
+                    document.getElementById('online-users').textContent = data.online_count || 0;
+                    
+                    // 更新最後更新時間
+                    document.getElementById('last-online-update').textContent = 
+                        `最後更新: ${new Date().toLocaleString('zh-TW')}`;
+                } else {
+                    alert('載入失敗: ' + data.error);
+                }
+            } catch (error) {
+                console.error('載入在線用戶錯誤:', error);
+                alert('載入錯誤: ' + error.message);
+            }
+        }
+
+        function renderOnlineUsers(users) {
+            const tbody = document.getElementById('online-users-tbody');
+            tbody.innerHTML = '';
+            
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">目前沒有在線用戶</td></tr>';
+                return;
+            }
+            
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${user.display_name || 'Unknown'}</td>
+                    <td>
+                        <code style="font-size: 11px; color: var(--accent-blue);">${user.full_uuid}</code>
+                        <button onclick="copyToClipboard('${user.full_uuid}')" class="btn" style="font-size: 8px; padding: 2px 6px; margin-left: 5px;">
+                            複製
+                        </button>
+                    </td>
+                    <td>${formatTimeAgo(user.last_activity)}</td>
+                    <td>${user.activity_type_display}</td>
+                    <td><code style="font-size: 11px;">${user.ip_address}</code></td>
+                    <td>
+                        <button onclick="alert('用戶ID: ${user.user_id}')" class="btn btn-info" style="font-size: 10px;">詳情</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return '未知';
+            
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diffMs = now - time;
+            const diffMins = Math.floor(diffMs / 60000);
+            
+            if (diffMins < 1) return '剛剛';
+            if (diffMins < 60) return `${diffMins}分鐘前`;
+            
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours}小時前`;
+            
+            return `${Math.floor(diffHours / 24)}天前`;
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('UUID 已複製到剪貼簿');
+            }).catch(() => {
+                alert('複製失敗，請手動複製');
+            });
+        }
+
         // 鍵盤支援
         document.addEventListener('DOMContentLoaded', function() {
             const passwordInput = document.getElementById('admin-password');
@@ -2542,4 +2667,63 @@ def backup_data():
         
     except Exception as e:
         logger.error(f"Backup data error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+    
+@admin_bp.route('/online-users', methods=['GET'])
+def get_online_users():
+    """獲取目前在線用戶列表"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+            
+        # 獲取最近30分鐘內有活動的會話
+        cutoff_time = datetime.now() - timedelta(minutes=30)
+        sessions_ref = db.collection('user_sessions')
+        active_sessions = sessions_ref.where('last_activity', '>', cutoff_time).stream()
+        
+        online_users = []
+        for session in active_sessions:
+            session_data = session.to_dict()
+            user_id = session_data.get('user_id')
+            
+            if not user_id:
+                continue
+                
+            # 獲取用戶信息
+            user_ref = db.collection('authorized_users').document(user_id)
+            user_doc = user_ref.get()
+            if not user_doc.exists:
+                continue
+            
+            user_data = user_doc.to_dict()
+            
+            online_users.append({
+                'user_id': user_id,
+                'display_name': user_data.get('display_name', 'Unknown'),
+                'full_uuid': user_data.get('original_uuid', 'N/A'),
+                'last_activity': session_data.get('last_activity').strftime('%Y-%m-%d %H:%M:%S') if session_data.get('last_activity') else None,
+                'ip_address': session_data.get('ip_address', 'N/A'),
+                'activity_type': session_data.get('last_activity_type', 'unknown'),
+                'activity_type_display': {
+                    'login': '登入驗證',
+                    'heartbeat': '心跳檢測',
+                    'validation': '權限驗證',
+                }.get(session_data.get('last_activity_type', 'unknown'), '未知活動')
+            })
+        
+        # 計算在線人數
+        online_count = len(online_users)
+        
+        return jsonify({
+            'success': True,
+            'online_users': online_users,
+            'online_count': online_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Get online users error: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
