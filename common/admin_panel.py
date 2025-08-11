@@ -1824,19 +1824,23 @@ JS_USER_OPERATIONS = """
             users.forEach(user => {
                 const row = document.createElement('tr');
                 
+                // 根據狀態設置不同的樣式
+                const activityColor = user.status_class === 'status-active' ? '#10b981' : '#f59e0b';
+                const activityIcon = user.status_class === 'status-active' ? '🟢' : '🟡';
+                
                 row.innerHTML = `
                     <td>${user.display_name || 'Unknown'}</td>
                     <td>
-                        <code style="font-size: 11px; color: var(--accent-blue);">${user.full_uuid}</code>
+                        <code style="font-size: 11px; color: #00d4ff;">${user.full_uuid}</code>
                         <button onclick="copyToClipboard('${user.full_uuid}')" class="btn" style="font-size: 8px; padding: 2px 6px; margin-left: 5px;">
                             複製
                         </button>
                     </td>
-                    <td>${formatTimeAgo(user.last_activity)}</td>
+                    <td style="color: ${activityColor};">${activityIcon} ${user.last_activity}</td>
                     <td>${user.activity_type_display}</td>
                     <td><code style="font-size: 11px;">${user.ip_address}</code></td>
                     <td>
-                        <button onclick="alert('用戶ID: ${user.user_id}')" class="btn btn-info" style="font-size: 10px;">詳情</button>
+                        <button onclick="showUserDetails('${user.user_id}', '${user.display_name}', '${user.full_uuid}')" class="btn btn-info" style="font-size: 10px;">詳情</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -2671,7 +2675,7 @@ def backup_data():
     
 @admin_bp.route('/online-users', methods=['GET'])
 def get_online_users():
-    """獲取目前在線用戶列表"""
+    """獲取目前在線用戶列表 - 安全版本"""
     if not check_admin_token(request):
         return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     
@@ -2680,19 +2684,45 @@ def get_online_users():
         if db is None:
             return jsonify({'success': False, 'error': 'Database not available'}), 503
             
-        # 獲取最近30分鐘內有活動的會話
-        cutoff_time = datetime.now() - timedelta(minutes=30)
+        current_time = datetime.now()
+        
+        # 延長到2小時，更保守的過期時間
+        cutoff_time = current_time - timedelta(hours=2)
+        
+        # 只清理非常舊的會話（超過24小時）
+        very_old_cutoff = current_time - timedelta(hours=24)
+        very_old_sessions = db.collection('user_sessions').where('last_activity', '<', very_old_cutoff).limit(10).stream()
+        
+        cleaned_count = 0
+        for old_session in very_old_sessions:
+            old_session.reference.delete()
+            cleaned_count += 1
+        
+        # 獲取活躍會話（2小時內活動 + 標記為活躍）
         sessions_ref = db.collection('user_sessions')
-        active_sessions = sessions_ref.where('last_activity', '>', cutoff_time).stream()
+        recent_sessions = sessions_ref.where('last_activity', '>', cutoff_time).stream()
         
         online_users = []
-        for session in active_sessions:
+        user_sessions = {}  # 用戶ID -> 最新會話
+        
+        for session in recent_sessions:
             session_data = session.to_dict()
             user_id = session_data.get('user_id')
             
-            if not user_id:
+            # 跳過明確標記為非活躍的會話
+            if session_data.get('session_active') == False:
                 continue
                 
+            if not user_id:
+                continue
+            
+            # 只保留每個用戶的最新會話
+            last_activity = session_data.get('last_activity')
+            if user_id not in user_sessions or (last_activity and last_activity > user_sessions[user_id]['last_activity']):
+                user_sessions[user_id] = session_data
+        
+        # 處理每個唯一用戶
+        for user_id, session_data in user_sessions.items():
             # 獲取用戶信息
             user_ref = db.collection('authorized_users').document(user_id)
             user_doc = user_ref.get()
@@ -2701,29 +2731,106 @@ def get_online_users():
             
             user_data = user_doc.to_dict()
             
+            # 檢查用戶是否仍然有效
+            if not user_data.get('active', False):
+                continue
+            
+            # 檢查是否過期
+            expires_at = user_data.get('expires_at')
+            if expires_at:
+                if isinstance(expires_at, str):
+                    expires_at = datetime.fromisoformat(expires_at.replace('Z', ''))
+                if expires_at < current_time:
+                    continue  # 跳過已過期的用戶
+            
+            # 計算時間差（30分鐘內算"活躍"，2小時內算"在線"）
+            last_activity = session_data.get('last_activity')
+            if isinstance(last_activity, datetime):
+                diff_minutes = int((current_time - last_activity).total_seconds() / 60)
+                
+                if diff_minutes < 5:
+                    time_display = "剛剛"
+                    status_class = "status-active"
+                elif diff_minutes < 30:
+                    time_display = f"{diff_minutes}分鐘前"
+                    status_class = "status-active"
+                elif diff_minutes < 120:
+                    hours = diff_minutes // 60
+                    minutes = diff_minutes % 60
+                    if hours > 0:
+                        time_display = f"{hours}小時{minutes}分鐘前"
+                    else:
+                        time_display = f"{diff_minutes}分鐘前"
+                    status_class = "status-inactive"  # 閒置但在線
+                else:
+                    continue  # 超過2小時就不顯示
+            else:
+                time_display = "未知"
+                status_class = "status-inactive"
+            
             online_users.append({
                 'user_id': user_id,
                 'display_name': user_data.get('display_name', 'Unknown'),
                 'full_uuid': user_data.get('original_uuid', 'N/A'),
-                'last_activity': session_data.get('last_activity').strftime('%Y-%m-%d %H:%M:%S') if session_data.get('last_activity') else None,
+                'last_activity': time_display,
+                'status_class': status_class,
                 'ip_address': session_data.get('ip_address', 'N/A'),
                 'activity_type': session_data.get('last_activity_type', 'unknown'),
                 'activity_type_display': {
                     'login': '登入驗證',
-                    'heartbeat': '心跳檢測',
                     'validation': '權限驗證',
+                    'heartbeat': '心跳檢測',
                 }.get(session_data.get('last_activity_type', 'unknown'), '未知活動')
             })
         
-        # 計算在線人數
-        online_count = len(online_users)
+        # 按活躍程度和時間排序
+        online_users.sort(key=lambda x: (x['status_class'] == 'status-active', x['last_activity']), reverse=True)
         
         return jsonify({
             'success': True,
             'online_users': online_users,
-            'online_count': online_count
+            'online_count': len(online_users),
+            'active_count': len([u for u in online_users if u['status_class'] == 'status-active']),
+            'cleaned_expired': cleaned_count
         })
         
     except Exception as e:
         logger.error(f"Get online users error: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+# 3. 更保守的定期清理（只清理很舊的會話）
+def cleanup_expired_sessions():
+    """定期清理過期會話 - 保守版本"""
+    try:
+        from app import db, firebase_initialized  # 正確導入變數
+        
+        if not firebase_initialized or db is None:
+            return
+            
+        current_time = datetime.now()
+        
+        # 只清理24小時前的會話，非常保守
+        cutoff_time = current_time - timedelta(hours=24)
+        old_sessions = db.collection('user_sessions').where('last_activity', '<', cutoff_time).limit(20).stream()
+        
+        deleted_count = 0
+        for session in old_sessions:
+            session.reference.delete()
+            deleted_count += 1
+        
+        # 另外清理明確標記為非活躍且超過1小時的會話
+        inactive_cutoff = current_time - timedelta(hours=1)
+        inactive_sessions = db.collection('user_sessions')\
+                            .where('session_active', '==', False)\
+                            .where('logout_time', '<', inactive_cutoff)\
+                            .limit(10).stream()
+        
+        for session in inactive_sessions:
+            session.reference.delete()
+            deleted_count += 1
+        
+        if deleted_count > 0:
+            logger.info(f"🧹 保守清理：刪除了 {deleted_count} 個過期會話")
+            
+    except Exception as e:
+        logger.error(f"❌ 定期清理失敗: {str(e)}")
