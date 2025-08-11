@@ -1,6 +1,7 @@
 """
 app.py - 修復版本，正確支援 Gumroad 付款
 """
+import hashlib
 from flask import Flask, redirect, request, jsonify, render_template_string
 from flask_cors import CORS
 import firebase_admin
@@ -8,7 +9,7 @@ from firebase_admin import credentials, firestore
 import os
 import json
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import threading
 import schedule
@@ -399,7 +400,54 @@ def login():
             'code': 'SERVICE_NOT_READY'
         }), 503
     
-    return route_handlers.login()
+    # 獲取用戶的原始 UUID 和 request 信息
+    data = request.get_json()
+    user_uuid = data.get('uuid', '').strip()
+    
+    # 先進行原有的登入驗證
+    result = route_handlers.login()
+    
+    # 如果登入成功，創建會話記錄
+    if isinstance(result, tuple):
+        response_data, status_code = result
+    else:
+        response_data = result.get_json() if hasattr(result, 'get_json') else result
+        status_code = 200
+    
+    if isinstance(response_data, dict) and response_data.get('success') and user_uuid:
+        try:
+            # 創建會話記錄
+            if session_manager:
+                user_id = hashlib.sha256(user_uuid.encode()).hexdigest()
+                
+                # 獲取 IP 地址
+                ip_address = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+                if ip_address and ',' in ip_address:
+                    ip_address = ip_address.split(',')[0].strip()
+                
+                # 創建會話數據
+                session_data = {
+                    'user_id': user_id,
+                    'original_uuid': user_uuid,
+                    'created_at': datetime.now(),
+                    'last_activity': datetime.now(),
+                    'last_activity_type': 'login',
+                    'ip_address': ip_address,
+                    'user_agent': request.headers.get('User-Agent', ''),
+                    'expires_at': datetime.now() + timedelta(hours=24)
+                }
+                
+                # 保存到資料庫
+                session_ref = db.collection('user_sessions').document()
+                session_ref.set(session_data)
+                
+                logger.info(f"創建用戶會話: {user_uuid[:16]}... IP: {ip_address}")
+                
+        except Exception as e:
+            logger.error(f"創建會話記錄失敗: {str(e)}")
+            # 不影響登入流程
+    
+    return result
 
 @app.route('/auth/logout', methods=['POST'])
 def logout():
@@ -423,7 +471,44 @@ def validate_session():
             'code': 'SERVICE_NOT_READY'
         }), 503
     
-    return route_handlers.validate_session()
+    # 獲取用戶 UUID 用於更新會話
+    data = request.get_json()
+    user_uuid = data.get('uuid', '').strip()
+    
+    # 執行原有的驗證
+    result = route_handlers.validate_session()
+    
+    # 如果驗證成功，更新會話活動
+    if isinstance(result, tuple):
+        response_data, status_code = result
+    else:
+        response_data = result.get_json() if hasattr(result, 'get_json') else result
+        status_code = 200
+    
+    if isinstance(response_data, dict) and response_data.get('success') and user_uuid:
+        try:
+            # 更新會話活動
+            user_id = hashlib.sha256(user_uuid.encode()).hexdigest()
+            
+            # 查找並更新最新的會話
+            sessions_ref = db.collection('user_sessions')
+            user_sessions = sessions_ref.where('user_id', '==', user_id)\
+                                     .order_by('last_activity', direction=firestore.Query.DESCENDING)\
+                                     .limit(1)\
+                                     .stream()
+            
+            for session in user_sessions:
+                session.reference.update({
+                    'last_activity': datetime.now(),
+                    'last_activity_type': 'validation'
+                })
+                break
+                
+        except Exception as e:
+            logger.error(f"更新會話活動失敗: {str(e)}")
+            # 不影響驗證流程
+    
+    return result
 
 @app.route('/session-stats', methods=['GET'])
 def session_stats():
