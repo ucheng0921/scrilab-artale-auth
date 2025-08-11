@@ -451,7 +451,7 @@ def login():
 
 @app.route('/auth/logout', methods=['POST'])
 def logout():
-    """用戶登出端點"""
+    """用戶登出端點 - 安全版本"""
     if not route_handlers:
         return jsonify({
             'success': False,
@@ -459,7 +459,38 @@ def logout():
             'code': 'SERVICE_NOT_READY'
         }), 503
     
-    return route_handlers.logout()
+    # 獲取用戶 UUID 用於清理會話
+    data = request.get_json()
+    user_uuid = data.get('uuid', '').strip()
+    
+    # 執行原有的登出
+    result = route_handlers.logout()
+    
+    # 只標記會話為非活躍，而不是刪除
+    if user_uuid and db:
+        try:
+            user_id = hashlib.sha256(user_uuid.encode()).hexdigest()
+            ip_address = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+            if ip_address and ',' in ip_address:
+                ip_address = ip_address.split(',')[0].strip()
+            
+            # 只更新匹配IP和用戶的會話為非活躍
+            user_sessions = db.collection('user_sessions').where('user_id', '==', user_id).stream()
+            for session in user_sessions:
+                session_data = session.to_dict()
+                if session_data.get('ip_address') == ip_address:
+                    # 標記為非活躍而不是刪除
+                    session.reference.update({
+                        'session_active': False,
+                        'logout_time': datetime.now()
+                    })
+            
+            logger.info(f"用戶登出，標記會話非活躍: {user_uuid[:16]}... IP: {ip_address}")
+                
+        except Exception as e:
+            logger.error(f"標記登出會話失敗: {str(e)}")
+    
+    return result
 
 @app.route('/auth/validate', methods=['POST'])
 def validate_session():
