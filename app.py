@@ -545,7 +545,7 @@ if __name__ == '__main__':
     logger.info(f"🔍 Discord Token 存在: {'是' if discord_token else '否'}")
     logger.info(f"🔍 Discord Guild ID: {discord_guild_id if discord_guild_id else '未設定'}")
     
-    if discord_token:
+    if discord_token and discord_guild_id:
         logger.info("🤖 準備啟動 Discord 機器人...")
         try:
             # 檢查模組是否存在
@@ -579,9 +579,12 @@ if __name__ == '__main__':
         except Exception as e:
             logger.error(f"❌ Discord 機器人設定失敗: {str(e)}", exc_info=True)
     else:
-        logger.warning("⚠️ 未設定 DISCORD_BOT_TOKEN，跳過 Discord 機器人啟動")
+        if not discord_token:
+            logger.warning("⚠️ 未設定 DISCORD_BOT_TOKEN，跳過 Discord 機器人啟動")
+        if not discord_guild_id:
+            logger.warning("⚠️ 未設定 DISCORD_GUILD_ID，跳過 Discord 機器人啟動")
     
     # 啟動 Flask 應用
     port = int(os.environ.get('PORT', 5000))
     logger.info(f"🌐 Flask 應用啟動於 port {port}")
-    app.run(debug=False, host='0.0.0.0', port=port)  # 生產環境不用 debug=True
+    app.run(debug=False, host='0.0.0.0', port=port)
