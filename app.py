@@ -195,7 +195,7 @@ def init_firebase_with_retry(max_retries=3):
         initialization_in_progress = False
 
 def start_discord_bot():
-    """啟動 Discord 機器人 - 完整錯誤處理版本"""
+    """啟動 Discord 機器人"""
     # 檢查 Discord 相關設定
     discord_token = os.environ.get('DISCORD_BOT_TOKEN')
     discord_guild_id = os.environ.get('DISCORD_GUILD_ID')
@@ -203,73 +203,42 @@ def start_discord_bot():
     logger.info(f"🔍 Discord Token 存在: {'是' if discord_token else '否'}")
     logger.info(f"🔍 Discord Guild ID: {discord_guild_id if discord_guild_id else '未設定'}")
     
-    if not discord_token or not discord_guild_id:
+    if discord_token and discord_guild_id:
+        logger.info("🤖 準備啟動 Discord 機器人...")
+        try:
+            # 檢查模組是否存在
+            import discord_bot
+            logger.info("✅ discord_bot 模組導入成功")
+            
+            from discord_bot import create_discord_bot
+            logger.info("✅ create_discord_bot 函數導入成功")
+            
+            def run_discord_bot():
+                try:
+                    logger.info("🚀 Discord 機器人線程開始...")
+                    bot = create_discord_bot(db)  # 使用現有的 Firebase db
+                    logger.info("✅ Discord 機器人實例創建成功")
+                    logger.info("🔌 嘗試連接到 Discord...")
+                    bot.run(discord_token)
+                except Exception as e:
+                    logger.error(f"❌ Discord 機器人執行失敗: {str(e)}", exc_info=True)
+            
+            # 在背景執行 Discord 機器人
+            discord_thread = threading.Thread(target=run_discord_bot)
+            discord_thread.daemon = True
+            discord_thread.start()
+            logger.info("✅ Discord 機器人線程已啟動")
+            
+        except ImportError as e:
+            logger.error(f"❌ Discord 模組導入失敗: {str(e)}")
+            logger.error("請確認 discord_bot 資料夾和相關檔案是否存在")
+        except Exception as e:
+            logger.error(f"❌ Discord 機器人設定失敗: {str(e)}", exc_info=True)
+    else:
         if not discord_token:
             logger.warning("⚠️ 未設定 DISCORD_BOT_TOKEN，跳過 Discord 機器人啟動")
         if not discord_guild_id:
             logger.warning("⚠️ 未設定 DISCORD_GUILD_ID，跳過 Discord 機器人啟動")
-        return
-
-    logger.info("🤖 準備啟動 Discord 機器人...")
-    
-    try:
-        # 首先測試基本的 discord 導入
-        import discord
-        logger.info("✅ Discord 基礎模組導入成功")
-        
-        # 測試 voice 相關功能（這裡通常會觸發 audioop 錯誤）
-        try:
-            # 這個測試可能會觸發 audioop 相關的錯誤
-            _ = discord.VoiceClient
-            logger.info("✅ Discord Voice 功能可用")
-        except Exception as voice_error:
-            logger.warning(f"⚠️ Discord Voice 功能不可用: {voice_error}")
-            logger.info("ℹ️ 將以純文字模式運行機器人")
-        
-        # 檢查 discord_bot 模組
-        import discord_bot
-        logger.info("✅ discord_bot 模組導入成功")
-        
-        from discord_bot import create_discord_bot
-        logger.info("✅ create_discord_bot 函數導入成功")
-        
-        def run_discord_bot():
-            try:
-                logger.info("🚀 Discord 機器人線程開始...")
-                bot = create_discord_bot(db)  # 使用現有的 Firebase db
-                logger.info("✅ Discord 機器人實例創建成功")
-                logger.info("🔌 嘗試連接到 Discord...")
-                bot.run(discord_token)
-            except Exception as e:
-                logger.error(f"❌ Discord 機器人執行失敗: {str(e)}", exc_info=True)
-        
-        # 在背景執行 Discord 機器人
-        discord_thread = threading.Thread(target=run_discord_bot)
-        discord_thread.daemon = True
-        discord_thread.start()
-        logger.info("✅ Discord 機器人線程已啟動")
-        
-    except ImportError as e:
-        error_msg = str(e).lower()
-        
-        if 'audioop' in error_msg:
-            logger.error("❌ Discord.py 與當前 Python 版本不相容（audioop 模組缺失）")
-            logger.error("🔧 建議解決方案：")
-            logger.error("   1. 使用 py-cord 替代 discord.py：pip install py-cord==2.4.1")
-            logger.error("   2. 確保 runtime.txt 指定 Python 3.11 或更低版本")
-            logger.error("   3. 或暫時禁用 Discord 機器人功能")
-        elif 'discord' in error_msg:
-            logger.error(f"❌ Discord 模組導入失敗: {e}")
-            logger.error("🔧 請檢查 requirements.txt 中是否包含正確的 Discord 依賴")
-        else:
-            logger.error(f"❌ Discord 機器人模組載入失敗: {e}")
-            logger.error("🔧 請確認 discord_bot 資料夾和相關檔案是否存在")
-        
-        logger.warning("🔄 應用程式繼續運行，但 Discord 機器人功能暫不可用")
-        
-    except Exception as e:
-        logger.error(f"❌ Discord 機器人設定失敗: {str(e)}", exc_info=True)
-        logger.warning("🔄 應用程式繼續運行，但 Discord 機器人功能暫不可用")
 
 def init_services():
     """初始化相關服務"""
