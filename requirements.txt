@@ -7,5 +7,5 @@ requests==2.31.0
 uuid==1.30
 schedule==1.2.0
 psutil==6.1.0
-# 使用最新版 discord.py，已修復 Python 3.13 相容性
-discord.py==2.4.0
+# 使用穩定版 discord.py，與 Python 3.12 完全相容
+discord.py==2.3.2
