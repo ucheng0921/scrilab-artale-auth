@@ -526,6 +526,8 @@ def forbidden(error):
     """將 403 偽裝成 404"""
     return jsonify({'error': 'Not found'}), 404
 
+# 在 app.py 最底部，修改成這樣：
+
 # 如果作為主程式運行
 if __name__ == '__main__':
     # 開發環境下的額外檢查
@@ -535,22 +537,34 @@ if __name__ == '__main__':
     if not gumroad_service:
         logger.warning("⚠️ Gumroad 服務未初始化，付款功能不可用")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
-
-
-if __name__ == '__main__':
-    # 原有的 Flask 應用啟動
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # 檢查是否要啟動 Discord 機器人
+    discord_token = os.environ.get('DISCORD_BOT_TOKEN')
+    if discord_token:
+        try:
+            import threading
+            from discord_bot import create_discord_bot
+            
+            def run_discord_bot():
+                try:
+                    logger.info("🤖 啟動 Discord 機器人...")
+                    bot = create_discord_bot(db)  # 使用現有的 Firebase db
+                    bot.run(discord_token)
+                except Exception as e:
+                    logger.error(f"❌ Discord 機器人啟動失敗: {str(e)}")
+            
+            # 在背景執行 Discord 機器人
+            discord_thread = threading.Thread(target=run_discord_bot)
+            discord_thread.daemon = True
+            discord_thread.start()
+            logger.info("✅ Discord 機器人已在背景啟動")
+            
+        except ImportError as e:
+            logger.warning(f"⚠️ Discord 模組導入失敗: {str(e)}")
+        except Exception as e:
+            logger.error(f"❌ Discord 機器人設定失敗: {str(e)}")
+    else:
+        logger.info("ℹ️ 未設定 DISCORD_BOT_TOKEN，跳過 Discord 機器人啟動")
     
-    # 如果要同時運行 Discord 機器人，取消註解以下代碼：
-    # import threading
-    # from discord_bot import create_discord_bot, DISCORD_TOKEN
-    # 
-    # def run_discord_bot():
-    #     bot = create_discord_bot(db)  # db 是你的 Firebase 連接
-    #     bot.run(DISCORD_TOKEN)
-    # 
-    # # 在背景執行 Discord 機器人
-    # discord_thread = threading.Thread(target=run_discord_bot)
-    # discord_thread.daemon = True
-    # discord_thread.start()
+    # 啟動 Flask 應用
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
