@@ -7,5 +7,6 @@ requests==2.31.0
 uuid==1.30
 schedule==1.2.0
 psutil==6.1.0
-# 使用穩定版 discord.py，與 Python 3.12 完全相容
+# Discord 相關依賴
+audioop-lts==0.2.1
 discord.py==2.3.2
