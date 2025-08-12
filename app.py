@@ -536,3 +536,21 @@ if __name__ == '__main__':
         logger.warning("⚠️ Gumroad 服務未初始化，付款功能不可用")
     
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+
+if __name__ == '__main__':
+    # 原有的 Flask 應用啟動
+    app.run(debug=True, host='0.0.0.0', port=5000)
+    
+    # 如果要同時運行 Discord 機器人，取消註解以下代碼：
+    # import threading
+    # from discord_bot import create_discord_bot, DISCORD_TOKEN
+    # 
+    # def run_discord_bot():
+    #     bot = create_discord_bot(db)  # db 是你的 Firebase 連接
+    #     bot.run(DISCORD_TOKEN)
+    # 
+    # # 在背景執行 Discord 機器人
+    # discord_thread = threading.Thread(target=run_discord_bot)
+    # discord_thread.daemon = True
+    # discord_thread.start()
