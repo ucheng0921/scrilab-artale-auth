@@ -1493,6 +1493,32 @@ INTRO_TEMPLATE = r"""
                     選擇我們，就是選擇更安全、更可靠的解決方案。
                 </div>
             </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <span>🛡️ 軟體會被防毒軟體誤判嗎？如何證明無毒？</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <strong>完全理解您的擔憂！</strong>這是使用任何第三方軟體時最重要的安全考量。<br><br>
+                    
+                    <strong>📋 關於防毒軟體誤判：</strong><br>
+                    • 自動化軟體確實容易被部分防毒軟體「誤判」為可疑程式<br>
+                    • 這是因為我們的軟體需要「讀取螢幕畫面」和「模擬滑鼠鍵盤操作」<br>
+                    • 這些行為模式與某些惡意軟體相似，觸發了防毒軟體的啟發式檢測<br>
+                    
+                    <strong>🔒 我們的安全保證：</strong><br>
+                    • <strong>功能透明</strong>：僅執行螢幕截圖分析和滑鼠鍵盤模擬，無其他隱藏功能<br>
+                    • <strong>無網路威脅</strong>：除了必要的授權驗證外，不進行任何可疑的網路連線<br>
+                    • <strong>無系統破壞</strong>：不修改系統檔案、不寫入登錄檔敏感區域<br>
+                    
+                    <strong>🔍 您可以自行驗證的方法：</strong><br>
+                    1. <strong>VirusTotal 檢測</strong>：將軟體上傳至 virustotal.com 進行多引擎掃描<br>
+                    2. <strong>沙盒測試</strong>：在虛擬機器中先行測試，觀察軟體行為<br>
+                    3. <strong>網路監控</strong>：使用 Wireshark 等工具監控軟體的網路活動<br>
+                    4. <strong>系統監控</strong>：使用 Process Monitor 觀察軟體的檔案系統操作<br><br>
+                    
+                </div>
+            </div>
             
         </section>
 

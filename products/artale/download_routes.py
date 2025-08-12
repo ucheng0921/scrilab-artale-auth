@@ -645,7 +645,7 @@ DOWNLOAD_TEMPLATE = r"""
         <div class="download-header">
             <h1 class="download-title">Artale Script 下載中心</h1>
             <p class="download-subtitle">專業版軟體下載 - 僅供授權用戶使用</p>
-            <span class="version-badge">最新版本 v1.3.11</span>
+            <span class="version-badge">最新版本 v1.4.6</span>
         </div>
 
         <!-- Auth Section -->
@@ -734,7 +734,7 @@ DOWNLOAD_TEMPLATE = r"""
                             </div>
                             <div class="download-info">
                                 <h3>Artale Script 主程式</h3>
-                                <div class="download-version">版本 v1.3.11 | 完整版本</div>
+                                <div class="download-version">版本 v1.4.6 | 完整版本</div>
                             </div>
                         </div>
                         
@@ -749,6 +749,7 @@ DOWNLOAD_TEMPLATE = r"""
                             <li><i class="fas fa-check feature-check"></i> 紅點檢測避人功能</li>
                             <li><i class="fas fa-check feature-check"></i> 攀爬繩索功能</li>
                             <li><i class="fas fa-check feature-check"></i> 血量監控系統</li>
+                            <li><i class="fas fa-check feature-check"></i> 自動解除測謊</li>
                         </ul>
                         
                         <a href="https://drive.google.com/drive/folders/1Cm85uYGr2xaZmw4pRamAz_JAZ6WjUEfw?usp=drive_link" 
