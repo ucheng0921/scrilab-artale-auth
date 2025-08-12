@@ -1,5 +1,5 @@
 """
-Discord 機器人主程式 - 專注於序號驗證
+Discord 機器人主程式 - 修復版本
 """
 import discord
 from discord.ext import commands
@@ -28,14 +28,21 @@ class DiscordBot(commands.Bot):
             synced = await self.tree.sync()
             logger.info(f"✅ 已同步 {len(synced)} 個斜線命令")
             
+            # 等待機器人完全就緒後再設置狀態
+            await self.wait_until_ready()
+            
             # 設置機器人狀態
-            await self.change_presence(
-                status=discord.Status.online,
-                activity=discord.Activity(
-                    type=discord.ActivityType.watching, 
-                    name="序號驗證 | 使用 /verify"
+            try:
+                await self.change_presence(
+                    status=discord.Status.online,
+                    activity=discord.Activity(
+                        type=discord.ActivityType.watching, 
+                        name="序號驗證 | 使用 /verify"
+                    )
                 )
-            )
+                logger.info("✅ 機器人狀態設置成功")
+            except Exception as status_error:
+                logger.warning(f"⚠️ 無法設置機器人狀態: {status_error}")
             
         except Exception as e:
             logger.error(f"❌ 機器人設置失敗: {e}")
@@ -47,6 +54,7 @@ class DiscordBot(commands.Bot):
         
         # 檢查必要的角色是否存在
         for guild in self.guilds:
+            logger.info(f"🏠 伺服器: {guild.name} (ID: {guild.id})")
             await self.setup_guild_roles(guild)
 
     async def setup_guild_roles(self, guild):
@@ -62,6 +70,8 @@ class DiscordBot(commands.Bot):
                     mentionable=False
                 )
                 logger.info(f"✅ 已在 {guild.name} 創建驗證角色")
+            else:
+                logger.info(f"✅ {guild.name} 中已存在驗證角色")
             
             # 可選：創建未驗證角色（用於限制訪問）
             unverified_role = discord.utils.get(guild.roles, name=UNVERIFIED_ROLE_NAME)
@@ -73,6 +83,8 @@ class DiscordBot(commands.Bot):
                     mentionable=False
                 )
                 logger.info(f"✅ 已在 {guild.name} 創建未驗證角色")
+            else:
+                logger.info(f"✅ {guild.name} 中已存在未驗證角色")
                 
         except discord.Forbidden:
             logger.error(f"❌ 機器人在 {guild.name} 沒有管理角色權限")
@@ -83,11 +95,15 @@ class DiscordBot(commands.Bot):
         """新成員加入時自動給予未驗證角色"""
         try:
             guild = member.guild
+            logger.info(f"👋 新成員 {member.name} 加入 {guild.name}")
+            
             unverified_role = discord.utils.get(guild.roles, name=UNVERIFIED_ROLE_NAME)
             
             if unverified_role:
                 await member.add_roles(unverified_role, reason="新成員自動角色")
-                logger.info(f"👋 {member.name} 加入 {guild.name}，已給予未驗證角色")
+                logger.info(f"✅ 已給予 {member.name} 未驗證角色")
+            else:
+                logger.warning(f"⚠️ 在 {guild.name} 找不到未驗證角色")
             
             # 發送歡迎私訊
             try:
@@ -99,9 +115,9 @@ class DiscordBot(commands.Bot):
                     color=0x00d4ff
                 )
                 await member.send(embed=embed)
+                logger.info(f"✅ 已發送歡迎私訊給 {member.name}")
             except discord.Forbidden:
-                # 如果無法發送私訊，忽略錯誤
-                pass
+                logger.info(f"⚠️ 無法發送私訊給 {member.name}")
                 
         except Exception as e:
             logger.error(f"❌ 處理新成員加入時出錯: {e}")
@@ -305,7 +321,7 @@ def setup_bot_commands(bot):
                 color=0x00ff88
             )
             embed.add_field(name="🔓 權限", value="擁有所有會員權限", inline=True)
-            embed.add_field(name="⏰ 驗證時間", value="查看角色獲得時間", inline=True)
+            embed.add_field(name="📅 加入時間", value=f"<t:{int(member.joined_at.timestamp())}:R>", inline=True)
         else:
             embed = discord.Embed(
                 title="❌ 驗證狀態：未驗證",
@@ -320,7 +336,7 @@ def setup_bot_commands(bot):
         
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    # 管理員命令（可選）
+    # 管理員命令
     @bot.tree.command(name="setup_verification", description="🛠️ 設置驗證面板（僅管理員）")
     @discord.app_commands.default_permissions(administrator=True)
     async def setup_verification_panel(interaction: discord.Interaction):
@@ -354,3 +370,4 @@ def setup_bot_commands(bot):
         
         # 儲存持久化視圖
         bot.add_view(view)
+        logger.info(f"✅ 管理員 {interaction.user.name} 設置了驗證面板")
