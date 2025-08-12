@@ -28,22 +28,6 @@ class DiscordBot(commands.Bot):
             synced = await self.tree.sync()
             logger.info(f"✅ 已同步 {len(synced)} 個斜線命令")
             
-            # 等待機器人完全就緒後再設置狀態
-            await self.wait_until_ready()
-            
-            # 設置機器人狀態
-            try:
-                await self.change_presence(
-                    status=discord.Status.online,
-                    activity=discord.Activity(
-                        type=discord.ActivityType.watching, 
-                        name="序號驗證 | 使用 /verify"
-                    )
-                )
-                logger.info("✅ 機器人狀態設置成功")
-            except Exception as status_error:
-                logger.warning(f"⚠️ 無法設置機器人狀態: {status_error}")
-            
         except Exception as e:
             logger.error(f"❌ 機器人設置失敗: {e}")
 
@@ -51,6 +35,19 @@ class DiscordBot(commands.Bot):
         """機器人準備就緒"""
         logger.info(f'✅ {self.user} 已成功連線到 Discord！')
         logger.info(f'📊 已連接到 {len(self.guilds)} 個伺服器')
+        
+        # 設置機器人狀態
+        try:
+            await self.change_presence(
+                status=discord.Status.online,
+                activity=discord.Activity(
+                    type=discord.ActivityType.watching, 
+                    name="序號驗證 | 使用 /verify"
+                )
+            )
+            logger.info("✅ 機器人狀態設置成功")
+        except Exception as status_error:
+            logger.warning(f"⚠️ 無法設置機器人狀態: {status_error}")
         
         # 檢查必要的角色是否存在
         for guild in self.guilds:
