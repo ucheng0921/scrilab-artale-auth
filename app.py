@@ -528,7 +528,8 @@ def forbidden(error):
 
 # 在 app.py 最底部，修改成這樣：
 
-# 如果作為主程式運行
+# 在 app.py 最底部，替換成這個版本：
+
 if __name__ == '__main__':
     # 開發環境下的額外檢查
     if not firebase_initialized:
@@ -537,34 +538,50 @@ if __name__ == '__main__':
     if not gumroad_service:
         logger.warning("⚠️ Gumroad 服務未初始化，付款功能不可用")
     
-    # 檢查是否要啟動 Discord 機器人
+    # 檢查 Discord 相關設定
     discord_token = os.environ.get('DISCORD_BOT_TOKEN')
+    discord_guild_id = os.environ.get('DISCORD_GUILD_ID')
+    
+    logger.info(f"🔍 Discord Token 存在: {'是' if discord_token else '否'}")
+    logger.info(f"🔍 Discord Guild ID: {discord_guild_id if discord_guild_id else '未設定'}")
+    
     if discord_token:
+        logger.info("🤖 準備啟動 Discord 機器人...")
         try:
-            import threading
+            # 檢查模組是否存在
+            import discord_bot
+            logger.info("✅ discord_bot 模組導入成功")
+            
             from discord_bot import create_discord_bot
+            logger.info("✅ create_discord_bot 函數導入成功")
+            
+            import threading
             
             def run_discord_bot():
                 try:
-                    logger.info("🤖 啟動 Discord 機器人...")
+                    logger.info("🚀 Discord 機器人線程開始...")
                     bot = create_discord_bot(db)  # 使用現有的 Firebase db
+                    logger.info("✅ Discord 機器人實例創建成功")
+                    logger.info("🔌 嘗試連接到 Discord...")
                     bot.run(discord_token)
                 except Exception as e:
-                    logger.error(f"❌ Discord 機器人啟動失敗: {str(e)}")
+                    logger.error(f"❌ Discord 機器人執行失敗: {str(e)}", exc_info=True)
             
             # 在背景執行 Discord 機器人
             discord_thread = threading.Thread(target=run_discord_bot)
             discord_thread.daemon = True
             discord_thread.start()
-            logger.info("✅ Discord 機器人已在背景啟動")
+            logger.info("✅ Discord 機器人線程已啟動")
             
         except ImportError as e:
-            logger.warning(f"⚠️ Discord 模組導入失敗: {str(e)}")
+            logger.error(f"❌ Discord 模組導入失敗: {str(e)}")
+            logger.error("請確認 discord_bot 資料夾和相關檔案是否存在")
         except Exception as e:
-            logger.error(f"❌ Discord 機器人設定失敗: {str(e)}")
+            logger.error(f"❌ Discord 機器人設定失敗: {str(e)}", exc_info=True)
     else:
-        logger.info("ℹ️ 未設定 DISCORD_BOT_TOKEN，跳過 Discord 機器人啟動")
+        logger.warning("⚠️ 未設定 DISCORD_BOT_TOKEN，跳過 Discord 機器人啟動")
     
     # 啟動 Flask 應用
     port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    logger.info(f"🌐 Flask 應用啟動於 port {port}")
+    app.run(debug=False, host='0.0.0.0', port=port)  # 生產環境不用 debug=True
