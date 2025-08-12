@@ -7,4 +7,4 @@ requests==2.31.0
 uuid==1.30
 schedule==1.2.0
 psutil==6.1.0
-discord.py==2.2.3
+py-cord==2.4.1
