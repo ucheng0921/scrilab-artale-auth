@@ -206,12 +206,16 @@ class DiscordBot(commands.Bot):
 
     async def on_message(self, message):
         """監控驗證頻道訊息"""
-        # 如果不是在驗證頻道，忽略
-        if message.channel.name != VERIFICATION_CHANNEL:
-            return
-        
         # 如果是機器人訊息，忽略
         if message.author.bot:
+            return
+        
+        # 檢查是否為私訊或非群組訊息
+        if not hasattr(message.channel, 'name') or not message.guild:
+            return
+        
+        # 如果不是在驗證頻道，忽略
+        if message.channel.name != VERIFICATION_CHANNEL:
             return
         
         # 刪除用戶在驗證頻道的訊息（保持頻道整潔）
