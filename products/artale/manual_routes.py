@@ -2521,7 +2521,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <div class="feature-title">技術支援</div>
                         <div class="feature-desc">
                             <strong>Discord 即時支援：</strong><br>
-                            <a href="https://discord.gg/HPzNrQmN" target="_blank" style="color: var(--accent-blue);">
+                            <a href="https://discord.gg/nmMmm9gZDC" target="_blank" style="color: var(--accent-blue);">
                                 discord.gg/HPzNrQmN
                             </a><br><br>
                             <strong>Email 客服：</strong><br>

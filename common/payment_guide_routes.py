@@ -600,7 +600,7 @@ PAYMENT_GUIDE_TEMPLATE = r"""
                 如果您在付款過程中遇到任何問題，或需要技術支援，歡迎透過以下方式聯繫我們
             </p>
             <div class="support-methods">
-                <a href="https://discord.gg/HPzNrQmN" target="_blank" class="support-link">
+                <a href="https://discord.gg/nmMmm9gZDC" target="_blank" class="support-link">
                     <i class="fab fa-discord"></i>
                     <span>Discord 即時支援</span>
                 </a>

@@ -1272,7 +1272,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             <div class="footer-simple">
                 <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; color: var(--text-primary); font-weight: 600;">聯絡我們</h3>
                 <div class="contact-methods">
-                    <a href="https://discord.gg/HPzNrQmN" target="_blank" class="discord-link">
+                    <a href="https://discord.gg/nmMmm9gZDC" target="_blank" class="discord-link">
                         <i class="fab fa-discord"></i>
                         <span>Discord 技術支援</span>
                     </a>
@@ -2178,7 +2178,7 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
         <div class="contact-info">
             <h3 class="contact-title">需要協助？</h3>
             <div class="contact-methods">
-                <a href="https://discord.gg/HPzNrQmN" target="_blank" class="contact-link">
+                <a href="https://discord.gg/nmMmm9gZDC" target="_blank" class="contact-link">
                     <i class="fab fa-discord"></i>
                     <span>Discord 技術支援</span>
                 </a>

@@ -814,7 +814,7 @@ DOWNLOAD_TEMPLATE = r"""
                         <p style="color: var(--text-secondary); margin-bottom: 1rem;">
                             加入我們的 Discord 社群獲得即時技術支援和使用交流。
                         </p>
-                        <a href="https://discord.gg/HPzNrQmN" target="_blank" style="color: var(--accent-blue); text-decoration: none;">
+                        <a href="https://discord.gg/nmMmm9gZDC" target="_blank" style="color: var(--accent-blue); text-decoration: none;">
                             discord.gg/HPzNrQmN
                         </a>
                     </div>

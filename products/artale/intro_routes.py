@@ -1576,7 +1576,7 @@ INTRO_TEMPLATE = r"""
                     <i class="fas fa-book"></i>
                     查看詳細教學
                 </a>
-                <a href="https://discord.gg/HPzNrQmN" target="_blank" class="cta-button">
+                <a href="https://discord.gg/nmMmm9gZDC" target="_blank" class="cta-button">
                     <i class="fab fa-discord"></i>
                     加入 Discord 社群
                 </a>

@@ -1121,7 +1121,7 @@ DISCLAIMER_TEMPLATE = r"""
                 <h4>聲明解釋權與聯繫方式</h4>
                 <p>本免責聲明的最終解釋權歸Scrilab所有。在法律允許的範圍內，本工作室對聲明內容的解釋為最終解釋。如對本聲明有任何疑問或需要澄清，請透過以下方式聯繫我們：</p>
                 <ul>
-                    <li><strong>一般服務問題：</strong>Discord社群 (https://discord.gg/HPzNrQmN)</li>
+                    <li><strong>一般服務問題：</strong>Discord社群 (https://discord.gg/nmMmm9gZDC)</li>
                     <li><strong>官方網站：</strong>https://scrilab.com</li>
                 </ul>
             </div>
@@ -1132,7 +1132,7 @@ DISCLAIMER_TEMPLATE = r"""
             <h3>有問題嗎？聯繫我們</h3>
             <p>如果您對免責聲明有任何疑問，歡迎隨時聯繫我們的客服團隊</p>
             <div class="contact-methods">
-                <a href="https://discord.gg/HPzNrQmN" target="_blank" class="contact-link">
+                <a href="https://discord.gg/nmMmm9gZDC" target="_blank" class="contact-link">
                     <i class="fab fa-discord"></i>
                     <span>Discord 社群</span>
                 </a>
