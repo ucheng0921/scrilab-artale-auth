@@ -1,5 +1,5 @@
 """
-Discord 機器人主程式 - 修復頻道搜尋問題
+Discord 機器人主程式 - 專業驗證體驗版本
 """
 import discord
 from discord.ext import commands
@@ -21,37 +21,6 @@ class DiscordBot(commands.Bot):
         super().__init__(command_prefix='!', intents=intents)
         self.db = firebase_db
         self.verification_panel_sent = False
-
-    def find_verification_channel(self, guild):
-        """靈活搜尋驗證頻道"""
-        # 方法1：完全匹配
-        channel = discord.utils.get(guild.channels, name=VERIFICATION_CHANNEL)
-        if channel:
-            logger.info(f"✅ 找到驗證頻道（完全匹配）: #{channel.name}")
-            return channel
-        
-        # 方法2：嘗試替代名稱
-        for alt_name in VERIFICATION_CHANNEL_ALTERNATIVES:
-            channel = discord.utils.get(guild.channels, name=alt_name)
-            if channel:
-                logger.info(f"✅ 找到驗證頻道（替代名稱）: #{channel.name}")
-                return channel
-        
-        # 方法3：模糊搜尋（包含關鍵字）
-        keywords = ["驗證", "verification", "verify", "會員"]
-        for channel in guild.text_channels:
-            channel_name_lower = channel.name.lower()
-            if any(keyword in channel_name_lower for keyword in keywords):
-                logger.info(f"✅ 找到驗證頻道（模糊匹配）: #{channel.name}")
-                return channel
-        
-        # 方法4：列出所有頻道供除錯
-        logger.warning(f"❌ 在 {guild.name} 中找不到驗證頻道")
-        logger.info("📋 可用的文字頻道列表：")
-        for channel in guild.text_channels:
-            logger.info(f"  - #{channel.name}")
-        
-        return None
 
     async def setup_hook(self):
         """機器人啟動時的設置"""
@@ -122,16 +91,14 @@ class DiscordBot(commands.Bot):
             logger.error(f"❌ 設置 {guild.name} 角色時出錯: {e}")
 
     async def setup_verification_panel(self, guild):
-        """自動設置驗證面板 - 使用改進的頻道搜尋"""
+        """自動設置驗證面板"""
         try:
-            # 使用改進的頻道搜尋
-            verification_channel = self.find_verification_channel(guild)
+            # 尋找驗證頻道
+            verification_channel = discord.utils.get(guild.channels, name=VERIFICATION_CHANNEL)
             
             if not verification_channel:
-                logger.warning(f"⚠️ 在 {guild.name} 中找不到驗證頻道")
+                logger.warning(f"⚠️ 在 {guild.name} 中找不到 #{VERIFICATION_CHANNEL} 頻道")
                 return
-            
-            logger.info(f"✅ 找到驗證頻道: #{verification_channel.name}")
             
             # 檢查頻道中是否已有驗證面板
             async for message in verification_channel.history(limit=50):
@@ -187,6 +154,7 @@ class DiscordBot(commands.Bot):
             )
             
             embed.set_footer(text="ScriLab Official • 自動驗證系統")
+            embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/🔐.png")
             
             view = PersistentVerificationView(self)
             message = await channel.send(embed=embed, view=view)
@@ -211,16 +179,13 @@ class DiscordBot(commands.Bot):
                 await member.add_roles(unverified_role, reason="新成員自動角色")
                 logger.info(f"✅ 已給予 {member.name} 未驗證角色")
             
-            # 找到驗證頻道用於私訊連結
-            verification_channel = self.find_verification_channel(guild)
-            
             # 發送歡迎私訊
             try:
                 embed = discord.Embed(
                     title="🎉 歡迎加入 ScriLab 官方社群！",
                     description=f"親愛的 {member.mention}，歡迎來到我們的官方 Discord 社群！\n\n"
                                "**🔐 下一步該做什麼？**\n"
-                               f"請前往 {f'<#{verification_channel.id}>' if verification_channel else '驗證頻道'} 驗證您的購買序號\n\n"
+                               f"請前往 <#{discord.utils.get(guild.channels, name=VERIFICATION_CHANNEL).id}> 驗證您的購買序號\n\n"
                                "**💡 序號從哪裡獲得？**\n"
                                "購買完成後，序號會發送到您的郵箱中\n\n"
                                "**🎯 驗證後可以享受：**\n"
@@ -241,11 +206,8 @@ class DiscordBot(commands.Bot):
 
     async def on_message(self, message):
         """監控驗證頻道訊息"""
-        # 找到驗證頻道
-        verification_channel = self.find_verification_channel(message.guild) if message.guild else None
-        
         # 如果不是在驗證頻道，忽略
-        if not verification_channel or message.channel.id != verification_channel.id:
+        if message.channel.name != VERIFICATION_CHANNEL:
             return
         
         # 如果是機器人訊息，忽略
@@ -384,13 +346,14 @@ class AdvancedVerificationModal(discord.ui.Modal):
             
             embed.add_field(
                 name="🚀 建議您接下來：",
-                value="• 查看軟體下載頻道獲取最新版本\n"
-                      "• 閱讀使用教學快速上手\n"
-                      "• 加入會員聊天與其他用戶交流",
+                value="• 查看 <#軟體下載> 獲取最新版本\n"
+                      "• 閱讀 <#使用教學> 快速上手\n"
+                      "• 加入 <#會員聊天> 與其他用戶交流",
                 inline=False
             )
             
             embed.set_footer(text="感謝您對 ScriLab 的支持！")
+            embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/🎉.png")
             
             await interaction.edit_original_response(embed=embed)
             logger.info(f"✅ {member.name}#{member.discriminator} 驗證成功 ({plan_type})")
@@ -463,11 +426,10 @@ class PersistentVerificationView(discord.ui.View):
     )
     async def start_verification(self, interaction: discord.Interaction, button: discord.ui.Button):
         # 檢查是否在正確的頻道
-        verification_channel = self.bot.find_verification_channel(interaction.guild)
-        if not verification_channel or interaction.channel.id != verification_channel.id:
+        if interaction.channel.name != VERIFICATION_CHANNEL:
             embed = discord.Embed(
                 title="⚠️ 錯誤的頻道",
-                description=f"請在 {verification_channel.mention if verification_channel else '驗證頻道'} 進行驗證",
+                description=f"請在 <#{discord.utils.get(interaction.guild.channels, name=VERIFICATION_CHANNEL).id}> 頻道進行驗證",
                 color=0xffaa00
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -480,9 +442,9 @@ class PersistentVerificationView(discord.ui.View):
                 title="✅ 您已經是認證會員",
                 description="您已經通過驗證，擁有所有會員權限！\n\n"
                            "**🎯 您可以前往：**\n"
-                           "• 軟體下載頻道獲取最新版本\n"
-                           "• 會員聊天與其他會員交流\n"
-                           "• 技術支援獲得專業協助",
+                           "• <#軟體下載> 獲取最新版本\n"
+                           "• <#會員聊天> 與其他會員交流\n"
+                           "• <#技術支援> 獲得專業協助",
                 color=0x00ff88
             )
             embed.set_footer(text="感謝您的支持！")
@@ -541,11 +503,11 @@ def setup_bot_commands(bot):
     @discord.app_commands.default_permissions(administrator=True)
     async def reset_verification(interaction: discord.Interaction):
         """重新發送驗證面板"""
-        verification_channel = bot.find_verification_channel(interaction.guild)
+        verification_channel = discord.utils.get(interaction.guild.channels, name=VERIFICATION_CHANNEL)
         
         if not verification_channel:
             await interaction.response.send_message(
-                f"❌ 找不到驗證頻道", 
+                f"❌ 找不到 `#{VERIFICATION_CHANNEL}` 頻道", 
                 ephemeral=True
             )
             return
@@ -587,7 +549,7 @@ class AdminPanelView(discord.ui.View):
     
     @discord.ui.button(label='🔄 重置面板', style=discord.ButtonStyle.secondary)
     async def reset_panel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        verification_channel = self.bot.find_verification_channel(interaction.guild)
+        verification_channel = discord.utils.get(interaction.guild.channels, name=VERIFICATION_CHANNEL)
         
         if verification_channel:
             # 清理並重新發送
@@ -602,7 +564,7 @@ class AdminPanelView(discord.ui.View):
     
     @discord.ui.button(label='🧹 清理頻道', style=discord.ButtonStyle.danger)
     async def cleanup_channel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        verification_channel = self.bot.find_verification_channel(interaction.guild)
+        verification_channel = discord.utils.get(interaction.guild.channels, name=VERIFICATION_CHANNEL)
         
         if verification_channel:
             deleted = 0
@@ -615,41 +577,3 @@ class AdminPanelView(discord.ui.View):
             await interaction.response.send_message(f"🧹 已清理 {deleted} 條訊息", ephemeral=True)
         else:
             await interaction.response.send_message("❌ 找不到驗證頻道", ephemeral=True)
-    
-    @discord.ui.button(label='📋 列出頻道', style=discord.ButtonStyle.gray)
-    async def list_channels(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """列出所有文字頻道，幫助除錯"""
-        guild = interaction.guild
-        channel_list = []
-        
-        for channel in guild.text_channels:
-            channel_list.append(f"• #{channel.name} (ID: {channel.id})")
-        
-        # 分頁顯示頻道列表
-        if len(channel_list) > 20:
-            channel_text = "\n".join(channel_list[:20]) + f"\n... 還有 {len(channel_list) - 20} 個頻道"
-        else:
-            channel_text = "\n".join(channel_list)
-        
-        embed = discord.Embed(
-            title="📋 伺服器文字頻道列表",
-            description=f"```\n{channel_text}\n```",
-            color=0x00d4ff
-        )
-        
-        # 標示驗證頻道
-        verification_channel = self.bot.find_verification_channel(guild)
-        if verification_channel:
-            embed.add_field(
-                name="✅ 目前驗證頻道",
-                value=f"#{verification_channel.name} (ID: {verification_channel.id})",
-                inline=False
-            )
-        else:
-            embed.add_field(
-                name="❌ 未找到驗證頻道",
-                value="請檢查頻道名稱是否正確",
-                inline=False
-            )
-        
-        await interaction.response.send_message(embed=embed, ephemeral=True)
