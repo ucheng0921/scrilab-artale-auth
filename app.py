@@ -1,10 +1,8 @@
 """
-app.py - 修復版本，正確支援 Gumroad 付款和 Discord 機器人，並加強安全防護
+app.py - 修復版本，正確支援 Gumroad 付款和 Discord 機器人
 """
-from flask import Flask, redirect, request, jsonify, render_template_string, abort
+from flask import Flask, redirect, request, jsonify, render_template_string
 from flask_cors import CORS
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
@@ -46,38 +44,6 @@ app.config['SECRET_KEY'] = os.environ.get('APP_SECRET_KEY', 'dev-key-change-in-p
 allowed_origins = os.environ.get('ALLOWED_ORIGINS', '*').split(',')
 CORS(app, origins=allowed_origins, supports_credentials=True)
 
-# =====【新增】速率限制配置 =====
-limiter = Limiter(
-    app,
-    key_func=get_remote_address,
-    default_limits=["1000 per day", "100 per hour"],
-    storage_uri="memory://"  # 使用記憶體存儲，適合 Render 平台
-)
-
-# =====【新增】安全配置 =====
-# 封鎖的IP列表 (從環境變數讀取)
-BLOCKED_IPS = set(os.environ.get('BLOCKED_IPS', '34.217.207.71').split(','))
-
-# 可疑路徑列表
-SUSPICIOUS_PATHS = {
-    "/administrator/", "/.env", "/wp-admin/", "/phpmyadmin/", 
-    "/admin.php", "/config.php", "/.git/", "/backup/",
-    "/joomla.xml", "/wordpress/", "/xmlrpc.php",
-    "/wp-config.php", "/database/", "/.htaccess"
-}
-
-# 可疑 User-Agent 關鍵字
-SUSPICIOUS_USER_AGENTS = {
-    'scanner', 'bot', 'crawl', 'spider', 'curl', 'wget', 'nikto', 
-    'sqlmap', 'nmap', 'masscan', 'zap', 'burp'
-}
-
-# 合法爬蟲 User-Agent
-LEGITIMATE_USER_AGENTS = {
-    'googlebot', 'facebookexternalhit', 'twitterbot', 'linkedinbot',
-    'slackbot', 'discordbot', 'whatsapp', 'telegrambot'
-}
-
 # 註冊藍圖
 app.register_blueprint(admin_bp)
 app.register_blueprint(manual_bp)
@@ -114,9 +80,7 @@ def check_environment_variables():
         'EMAIL_PASSWORD',
         'SUPPORT_EMAIL',
         'DISCORD_BOT_TOKEN',
-        'DISCORD_GUILD_ID',
-        'BLOCKED_IPS',  # 新增的安全相關環境變數
-        'ADMIN_ALLOWED_IPS'
+        'DISCORD_GUILD_ID'
     ]
     
     missing_vars = [var for var in required_vars if not os.environ.get(var)]
@@ -132,42 +96,6 @@ def check_environment_variables():
     
     logger.info("✅ 環境變數檢查通過")
     return True
-
-# =====【新增】安全檢查函數 =====
-def get_real_ip():
-    """獲取真實客戶端IP"""
-    # 處理代理和負載均衡器的情況
-    forwarded_for = request.environ.get('HTTP_X_FORWARDED_FOR')
-    if forwarded_for:
-        # 取第一個IP（客戶端真實IP）
-        return forwarded_for.split(',')[0].strip()
-    
-    real_ip = request.environ.get('HTTP_X_REAL_IP')
-    if real_ip:
-        return real_ip.strip()
-    
-    return request.remote_addr
-
-def is_suspicious_user_agent(user_agent):
-    """檢查是否為可疑的User-Agent"""
-    if not user_agent:
-        return True
-    
-    user_agent_lower = user_agent.lower()
-    
-    # 檢查是否為合法爬蟲
-    if any(legitimate in user_agent_lower for legitimate in LEGITIMATE_USER_AGENTS):
-        return False
-    
-    # 檢查是否為可疑工具
-    return any(suspicious in user_agent_lower for suspicious in SUSPICIOUS_USER_AGENTS)
-
-def log_security_event(event_type, details):
-    """記錄安全事件"""
-    client_ip = get_real_ip()
-    user_agent = request.headers.get('User-Agent', 'Unknown')
-    
-    logger.warning(f"🚨 安全事件 [{event_type}] - IP: {client_ip} | 路徑: {request.path} | UA: {user_agent[:100]} | 詳情: {details}")
 
 def init_firebase_with_retry(max_retries=3):
     """改進的 Firebase 初始化，包含重試機制"""
@@ -369,38 +297,18 @@ def start_background_tasks():
         background_thread.start()
         logger.info("🚀 後台清理任務已啟動")
 
-# =====【修改】Flask 中間件 - 加強安全檢查 =====
+# ===== Flask 中間件 =====
 
 @app.before_request
 def security_checks():
-    """加強版安全檢查：IP封鎖、路徑檢查、User-Agent檢查等"""
-    client_ip = get_real_ip()
-    
-    # 1. IP 封鎖檢查
-    if client_ip in BLOCKED_IPS:
-        log_security_event("BLOCKED_IP_ACCESS", f"已封鎖的IP嘗試訪問")
-        abort(403)
-    
-    # 2. 可疑路徑檢查
-    request_path = request.path.lower()
-    for suspicious_path in SUSPICIOUS_PATHS:
-        if suspicious_path in request_path:
-            log_security_event("SUSPICIOUS_PATH_ACCESS", f"嘗試訪問可疑路徑: {request.path}")
-            abort(404)  # 返回404而不是403，避免洩露資訊
-    
-    # 3. User-Agent 檢查
-    user_agent = request.headers.get('User-Agent', '')
-    if is_suspicious_user_agent(user_agent):
-        log_security_event("SUSPICIOUS_USER_AGENT", f"可疑User-Agent: {user_agent[:100]}")
-        # 對於可疑User-Agent，我們記錄但不阻擋，避免誤殺
-    
-    # 4. 強制 HTTPS（生產環境）
+    """安全檢查：HTTPS和管理員路由保護"""
+    # 1. 強制 HTTPS（生產環境）
     if (not request.is_secure and 
         request.headers.get('X-Forwarded-Proto') != 'https' and
         os.environ.get('FLASK_ENV') == 'production'):
         return redirect(request.url.replace('http://', 'https://'), code=301)
     
-    # 5. 保護管理員路由
+    # 2. 保護管理員路由
     protected_paths = [
         '/admin',
         '/session-stats', 
@@ -414,9 +322,14 @@ def security_checks():
         allowed_ips = os.environ.get('ADMIN_ALLOWED_IPS', '').split(',')
         allowed_ips = [ip.strip() for ip in allowed_ips if ip.strip()]
         
-        if allowed_ips and client_ip not in allowed_ips:
-            log_security_event("UNAUTHORIZED_ADMIN_ACCESS", f"未授權的管理員訪問嘗試")
-            return jsonify({'error': 'Not found'}), 404
+        if allowed_ips:
+            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+            if client_ip and ',' in client_ip:
+                client_ip = client_ip.split(',')[0].strip()
+            
+            if client_ip not in allowed_ips:
+                logger.warning(f"未授權的管理員訪問嘗試: {client_ip} -> {request.path}")
+                return jsonify({'error': 'Not found'}), 404
     
     return None
 
@@ -426,35 +339,20 @@ def after_request(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     
     # 記錄請求
-    client_ip = get_real_ip()
-    logger.info(f"{client_ip} - {request.method} {request.path} - {response.status_code}")
+    logger.info(f"{request.remote_addr} - {request.method} {request.path} - {response.status_code}")
     
     return response
 
-# =====【新增】速率限制錯誤處理 =====
-@app.errorhandler(429)
-def ratelimit_handler(e):
-    """速率限制錯誤處理"""
-    client_ip = get_real_ip()
-    log_security_event("RATE_LIMIT_EXCEEDED", f"速率限制觸發")
-    return jsonify({
-        'error': 'Too many requests. Please slow down.',
-        'retry_after': str(e.retry_after) if hasattr(e, 'retry_after') else '60'
-    }), 429
-
-# ===== 主要路由（添加速率限制） =====
+# ===== 主要路由 =====
 
 @app.route('/', methods=['GET'])
-@limiter.limit("30 per minute")  # 主頁速率限制
 def root():
     """根路徑端點 - 直接重定向到產品頁面"""
     return redirect('/products', code=301)
 
 @app.route('/system/status/<secret_key>', methods=['GET'])
-@limiter.limit("10 per minute")  # 系統狀態查詢限制
 def system_status(secret_key):
     """隱藏的系統狀態端點"""
     # 檢查密鑰
@@ -475,22 +373,17 @@ def system_status(secret_key):
             'status': 'initializing',
             'firebase_initialized': firebase_initialized,
             'gumroad_available': gumroad_service is not None,
-            'message': 'Service is starting up, please wait...',
-            'security_status': {
-                'blocked_ips_count': len(BLOCKED_IPS),
-                'rate_limiting_enabled': True
-            }
+            'message': 'Service is starting up, please wait...'
         })
 
 @app.route('/health', methods=['GET'])
-@limiter.limit("60 per minute")  # 健康檢查較寬鬆的限制
 def health_check():
     """健康檢查端點"""
     health_status = {
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'service': 'artale-auth-service',
-        'version': '3.1.1-security-enhanced',
+        'version': '3.1.0-discord-integrated',
         'checks': {}
     }
     
@@ -542,20 +435,12 @@ def health_check():
     else:
         health_status['checks']['discord_bot'] = 'not_configured'
     
-    # 安全狀態檢查
-    health_status['checks']['security'] = {
-        'rate_limiting': 'enabled',
-        'blocked_ips_count': len(BLOCKED_IPS),
-        'suspicious_paths_monitored': len(SUSPICIOUS_PATHS)
-    }
-    
     status_code = 200 if health_status['status'] in ['healthy', 'degraded'] else 503
     return jsonify(health_status), status_code
 
-# ===== 用戶認證路由（添加速率限制） =====
+# ===== 用戶認證路由 =====
 
 @app.route('/auth/login', methods=['POST'])
-@limiter.limit("5 per minute")  # 登入嚴格限制
 def login():
     """用戶登入端點"""
     if not firebase_initialized:
@@ -577,7 +462,6 @@ def login():
     return route_handlers.login()
 
 @app.route('/auth/logout', methods=['POST'])
-@limiter.limit("10 per minute")  # 登出限制
 def logout():
     """用戶登出端點"""
     if not route_handlers:
@@ -590,7 +474,6 @@ def logout():
     return route_handlers.logout()
 
 @app.route('/auth/validate', methods=['POST'])
-@limiter.limit("20 per minute")  # 驗證稍微寬鬆
 def validate_session():
     """驗證會話令牌"""
     if not route_handlers:
@@ -603,7 +486,6 @@ def validate_session():
     return route_handlers.validate_session()
 
 @app.route('/session-stats', methods=['GET'])
-@limiter.limit("10 per minute")  # 管理功能限制
 def session_stats():
     """Session 統計信息"""
     if not route_handlers:
@@ -616,7 +498,6 @@ def session_stats():
     return route_handlers.session_stats()
 
 @app.route('/cleanup-sessions', methods=['POST'])
-@limiter.limit("5 per minute")  # 清理功能嚴格限制
 def manual_cleanup_sessions():
     """手動清理過期會話"""
     if not route_handlers:
@@ -628,10 +509,9 @@ def manual_cleanup_sessions():
     
     return route_handlers.manual_cleanup_sessions()
 
-# ===== 付款相關路由（添加速率限制） =====
+# ===== 付款相關路由 =====
 
 @app.route('/api/create-payment', methods=['POST'])
-@limiter.limit("10 per minute")  # 付款創建限制
 def create_payment():
     """創建付款（統一入口，主要使用 Gumroad）"""
     try:
@@ -655,7 +535,6 @@ def create_payment():
         }), 500
 
 @app.route('/payment/success', methods=['GET'])
-@limiter.limit("20 per minute")  # 付款成功頁面限制
 def payment_success():
     """付款成功頁面"""
     try:
@@ -673,130 +552,14 @@ def payment_success():
         return redirect('/products?error=system_error')
 
 @app.route('/payment/cancel', methods=['GET'])
-@limiter.limit("20 per minute")  # 付款取消頁面限制
 def payment_cancel():
     """付款取消回調"""
     return render_template_string(PAYMENT_CANCEL_TEMPLATE)
 
 @app.route('/products', methods=['GET'])
-@limiter.limit("30 per minute")  # 產品頁面限制
 def products_page():
     """軟體服務展示頁面（支援 Gumroad）"""
     return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
-
-# =====【新增】特殊攻擊路徑直接阻擋 =====
-@app.route('/.env')
-@app.route('/administrator/<path:path>')
-@app.route('/wp-admin/<path:path>')
-@app.route('/phpmyadmin/<path:path>')
-@app.route('/wp-config.php')
-@app.route('/xmlrpc.php')
-@app.route('/.git/<path:path>')
-@app.route('/backup/<path:path>')
-def block_common_attacks(path=None):
-    """直接封鎖常見的攻擊路徑"""
-    client_ip = get_real_ip()
-    log_security_event("DIRECT_ATTACK_BLOCKED", f"直接攻擊路徑被阻擋: {request.path}")
-    
-    # 自動將此IP加入臨時封鎖列表（可選）
-    # add_ip_to_temporary_blocklist(client_ip)
-    
-    abort(404)
-
-# =====【新增】動態IP管理功能 =====
-def add_ip_to_temporary_blocklist(ip_address, duration_minutes=60):
-    """將IP加入臨時封鎖列表"""
-    try:
-        if db and firebase_initialized:
-            # 記錄到 Firestore 中，設置過期時間
-            from datetime import timedelta
-            
-            expire_time = datetime.now() + timedelta(minutes=duration_minutes)
-            
-            db.collection('temporary_blocked_ips').document(ip_address).set({
-                'ip': ip_address,
-                'blocked_at': datetime.now(),
-                'expires_at': expire_time,
-                'reason': 'Suspicious activity detected',
-                'auto_blocked': True
-            })
-            
-            # 加入記憶體中的封鎖列表
-            BLOCKED_IPS.add(ip_address)
-            
-            logger.warning(f"🚫 IP {ip_address} 已被自動加入臨時封鎖列表 ({duration_minutes} 分鐘)")
-            
-    except Exception as e:
-        logger.error(f"❌ 添加臨時封鎖IP失敗: {str(e)}")
-
-@app.route('/admin/security/unblock-ip', methods=['POST'])
-@limiter.limit("5 per minute")
-def unblock_ip():
-    """手動解除IP封鎖"""
-    try:
-        data = request.get_json()
-        ip_to_unblock = data.get('ip')
-        
-        if not ip_to_unblock:
-            return jsonify({'success': False, 'error': '請提供要解除封鎖的IP'}), 400
-        
-        # 從記憶體列表移除
-        BLOCKED_IPS.discard(ip_to_unblock)
-        
-        # 從 Firestore 移除（如果存在）
-        if db and firebase_initialized:
-            db.collection('temporary_blocked_ips').document(ip_to_unblock).delete()
-        
-        logger.info(f"✅ IP {ip_to_unblock} 已被手動解除封鎖")
-        
-        return jsonify({
-            'success': True,
-            'message': f'IP {ip_to_unblock} 已解除封鎖'
-        })
-        
-    except Exception as e:
-        logger.error(f"❌ 解除IP封鎖失敗: {str(e)}")
-        return jsonify({'success': False, 'error': '系統錯誤'}), 500
-
-@app.route('/admin/security/blocked-ips', methods=['GET'])
-@limiter.limit("10 per minute")
-def get_blocked_ips():
-    """獲取當前封鎖的IP列表"""
-    try:
-        blocked_list = []
-        
-        # 從環境變數獲取的永久封鎖IP
-        permanent_ips = set(os.environ.get('BLOCKED_IPS', '').split(','))
-        for ip in permanent_ips:
-            if ip.strip():
-                blocked_list.append({
-                    'ip': ip.strip(),
-                    'type': 'permanent',
-                    'reason': 'Manual configuration'
-                })
-        
-        # 從 Firestore 獲取臨時封鎖IP
-        if db and firebase_initialized:
-            temp_blocked = db.collection('temporary_blocked_ips').stream()
-            for doc in temp_blocked:
-                data = doc.to_dict()
-                blocked_list.append({
-                    'ip': data.get('ip'),
-                    'type': 'temporary',
-                    'reason': data.get('reason', 'Unknown'),
-                    'blocked_at': data.get('blocked_at'),
-                    'expires_at': data.get('expires_at')
-                })
-        
-        return jsonify({
-            'success': True,
-            'blocked_ips': blocked_list,
-            'total_count': len(blocked_list)
-        })
-        
-    except Exception as e:
-        logger.error(f"❌ 獲取封鎖IP列表失敗: {str(e)}")
-        return jsonify({'success': False, 'error': '系統錯誤'}), 500
 
 
 # ===== 應用初始化 =====
@@ -807,7 +570,6 @@ try:
     success = init_firebase_with_retry()
     if success:
         logger.info(f"✅ 應用初始化成功，Gumroad 服務: {'已啟用' if gumroad_service else '未啟用'}")
-        logger.info(f"🛡️ 安全功能已啟用 - 封鎖IP數量: {len(BLOCKED_IPS)}")
     else:
         logger.error(f"❌ 應用初始化失敗")
 except Exception as e:
@@ -817,26 +579,12 @@ except Exception as e:
 @app.errorhandler(404)
 def not_found(error):
     """統一的 404 處理"""
-    # 記錄 404 錯誤，可能是掃描行為
-    client_ip = get_real_ip()
-    user_agent = request.headers.get('User-Agent', 'Unknown')
-    
-    # 如果是可疑的404請求，記錄安全事件
-    if any(suspicious in request.path.lower() for suspicious in SUSPICIOUS_PATHS):
-        log_security_event("SUSPICIOUS_404", f"可疑的404請求")
-    
     return jsonify({'error': 'Not found'}), 404
 
 @app.errorhandler(403)
 def forbidden(error):
     """將 403 偽裝成 404"""
     return jsonify({'error': 'Not found'}), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    """內部錯誤處理"""
-    logger.error(f"❌ 內部錯誤: {str(error)}")
-    return jsonify({'error': 'Internal server error'}), 500
 
 # 本地開發環境啟動
 if __name__ == '__main__':
@@ -848,12 +596,6 @@ if __name__ == '__main__':
     
     if not gumroad_service:
         logger.warning("⚠️ Gumroad 服務未初始化，付款功能不可用")
-    
-    # 顯示安全配置
-    logger.info(f"🛡️ 安全配置:")
-    logger.info(f"   - 封鎖IP數量: {len(BLOCKED_IPS)}")
-    logger.info(f"   - 監控的可疑路徑數量: {len(SUSPICIOUS_PATHS)}")
-    logger.info(f"   - 速率限制: 已啟用")
     
     # 啟動 Flask 應用
     port = int(os.environ.get('PORT', 5000))
