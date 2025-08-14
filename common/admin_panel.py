@@ -704,6 +704,8 @@ HTML_MODAL = """
                     </div>
                 </div>
             </div>
+        </div>
+        
         <!-- 編輯用戶模態框 -->
         <div id="edit-user-modal" class="modal">
             <div class="modal-content">
@@ -801,6 +803,13 @@ JS_LOGIN_FUNCTIONS = """
             isLoggedIn = true;
             loadUsers();
             loadSystemStats();
+            refreshOnlineUsers();  // 添加這行
+            // 自動刷新在線用戶
+            setInterval(function() {
+                if (isLoggedIn) {
+                    refreshOnlineUsers();
+                }
+            }, 30000);  // 添加這幾行
         }
 
         async function validateTokenAndShowContent() {
@@ -1274,7 +1283,7 @@ JS_USER_FUNCTIONS = """
             tbody.innerHTML = '';
             
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">暫無用戶數據</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center;">暫無用戶數據</td></tr>';
                 return;
             }
             
