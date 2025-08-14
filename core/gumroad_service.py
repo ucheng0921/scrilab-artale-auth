@@ -73,11 +73,11 @@ class GumroadService:
                 'name_en': 'Scrilab Artale Trial Service',
                 'price_twd': 300,
                 'price_usd': 10.21,
-                'period': '7天',
-                'period_en': '7 days',
+                'period': '8天',
+                'period_en': '8 days',
                 'description': '適合新手玩家體驗的基礎技術服務',
                 'description_en': 'Basic gaming service for beginners to experience',
-                'days': 7,
+                'days': 8,
                 'gumroad_product_id': os.environ.get('GUMROAD_TRIAL_PRODUCT_ID')
             },
             'monthly_30': {
@@ -85,11 +85,11 @@ class GumroadService:
                 'name_en': 'Scrilab Artale Standard Service',
                 'price_twd': 549,
                 'price_usd': 18.68,
-                'period': '30天',
-                'period_en': '30 days',
+                'period': '33天',
+                'period_en': '33 days',
                 'description': '最受歡迎的完整技術服務方案',
                 'description_en': 'Most popular complete gaming service package',
-                'days': 30,
+                'days': 33,
                 'gumroad_product_id': os.environ.get('GUMROAD_MONTHLY_PRODUCT_ID')
             },
             'quarterly_90': {
@@ -97,11 +97,11 @@ class GumroadService:
                 'name_en': 'Scrilab Artale Quarterly Service',
                 'price_twd': 1499,
                 'price_usd': 51.02,
-                'period': '90天',
-                'period_en': '90 days',
+                'period': '100天',
+                'period_en': '100 days',
                 'description': '長期使用最划算的全功能技術服務',
                 'description_en': 'Best value long-term complete gaming service',
-                'days': 90,
+                'days': 100,
                 'gumroad_product_id': os.environ.get('GUMROAD_QUARTERLY_PRODUCT_ID')
             }
         }

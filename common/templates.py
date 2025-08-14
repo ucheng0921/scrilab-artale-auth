@@ -1111,7 +1111,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-subtitle">適合新手玩家體驗</div>
                         <div class="service-price">
                             <span class="currency">NT$</span>299
-                            <span class="period">/ 7天</span>
+                            <span class="period">/ 7+1天</span>
                         </div>
                         <div class="gumroad-info">
                             <i class="fas fa-shield-alt"></i>
@@ -1161,7 +1161,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-price">
                             <div class="original-price">
                                 <span class="original-amount">NT$1,285</span>
-                                <span class="original-period">/ 30天</span>
+                                <span class="original-period">/ 30+3天</span>
                             </div>
                             <div class="current-price">
                                 <span class="currency">NT$</span>599
@@ -1220,7 +1220,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </div>
                             <div class="current-price">
                                 <span class="currency">NT$</span>1,499
-                                <span class="period">/ 90天</span>
+                                <span class="period">/ 90+10天</span>
                             </div>
                             <div class="discount-badge">省61%</div>
                         </div>
@@ -1337,21 +1337,21 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 name: '體驗服務',
                 price_twd: 299,
                 price_usd: 9.99,
-                period: '7天',
+                period: '7+1天',
                 description: '適合新手玩家體驗的基礎技術服務'
             },
             'monthly_30': {
                 name: '標準服務',
                 price_twd: 599,
                 price_usd: 19.99,
-                period: '30天',
+                period: '30+3天',
                 description: '最受歡迎的完整技術服務方案'
             },
             'quarterly_90': {
                 name: '季度服務',
                 price_twd: 1499,
                 price_usd: 49.99,
-                period: '90天',
+                period: '90+10天',
                 description: '長期使用最划算的全功能技術服務'
             }
         };
