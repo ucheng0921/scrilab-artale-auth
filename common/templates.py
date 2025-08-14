@@ -1165,7 +1165,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </div>
                             <div class="current-price">
                                 <span class="currency">NT$</span>599
-                                <span class="period">/ 30天</span>
+                                <span class="period">/ 30+3天</span>
                             </div>
                             <div class="discount-badge">省57%</div>
                         </div>
@@ -1216,7 +1216,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-price">
                             <div class="original-price">
                                 <span class="original-amount">NT$3,855</span>
-                                <span class="original-period">/ 90天</span>
+                                <span class="original-period">/ 90+10天</span>
                             </div>
                             <div class="current-price">
                                 <span class="currency">NT$</span>1,499
