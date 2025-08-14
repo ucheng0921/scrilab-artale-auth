@@ -1,5 +1,5 @@
 """
-app.py - 修復版本，正確支援 Gumroad 付款
+app.py - 修復版本，正確支援 Gumroad 付款和 Discord 機器人
 """
 from flask import Flask, redirect, request, jsonify, render_template_string
 from flask_cors import CORS
@@ -78,7 +78,9 @@ def check_environment_variables():
         'SMTP_PORT',
         'EMAIL_USER',
         'EMAIL_PASSWORD',
-        'SUPPORT_EMAIL'
+        'SUPPORT_EMAIL',
+        'DISCORD_BOT_TOKEN',
+        'DISCORD_GUILD_ID'
     ]
     
     missing_vars = [var for var in required_vars if not os.environ.get(var)]
@@ -192,6 +194,52 @@ def init_firebase_with_retry(max_retries=3):
     finally:
         initialization_in_progress = False
 
+def start_discord_bot():
+    """啟動 Discord 機器人"""
+    # 檢查 Discord 相關設定
+    discord_token = os.environ.get('DISCORD_BOT_TOKEN')
+    discord_guild_id = os.environ.get('DISCORD_GUILD_ID')
+    
+    logger.info(f"🔍 Discord Token 存在: {'是' if discord_token else '否'}")
+    logger.info(f"🔍 Discord Guild ID: {discord_guild_id if discord_guild_id else '未設定'}")
+    
+    if discord_token and discord_guild_id:
+        logger.info("🤖 準備啟動 Discord 機器人...")
+        try:
+            # 檢查模組是否存在
+            import discord_bot
+            logger.info("✅ discord_bot 模組導入成功")
+            
+            from discord_bot import create_discord_bot
+            logger.info("✅ create_discord_bot 函數導入成功")
+            
+            def run_discord_bot():
+                try:
+                    logger.info("🚀 Discord 機器人線程開始...")
+                    bot = create_discord_bot(db)  # 使用現有的 Firebase db
+                    logger.info("✅ Discord 機器人實例創建成功")
+                    logger.info("🔌 嘗試連接到 Discord...")
+                    bot.run(discord_token)
+                except Exception as e:
+                    logger.error(f"❌ Discord 機器人執行失敗: {str(e)}", exc_info=True)
+            
+            # 在背景執行 Discord 機器人
+            discord_thread = threading.Thread(target=run_discord_bot)
+            discord_thread.daemon = True
+            discord_thread.start()
+            logger.info("✅ Discord 機器人線程已啟動")
+            
+        except ImportError as e:
+            logger.error(f"❌ Discord 模組導入失敗: {str(e)}")
+            logger.error("請確認 discord_bot 資料夾和相關檔案是否存在")
+        except Exception as e:
+            logger.error(f"❌ Discord 機器人設定失敗: {str(e)}", exc_info=True)
+    else:
+        if not discord_token:
+            logger.warning("⚠️ 未設定 DISCORD_BOT_TOKEN，跳過 Discord 機器人啟動")
+        if not discord_guild_id:
+            logger.warning("⚠️ 未設定 DISCORD_GUILD_ID，跳過 Discord 機器人啟動")
+
 def init_services():
     """初始化相關服務"""
     global gumroad_service, route_handlers
@@ -215,6 +263,9 @@ def init_services():
         
         # 啟動後台清理任務
         start_background_tasks()
+        
+        # 啟動 Discord 機器人
+        start_discord_bot()
         
     except Exception as e:
         logger.error(f"❌ 服務初始化失敗: {str(e)}")
@@ -332,7 +383,7 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'service': 'artale-auth-service',
-        'version': '3.0.0-gumroad-fixed',
+        'version': '3.1.0-discord-integrated',
         'checks': {}
     }
     
@@ -374,6 +425,15 @@ def health_check():
             health_status['checks']['session_manager'] = f'error: {str(e)}'
     else:
         health_status['checks']['session_manager'] = 'not_initialized'
+    
+    # 檢查 Discord 機器人狀態
+    discord_token = os.environ.get('DISCORD_BOT_TOKEN')
+    discord_guild_id = os.environ.get('DISCORD_GUILD_ID')
+    
+    if discord_token and discord_guild_id:
+        health_status['checks']['discord_bot'] = 'configured'
+    else:
+        health_status['checks']['discord_bot'] = 'not_configured'
     
     status_code = 200 if health_status['status'] in ['healthy', 'degraded'] else 503
     return jsonify(health_status), status_code
@@ -526,11 +586,10 @@ def forbidden(error):
     """將 403 偽裝成 404"""
     return jsonify({'error': 'Not found'}), 404
 
-# 在 app.py 最底部，修改成這樣：
-
-# 在 app.py 最底部，替換成這個版本：
-
+# 本地開發環境啟動
 if __name__ == '__main__':
+    logger.info("🏠 本地開發模式啟動")
+    
     # 開發環境下的額外檢查
     if not firebase_initialized:
         logger.warning("⚠️ Firebase 未初始化，應用可能無法正常工作")
@@ -538,53 +597,7 @@ if __name__ == '__main__':
     if not gumroad_service:
         logger.warning("⚠️ Gumroad 服務未初始化，付款功能不可用")
     
-    # 檢查 Discord 相關設定
-    discord_token = os.environ.get('DISCORD_BOT_TOKEN')
-    discord_guild_id = os.environ.get('DISCORD_GUILD_ID')
-    
-    logger.info(f"🔍 Discord Token 存在: {'是' if discord_token else '否'}")
-    logger.info(f"🔍 Discord Guild ID: {discord_guild_id if discord_guild_id else '未設定'}")
-    
-    if discord_token and discord_guild_id:
-        logger.info("🤖 準備啟動 Discord 機器人...")
-        try:
-            # 檢查模組是否存在
-            import discord_bot
-            logger.info("✅ discord_bot 模組導入成功")
-            
-            from discord_bot import create_discord_bot
-            logger.info("✅ create_discord_bot 函數導入成功")
-            
-            import threading
-            
-            def run_discord_bot():
-                try:
-                    logger.info("🚀 Discord 機器人線程開始...")
-                    bot = create_discord_bot(db)  # 使用現有的 Firebase db
-                    logger.info("✅ Discord 機器人實例創建成功")
-                    logger.info("🔌 嘗試連接到 Discord...")
-                    bot.run(discord_token)
-                except Exception as e:
-                    logger.error(f"❌ Discord 機器人執行失敗: {str(e)}", exc_info=True)
-            
-            # 在背景執行 Discord 機器人
-            discord_thread = threading.Thread(target=run_discord_bot)
-            discord_thread.daemon = True
-            discord_thread.start()
-            logger.info("✅ Discord 機器人線程已啟動")
-            
-        except ImportError as e:
-            logger.error(f"❌ Discord 模組導入失敗: {str(e)}")
-            logger.error("請確認 discord_bot 資料夾和相關檔案是否存在")
-        except Exception as e:
-            logger.error(f"❌ Discord 機器人設定失敗: {str(e)}", exc_info=True)
-    else:
-        if not discord_token:
-            logger.warning("⚠️ 未設定 DISCORD_BOT_TOKEN，跳過 Discord 機器人啟動")
-        if not discord_guild_id:
-            logger.warning("⚠️ 未設定 DISCORD_GUILD_ID，跳過 Discord 機器人啟動")
-    
     # 啟動 Flask 應用
     port = int(os.environ.get('PORT', 5000))
     logger.info(f"🌐 Flask 應用啟動於 port {port}")
-    app.run(debug=False, host='0.0.0.0', port=port)
+    app.run(debug=True, host='0.0.0.0', port=port)
