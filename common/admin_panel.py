@@ -725,6 +725,11 @@ HTML_MODAL = """
                     <div class="form-group">
                         <label>快速設定</label>
                         <div class="action-buttons">
+                            <button onclick="quickSetExpiry(1)" class="btn btn-info">+7天</button>
+                            <button onclick="quickSetExpiry(2)" class="btn btn-info">+7天</button>
+                            <button onclick="quickSetExpiry(3)" class="btn btn-info">+7天</button>
+                            <button onclick="quickSetExpiry(4)" class="btn btn-info">+7天</button>
+                            <button onclick="quickSetExpiry(5)" class="btn btn-info">+7天</button>
                             <button onclick="quickSetExpiry(7)" class="btn btn-info">+7天</button>
                             <button onclick="quickSetExpiry(30)" class="btn btn-info">+30天</button>
                             <button onclick="quickSetExpiry(90)" class="btn btn-info">+90天</button>
