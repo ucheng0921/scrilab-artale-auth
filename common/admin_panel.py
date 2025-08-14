@@ -1028,8 +1028,15 @@ JS_LOGIN_FUNCTIONS = """
             
             if (user.expires_at) {
                 const expiryDate = new Date(user.expires_at);
-                const localISOTime = new Date(expiryDate.getTime() - expiryDate.getTimezoneOffset() * 60000)
-                    .toISOString().slice(0, 16);
+                
+                const year = expiryDate.getFullYear();
+                const month = String(expiryDate.getMonth() + 1).padStart(2, '0');
+                const day = String(expiryDate.getDate()).padStart(2, '0');
+                const hours = String(expiryDate.getHours()).padStart(2, '0');
+                const minutes = String(expiryDate.getMinutes()).padStart(2, '0');
+                
+                const localISOTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+                
                 document.getElementById('edit-expiry-date').value = localISOTime;
             } else {
                 document.getElementById('edit-expiry-date').value = '';
@@ -1047,8 +1054,15 @@ JS_LOGIN_FUNCTIONS = """
         function quickSetExpiry(days) {
             const now = new Date();
             const expiryDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
-            const localISOTime = new Date(expiryDate.getTime() - expiryDate.getTimezoneOffset() * 60000)
-                .toISOString().slice(0, 16);
+            
+            const year = expiryDate.getFullYear();
+            const month = String(expiryDate.getMonth() + 1).padStart(2, '0');
+            const day = String(expiryDate.getDate()).padStart(2, '0');
+            const hours = String(expiryDate.getHours()).padStart(2, '0');
+            const minutes = String(expiryDate.getMinutes()).padStart(2, '0');
+            
+            const localISOTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
             document.getElementById('edit-expiry-date').value = localISOTime;
         }
 
