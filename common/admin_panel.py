@@ -1901,39 +1901,6 @@ JS_USER_OPERATIONS = """
         });
 
         // 其他用戶操作函數
-        async function editUser(documentId, currentName) {
-            if (!isLoggedIn) return;
-            
-            const newName = prompt('新的顯示名稱:', currentName);
-            if (!newName || newName === currentName) return;
-            
-            const newDays = prompt('延長有效期天數:', '30');
-            if (!newDays) return;
-            
-            try {
-                const response = await fetch(`/admin/users/${documentId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Admin-Token': ADMIN_TOKEN
-                    },
-                    body: JSON.stringify({
-                        display_name: newName,
-                        extend_days: parseInt(newDays)
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    alert('用戶更新成功!');
-                    loadUsers();
-                } else {
-                    alert('更新失敗: ' + data.error);
-                }
-            } catch (error) {
-                alert('更新錯誤: ' + error.message);
-            }
-        }
 
         async function toggleUser(documentId, newStatus) {
             if (!isLoggedIn) return;
