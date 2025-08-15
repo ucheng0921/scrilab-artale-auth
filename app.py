@@ -1,7 +1,7 @@
 """
-app.py - 修復版本，正確支援 Gumroad 付款和 Discord 機器人
+app.py - 修復版本，正確支援 Gumroad 付款和 Discord 機器人，添加基本安全防護
 """
-from flask import Flask, redirect, request, jsonify, render_template_string
+from flask import Flask, redirect, request, jsonify, render_template_string, abort
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -44,6 +44,18 @@ app.config['SECRET_KEY'] = os.environ.get('APP_SECRET_KEY', 'dev-key-change-in-p
 allowed_origins = os.environ.get('ALLOWED_ORIGINS', '*').split(',')
 CORS(app, origins=allowed_origins, supports_credentials=True)
 
+# =====【新增】基本安全配置 =====
+# 封鎖的IP列表 (從環境變數讀取)
+BLOCKED_IPS = set(filter(None, [ip.strip() for ip in os.environ.get('BLOCKED_IPS', '34.217.207.71').split(',')]))
+
+# 可疑路徑列表
+SUSPICIOUS_PATHS = {
+    "/administrator/", "/.env", "/wp-admin/", "/phpmyadmin/", 
+    "/admin.php", "/config.php", "/.git/", "/backup/",
+    "/joomla.xml", "/wordpress/", "/xmlrpc.php",
+    "/wp-config.php", "/database/", "/.htaccess"
+}
+
 # 註冊藍圖
 app.register_blueprint(admin_bp)
 app.register_blueprint(manual_bp)
@@ -59,6 +71,28 @@ firebase_initialized = False
 gumroad_service = None
 route_handlers = None
 initialization_in_progress = False
+
+# =====【新增】安全輔助函數 =====
+def get_real_ip():
+    """獲取真實客戶端IP"""
+    # 處理代理和負載均衡器的情況
+    forwarded_for = request.environ.get('HTTP_X_FORWARDED_FOR')
+    if forwarded_for:
+        # 取第一個IP（客戶端真實IP）
+        return forwarded_for.split(',')[0].strip()
+    
+    real_ip = request.environ.get('HTTP_X_REAL_IP')
+    if real_ip:
+        return real_ip.strip()
+    
+    return request.remote_addr
+
+def log_security_event(event_type, details):
+    """記錄安全事件"""
+    client_ip = get_real_ip()
+    user_agent = request.headers.get('User-Agent', 'Unknown')
+    
+    logger.warning(f"🚨 安全事件 [{event_type}] - IP: {client_ip} | 路徑: {request.path} | UA: {user_agent[:100]} | 詳情: {details}")
 
 def check_environment_variables():
     """檢查必要的環境變數"""
@@ -80,7 +114,9 @@ def check_environment_variables():
         'EMAIL_PASSWORD',
         'SUPPORT_EMAIL',
         'DISCORD_BOT_TOKEN',
-        'DISCORD_GUILD_ID'
+        'DISCORD_GUILD_ID',
+        'BLOCKED_IPS',  # 新增的安全相關環境變數
+        'ADMIN_ALLOWED_IPS'
     ]
     
     missing_vars = [var for var in required_vars if not os.environ.get(var)]
@@ -297,18 +333,34 @@ def start_background_tasks():
         background_thread.start()
         logger.info("🚀 後台清理任務已啟動")
 
-# ===== Flask 中間件 =====
+# =====【修改】Flask 中間件 - 添加基本安全檢查 =====
 
 @app.before_request
 def security_checks():
-    """安全檢查：HTTPS和管理員路由保護"""
-    # 1. 強制 HTTPS（生產環境）
+    """安全檢查：HTTPS和管理員路由保護 + 基本攻擊防護"""
+    
+    # 獲取真實IP
+    client_ip = get_real_ip()
+    
+    # 1. IP 封鎖檢查
+    if client_ip in BLOCKED_IPS:
+        log_security_event("BLOCKED_IP_ACCESS", f"已封鎖的IP嘗試訪問")
+        abort(403)
+    
+    # 2. 可疑路徑檢查
+    request_path = request.path.lower()
+    for suspicious_path in SUSPICIOUS_PATHS:
+        if suspicious_path in request_path:
+            log_security_event("SUSPICIOUS_PATH_ACCESS", f"嘗試訪問可疑路徑: {request.path}")
+            abort(404)  # 返回404而不是403，避免洩露資訊
+    
+    # 3. 強制 HTTPS（生產環境）
     if (not request.is_secure and 
         request.headers.get('X-Forwarded-Proto') != 'https' and
         os.environ.get('FLASK_ENV') == 'production'):
         return redirect(request.url.replace('http://', 'https://'), code=301)
     
-    # 2. 保護管理員路由
+    # 4. 保護管理員路由
     protected_paths = [
         '/admin',
         '/session-stats', 
@@ -322,14 +374,9 @@ def security_checks():
         allowed_ips = os.environ.get('ADMIN_ALLOWED_IPS', '').split(',')
         allowed_ips = [ip.strip() for ip in allowed_ips if ip.strip()]
         
-        if allowed_ips:
-            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
-            if client_ip and ',' in client_ip:
-                client_ip = client_ip.split(',')[0].strip()
-            
-            if client_ip not in allowed_ips:
-                logger.warning(f"未授權的管理員訪問嘗試: {client_ip} -> {request.path}")
-                return jsonify({'error': 'Not found'}), 404
+        if allowed_ips and client_ip not in allowed_ips:
+            log_security_event("UNAUTHORIZED_ADMIN_ACCESS", f"未授權的管理員訪問嘗試")
+            return jsonify({'error': 'Not found'}), 404
     
     return None
 
@@ -339,9 +386,11 @@ def after_request(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     
     # 記錄請求
-    logger.info(f"{request.remote_addr} - {request.method} {request.path} - {response.status_code}")
+    client_ip = get_real_ip()
+    logger.info(f"{client_ip} - {request.method} {request.path} - {response.status_code}")
     
     return response
 
@@ -373,7 +422,11 @@ def system_status(secret_key):
             'status': 'initializing',
             'firebase_initialized': firebase_initialized,
             'gumroad_available': gumroad_service is not None,
-            'message': 'Service is starting up, please wait...'
+            'message': 'Service is starting up, please wait...',
+            'security_status': {
+                'blocked_ips_count': len(BLOCKED_IPS),
+                'security_enabled': True
+            }
         })
 
 @app.route('/health', methods=['GET'])
@@ -383,7 +436,7 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'service': 'artale-auth-service',
-        'version': '3.1.0-discord-integrated',
+        'version': '3.1.1-security-basic',
         'checks': {}
     }
     
@@ -434,6 +487,12 @@ def health_check():
         health_status['checks']['discord_bot'] = 'configured'
     else:
         health_status['checks']['discord_bot'] = 'not_configured'
+    
+    # 安全狀態檢查
+    health_status['checks']['security'] = {
+        'blocked_ips_count': len(BLOCKED_IPS),
+        'suspicious_paths_monitored': len(SUSPICIOUS_PATHS)
+    }
     
     status_code = 200 if health_status['status'] in ['healthy', 'degraded'] else 503
     return jsonify(health_status), status_code
@@ -561,6 +620,20 @@ def products_page():
     """軟體服務展示頁面（支援 Gumroad）"""
     return render_template_string(PROFESSIONAL_PRODUCTS_TEMPLATE)
 
+# =====【新增】特殊攻擊路徑直接阻擋 =====
+@app.route('/.env')
+@app.route('/administrator/<path:path>')
+@app.route('/wp-admin/<path:path>')
+@app.route('/phpmyadmin/<path:path>')
+@app.route('/wp-config.php')
+@app.route('/xmlrpc.php')
+@app.route('/.git/<path:path>')
+@app.route('/backup/<path:path>')
+def block_common_attacks(path=None):
+    """直接封鎖常見的攻擊路徑"""
+    client_ip = get_real_ip()
+    log_security_event("DIRECT_ATTACK_BLOCKED", f"直接攻擊路徑被阻擋: {request.path}")
+    abort(404)
 
 # ===== 應用初始化 =====
 
@@ -570,6 +643,7 @@ try:
     success = init_firebase_with_retry()
     if success:
         logger.info(f"✅ 應用初始化成功，Gumroad 服務: {'已啟用' if gumroad_service else '未啟用'}")
+        logger.info(f"🛡️ 安全功能已啟用 - 封鎖IP數量: {len(BLOCKED_IPS)}")
     else:
         logger.error(f"❌ 應用初始化失敗")
 except Exception as e:
@@ -579,12 +653,26 @@ except Exception as e:
 @app.errorhandler(404)
 def not_found(error):
     """統一的 404 處理"""
+    # 記錄 404 錯誤，可能是掃描行為
+    client_ip = get_real_ip()
+    user_agent = request.headers.get('User-Agent', 'Unknown')
+    
+    # 如果是可疑的404請求，記錄安全事件
+    if any(suspicious in request.path.lower() for suspicious in SUSPICIOUS_PATHS):
+        log_security_event("SUSPICIOUS_404", f"可疑的404請求")
+    
     return jsonify({'error': 'Not found'}), 404
 
 @app.errorhandler(403)
 def forbidden(error):
     """將 403 偽裝成 404"""
     return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    """內部錯誤處理"""
+    logger.error(f"❌ 內部錯誤: {str(error)}")
+    return jsonify({'error': 'Internal server error'}), 500
 
 # 本地開發環境啟動
 if __name__ == '__main__':
@@ -596,6 +684,12 @@ if __name__ == '__main__':
     
     if not gumroad_service:
         logger.warning("⚠️ Gumroad 服務未初始化，付款功能不可用")
+    
+    # 顯示安全配置
+    logger.info(f"🛡️ 安全配置:")
+    logger.info(f"   - 封鎖IP數量: {len(BLOCKED_IPS)}")
+    logger.info(f"   - 監控的可疑路徑數量: {len(SUSPICIOUS_PATHS)}")
+    logger.info(f"   - 基本安全防護: 已啟用")
     
     # 啟動 Flask 應用
     port = int(os.environ.get('PORT', 5000))
