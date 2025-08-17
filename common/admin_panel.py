@@ -395,20 +395,20 @@ HTML_BODY_START = """
             <!-- 統計資訊 -->
             <div class="stats">
                 <div class="stat-card">
+                    <h3 id="total-users">-</h3>
+                    <p>總用戶數</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="active-users">-</h3>
+                    <p>活躍用戶</p>
+                </div>
+                <div class="stat-card">
                     <h3 id="total-revenue">-</h3>
                     <p>總收益 (NT$)</p>
                 </div>
                 <div class="stat-card">
                     <h3 id="net-revenue">-</h3>
                     <p>淨收益 (NT$)</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="online-count">-</h3>
-                    <p>當前在線用戶</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="active-sessions">-</h3>
-                    <p>活躍 Session</p>
                 </div>
             </div>
             
@@ -1560,12 +1560,15 @@ JS_SYSTEM_FUNCTIONS = """
         function updateStats(users) {
             const total = users.length;
             const active = users.filter(u => u.active && (!u.expires_at || new Date(u.expires_at) > new Date())).length;
-            const expired = users.filter(u => u.expires_at && new Date(u.expires_at) < new Date()).length;
-            const refunded = users.filter(u => u.payment_status === 'refunded').length;
+            
+            // 更新統計顯示
+            document.getElementById('total-users').textContent = total;
+            document.getElementById('active-users').textContent = active;
             
             // 載入收益統計
             loadRevenueStats();
         }
+
 
         async function loadRevenueStats() {
             try {
