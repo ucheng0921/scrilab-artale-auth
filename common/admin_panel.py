@@ -365,7 +365,7 @@ HTML_BODY_START = """
                 <button onclick="showDebugInfo()" class="btn btn-info" style="font-size: 12px;">🔍 調試信息</button>
                 <button onclick="clearToken()" class="btn btn-warning" style="font-size: 12px;">🔄 重置密碼</button>
                 <button onclick="manualLogin()" class="btn" style="font-size: 12px;">🔐 手動登入</button>
-                <button onclick="refreshOnlineUsers()" class="btn btn-success" style="font-size: 12px;">🟢 刷新在線用戶</button>
+                <button onclick="refreshActiveSessions()" class="btn btn-success" style="font-size: 12px;">🟢 刷新在線用戶</button>
             </div>
         </div>
         
@@ -380,15 +380,16 @@ HTML_BODY_START = """
         
         <!-- 主要內容區域 -->
         <div id="main-content" style="display: none;">
-            <!-- 在線用戶監控 -->
-            <div class="online-users-panel" style="background: #1e1e1e; border: 2px solid #10b981; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
-                <h3>🟢 在線用戶監控</h3>
-                <p style="margin-bottom: 15px;">顯示最近 5 分鐘內活動的用戶</p>
-                <div id="online-users-list">
+            <!-- 活躍Session監控 -->
+            <div class="active-sessions-panel" style="background: #1e1e1e; border: 2px solid #10b981; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+                <h3>⚡ 活躍 Session 監控</h3>
+                <p style="margin-bottom: 15px;">顯示最近 5 分鐘內的活躍用戶連線</p>
+                <div id="active-sessions-list">
                     <div style="text-align: center; padding: 20px;">載入中...</div>
                 </div>
                 <div style="margin-top: 15px;">
-                    <button onclick="refreshOnlineUsers()" class="btn btn-success">🔄 刷新在線狀態</button>
+                    <button onclick="refreshActiveSessions()" class="btn btn-success">🔄 刷新Session狀態</button>
+                    <button onclick="clearInactiveSessions()" class="btn btn-warning">🧹 清理無效Session</button>                    
                     <span id="last-refresh-time" style="margin-left: 10px; color: #b3b3b3;"></span>
                 </div>
             </div>
@@ -761,7 +762,7 @@ JS_VARIABLES = """
         let isLoggedIn = false;
         let currentRefundData = null;
         let currentEditUser = null;
-        let onlineUsers = [];
+        let activeSessions = [];
 
         // Check login status when page loads
         window.onload = function() {
@@ -808,11 +809,11 @@ JS_LOGIN_FUNCTIONS = """
             isLoggedIn = true;
             loadUsers();
             loadSystemStats();
-            refreshOnlineUsers();  // 添加這行
+            refreshActiveSessions();  // 添加這行
             // 自動刷新在線用戶
             setInterval(function() {
                 if (isLoggedIn) {
-                    refreshOnlineUsers();
+                    refreshActiveSessions();
                 }
             }, 30000);  // 添加這幾行
         }
@@ -893,7 +894,7 @@ JS_LOGIN_FUNCTIONS = """
             location.reload();
         }
         // 在線用戶監控功能
-        async function refreshOnlineUsers() {
+        async function refreshActiveSessions() {
             if (!isLoggedIn) return;
             
             try {
@@ -904,8 +905,8 @@ JS_LOGIN_FUNCTIONS = """
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success) {
-                        onlineUsers = data.online_users;
-                        renderOnlineUsers(onlineUsers);
+                        activeSessions = data.online_users;
+                        renderOnlineUsers(activeSessions);
                         updateOnlineStats(data.stats);
                         
                         const now = new Date();
@@ -1327,7 +1328,7 @@ JS_USER_FUNCTIONS = """
                 }
                 
                 // 檢查在線狀態
-                const onlineUser = onlineUsers.find(ou => ou.uuid_preview === user.uuid_preview);
+                const onlineUser = activeSessions.find(ou => ou.uuid_preview === user.uuid_preview);
                 const onlineStatus = onlineUser ? getOnlineStatusIndicator(onlineUser.last_activity) : { color: '#666666', text: '⚫ 離線' };
                 
                 row.innerHTML = `
@@ -2984,4 +2985,159 @@ def get_user_details(document_id):
         
     except Exception as e:
         logger.error(f"Get user details error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+    
+@admin_bp.route('/active-sessions', methods=['GET'])
+def get_active_sessions():
+    """獲取活躍Session列表"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+        
+        # 獲取最近 5 分鐘內活動的 session
+        from datetime import datetime, timedelta
+        cutoff_time = datetime.now() - timedelta(minutes=5)
+        
+        # 查詢活躍的 session
+        sessions_ref = db.collection('user_sessions')
+        active_sessions_query = sessions_ref.where('last_activity', '>=', cutoff_time).stream()
+        
+        active_sessions = []
+        unique_users = set()
+        
+        for session in active_sessions_query:
+            session_data = session.to_dict()
+            
+            # 獲取對應的用戶資訊
+            user_uuid = session_data.get('user_uuid')
+            if user_uuid:
+                unique_users.add(user_uuid)
+                
+                # 計算 UUID hash 來查找用戶
+                import hashlib
+                uuid_hash = hashlib.sha256(user_uuid.encode()).hexdigest()
+                user_ref = db.collection('authorized_users').document(uuid_hash)
+                user_doc = user_ref.get()
+                
+                if user_doc.exists:
+                    user_data = user_doc.to_dict()
+                    
+                    # 處理時間
+                    last_activity = session_data.get('last_activity')
+                    created_at = session_data.get('created_at')
+                    
+                    if hasattr(last_activity, 'isoformat'):
+                        last_activity_str = last_activity.isoformat()
+                    else:
+                        last_activity_str = str(last_activity)
+                    
+                    if hasattr(created_at, 'isoformat'):
+                        created_at_str = created_at.isoformat()
+                    else:
+                        created_at_str = str(created_at)
+                    
+                    # 生成 UUID 預覽
+                    original_uuid = user_data.get('original_uuid', user_uuid)
+                    uuid_preview = original_uuid[:16] + '...' if len(original_uuid) > 16 else original_uuid
+                    
+                    session_info = {
+                        'session_id': session.id,
+                        'user_uuid': user_uuid,
+                        'uuid_preview': uuid_preview,
+                        'display_name': user_data.get('display_name', 'Unknown'),
+                        'last_activity': last_activity_str,
+                        'created_at': created_at_str,
+                        'ip_address': session_data.get('ip_address', 'Unknown'),
+                        'user_agent': session_data.get('user_agent', 'Unknown')
+                    }
+                    
+                    active_sessions.append(session_info)
+        
+        # 按最後活動時間排序
+        active_sessions.sort(key=lambda x: x['last_activity'], reverse=True)
+        
+        stats = {
+            'active_sessions': len(active_sessions),
+            'unique_users': len(unique_users),
+            'last_updated': datetime.now().isoformat()
+        }
+        
+        return jsonify({
+            'success': True,
+            'active_sessions': active_sessions,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Get active sessions error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/clear-inactive-sessions', methods=['POST'])
+def clear_inactive_sessions():
+    """清理無效Session"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+        
+        # 獲取超過 10 分鐘沒有活動的 session
+        from datetime import datetime, timedelta
+        cutoff_time = datetime.now() - timedelta(minutes=10)
+        
+        sessions_ref = db.collection('user_sessions')
+        inactive_sessions = sessions_ref.where('last_activity', '<', cutoff_time).stream()
+        
+        cleared_count = 0
+        for session in inactive_sessions:
+            session.reference.delete()
+            cleared_count += 1
+        
+        logger.info(f"清理了 {cleared_count} 個無效Session")
+        
+        return jsonify({
+            'success': True,
+            'message': f'已清理 {cleared_count} 個無效Session',
+            'cleared_count': cleared_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Clear inactive sessions error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/terminate-session/<session_id>', methods=['DELETE'])
+def terminate_session(session_id):
+    """終止特定Session"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+        
+        session_ref = db.collection('user_sessions').document(session_id)
+        session_doc = session_ref.get()
+        
+        if not session_doc.exists:
+            return jsonify({'success': False, 'error': 'Session不存在'}), 404
+        
+        # 刪除Session
+        session_ref.delete()
+        
+        logger.info(f"管理員終止Session: {session_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Session已終止'
+        })
+        
+    except Exception as e:
+        logger.error(f"Terminate session error: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
