@@ -365,6 +365,7 @@ HTML_BODY_START = """
                 <button onclick="showDebugInfo()" class="btn btn-info" style="font-size: 12px;">🔍 調試信息</button>
                 <button onclick="clearToken()" class="btn btn-warning" style="font-size: 12px;">🔄 重置密碼</button>
                 <button onclick="manualLogin()" class="btn" style="font-size: 12px;">🔐 手動登入</button>
+                <button onclick="refreshOnlineUsers()" class="btn btn-success" style="font-size: 12px;">🟢 刷新在線用戶</button>
             </div>
         </div>
         
@@ -379,6 +380,18 @@ HTML_BODY_START = """
         
         <!-- 主要內容區域 -->
         <div id="main-content" style="display: none;">
+            <!-- 在線用戶監控 -->
+            <div class="online-users-panel" style="background: #1e1e1e; border: 2px solid #10b981; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+                <h3>🟢 在線用戶監控</h3>
+                <p style="margin-bottom: 15px;">顯示最近 5 分鐘內活動的用戶</p>
+                <div id="online-users-list">
+                    <div style="text-align: center; padding: 20px;">載入中...</div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button onclick="refreshOnlineUsers()" class="btn btn-success">🔄 刷新在線狀態</button>
+                    <span id="last-refresh-time" style="margin-left: 10px; color: #b3b3b3;"></span>
+                </div>
+            </div>
             <!-- 統計資訊 -->
             <div class="stats">
                 <div class="stat-card">
@@ -388,6 +401,14 @@ HTML_BODY_START = """
                 <div class="stat-card">
                     <h3 id="net-revenue">-</h3>
                     <p>淨收益 (NT$)</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="online-count">-</h3>
+                    <p>當前在線用戶</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="active-sessions">-</h3>
+                    <p>活躍 Session</p>
                 </div>
             </div>
             
@@ -448,18 +469,20 @@ HTML_USER_MANAGEMENT = """
                     <table class="user-table" id="users-table">
                         <thead>
                             <tr>
+                                <th>在線狀態</th>
                                 <th>顯示名稱</th>
                                 <th>UUID</th>
                                 <th>狀態</th>
                                 <th>到期時間</th>
                                 <th>登入次數</th>
+                                <th>最後活動</th>
                                 <th>創建時間</th>
                                 <th>付款狀態</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="users-tbody">
-                            <tr><td colspan="8" style="text-align: center;" id="loading-message">載入中...</td></tr>
+                            <tr><td colspan="10" style="text-align: center;" id="loading-message">載入中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -682,6 +705,49 @@ HTML_MODAL = """
                 </div>
             </div>
         </div>
+        
+        <!-- 編輯用戶模態框 -->
+        <div id="edit-user-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeEditUserModal()">&times;</span>
+                <h2>✏️ 編輯用戶</h2>
+                <div id="edit-user-details"></div>
+                <div class="edit-expiry-form" style="background: #2a2a2a; padding: 15px; border-radius: 8px; margin: 10px 0; border: 1px solid #333333;">
+                    <div class="form-group">
+                        <label>顯示名稱</label>
+                        <input type="text" id="edit-display-name" placeholder="用戶顯示名稱">
+                    </div>
+                    <div class="form-group">
+                        <label>到期時間</label>
+                        <input type="datetime-local" id="edit-expiry-date" style="background: #333333; color: #ffffff; border: 2px solid #555555; border-radius: 6px; padding: 8px;">
+                        <small style="color: #b3b3b3;">留空表示永久有效</small>
+                    </div>
+                    <div class="form-group">
+                        <label>快速設定</label>
+                        <div class="action-buttons">
+                            <button onclick="quickSetExpiry(1)" class="btn btn-info">+1天</button>
+                            <button onclick="quickSetExpiry(2)" class="btn btn-info">+2天</button>
+                            <button onclick="quickSetExpiry(3)" class="btn btn-info">+3天</button>
+                            <button onclick="quickSetExpiry(4)" class="btn btn-info">+4天</button>
+                            <button onclick="quickSetExpiry(5)" class="btn btn-info">+5天</button>
+                            <button onclick="quickSetExpiry(7)" class="btn btn-info">+7天</button>
+                            <button onclick="quickSetExpiry(30)" class="btn btn-info">+30天</button>
+                            <button onclick="quickSetExpiry(90)" class="btn btn-info">+90天</button>
+                            <button onclick="quickSetExpiry(365)" class="btn btn-info">+1年</button>
+                            <button onclick="setPermanent()" class="btn btn-warning">設為永久</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>備註</label>
+                        <textarea id="edit-notes" rows="3" placeholder="編輯備註..."></textarea>
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="saveUserChanges()" class="btn btn-success">💾 保存變更</button>
+                        <button onclick="closeEditUserModal()" class="btn">取消</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 """
 
 # JavaScript 分段 - 第一部分：基本變數和初始化
@@ -694,6 +760,8 @@ JS_VARIABLES = """
         let ADMIN_TOKEN = '';
         let isLoggedIn = false;
         let currentRefundData = null;
+        let currentEditUser = null;
+        let onlineUsers = [];
 
         // Check login status when page loads
         window.onload = function() {
@@ -740,6 +808,13 @@ JS_LOGIN_FUNCTIONS = """
             isLoggedIn = true;
             loadUsers();
             loadSystemStats();
+            refreshOnlineUsers();  // 添加這行
+            // 自動刷新在線用戶
+            setInterval(function() {
+                if (isLoggedIn) {
+                    refreshOnlineUsers();
+                }
+            }, 30000);  // 添加這幾行
         }
 
         async function validateTokenAndShowContent() {
@@ -816,6 +891,232 @@ JS_LOGIN_FUNCTIONS = """
             localStorage.removeItem('admin_token');
             alert('已清除登入信息');
             location.reload();
+        }
+        // 在線用戶監控功能
+        async function refreshOnlineUsers() {
+            if (!isLoggedIn) return;
+            
+            try {
+                const response = await fetch('/admin/online-users', {
+                    headers: { 'Admin-Token': ADMIN_TOKEN }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        onlineUsers = data.online_users;
+                        renderOnlineUsers(onlineUsers);
+                        updateOnlineStats(data.stats);
+                        
+                        const now = new Date();
+                        document.getElementById('last-refresh-time').textContent = 
+                            `最後更新: ${now.toLocaleTimeString()}`;
+                    }
+                }
+            } catch (error) {
+                console.error('載入在線用戶失敗:', error);
+            }
+        }
+
+        function renderOnlineUsers(users) {
+            const container = document.getElementById('online-users-list');
+            container.innerHTML = '';
+            
+            if (users.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">目前沒有在線用戶</div>';
+                return;
+            }
+            
+            users.forEach(user => {
+                const item = document.createElement('div');
+                item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 10px; margin: 5px 0; background: #2a2a2a; border-radius: 8px; border: 1px solid #333333;';
+                
+                const statusIndicator = getOnlineStatusIndicator(user.last_activity);
+                const timeAgo = getTimeAgo(user.last_activity);
+                
+                item.innerHTML = `
+                    <div>
+                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; background-color: ${statusIndicator.color};"></span>
+                        <strong>${user.display_name}</strong>
+                        <small style="color: #b3b3b3;">(${user.uuid_preview})</small>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 12px; color: #10b981;">${statusIndicator.text}</div>
+                        <div style="font-size: 11px; color: #666;">${timeAgo}</div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        function getOnlineStatusIndicator(lastActivity) {
+            const now = new Date();
+            const activityTime = new Date(lastActivity);
+            const diffMinutes = (now - activityTime) / (1000 * 60);
+            
+            if (diffMinutes < 1) {
+                return { color: '#10b981', text: '🟢 在線中' };
+            } else if (diffMinutes < 5) {
+                return { color: '#f59e0b', text: '🟡 最近活動' };
+            } else {
+                return { color: '#666666', text: '⚫ 離線' };
+            }
+        }
+
+        function getTimeAgo(timestamp) {
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diffMinutes = Math.floor((now - time) / (1000 * 60));
+            
+            if (diffMinutes < 1) return '剛剛';
+            if (diffMinutes < 60) return `${diffMinutes} 分鐘前`;
+            
+            const diffHours = Math.floor(diffMinutes / 60);
+            if (diffHours < 24) return `${diffHours} 小時前`;
+            
+            const diffDays = Math.floor(diffHours / 24);
+            return `${diffDays} 天前`;
+        }
+
+        function updateOnlineStats(stats) {
+            const onlineCountEl = document.getElementById('online-count');
+            const activeSessionsEl = document.getElementById('active-sessions');
+            
+            if (onlineCountEl) onlineCountEl.textContent = stats.online_count;
+            if (activeSessionsEl) activeSessionsEl.textContent = stats.active_sessions;
+        }
+
+        // 編輯用戶功能
+        async function editUser(documentId, currentName) {
+            if (!isLoggedIn) return;
+            
+            try {
+                const response = await fetch(`/admin/users/${documentId}`, {
+                    headers: { 'Admin-Token': ADMIN_TOKEN }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        currentEditUser = { documentId, ...data.user };
+                        showEditUserModal(data.user);
+                    } else {
+                        alert('獲取用戶資訊失敗: ' + data.error);
+                    }
+                } else {
+                    alert('無法載入用戶資訊');
+                }
+            } catch (error) {
+                alert('編輯用戶錯誤: ' + error.message);
+            }
+        }
+
+        function showEditUserModal(user) {
+            document.getElementById('edit-user-details').innerHTML = `
+                <div style="background: #1e1e1e; border: 2px solid #10b981; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h4>用戶詳情</h4>
+                    <p><strong>UUID:</strong> <code>${user.original_uuid}</code></p>
+                    <p><strong>創建時間:</strong> ${user.created_at}</p>
+                    <p><strong>登入次數:</strong> ${user.login_count}</p>
+                    <p><strong>付款狀態:</strong> ${user.payment_status}</p>
+                    <p><strong>當前狀態:</strong> ${user.active ? '✅ 啟用' : '❌ 停用'}</p>
+                </div>
+            `;
+            
+            document.getElementById('edit-display-name').value = user.display_name || '';
+            
+            if (user.expires_at) {
+                const expiryDate = new Date(user.expires_at);
+                
+                const year = expiryDate.getFullYear();
+                const month = String(expiryDate.getMonth() + 1).padStart(2, '0');
+                const day = String(expiryDate.getDate()).padStart(2, '0');
+                const hours = String(expiryDate.getHours()).padStart(2, '0');
+                const minutes = String(expiryDate.getMinutes()).padStart(2, '0');
+                
+                const localISOTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+                
+                document.getElementById('edit-expiry-date').value = localISOTime;
+            } else {
+                document.getElementById('edit-expiry-date').value = '';
+            }
+            
+            document.getElementById('edit-notes').value = user.notes || '';
+            document.getElementById('edit-user-modal').style.display = 'block';
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('edit-user-modal').style.display = 'none';
+            currentEditUser = null;
+        }
+
+        function quickSetExpiry(days) {
+            const now = new Date();
+            const expiryDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+            
+            const year = expiryDate.getFullYear();
+            const month = String(expiryDate.getMonth() + 1).padStart(2, '0');
+            const day = String(expiryDate.getDate()).padStart(2, '0');
+            const hours = String(expiryDate.getHours()).padStart(2, '0');
+            const minutes = String(expiryDate.getMinutes()).padStart(2, '0');
+            
+            const localISOTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            document.getElementById('edit-expiry-date').value = localISOTime;
+        }
+
+        function setPermanent() {
+            document.getElementById('edit-expiry-date').value = '';
+        }
+
+        async function saveUserChanges() {
+            if (!currentEditUser) {
+                alert('沒有選擇的用戶');
+                return;
+            }
+            
+            const displayName = document.getElementById('edit-display-name').value.trim();
+            const expiryDate = document.getElementById('edit-expiry-date').value;
+            const notes = document.getElementById('edit-notes').value.trim();
+            
+            if (!displayName) {
+                alert('顯示名稱不能為空');
+                return;
+            }
+            
+            try {
+                const updateData = {
+                    display_name: displayName,
+                    notes: notes
+                };
+                
+                if (expiryDate) {
+                    updateData.expires_at = new Date(expiryDate).toISOString();
+                } else {
+                    updateData.expires_at = null;
+                }
+                
+                const response = await fetch(`/admin/users/${currentEditUser.documentId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Admin-Token': ADMIN_TOKEN
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('用戶資訊已更新！');
+                    closeEditUserModal();
+                    loadUsers();
+                } else {
+                    alert('更新失敗: ' + data.error);
+                }
+            } catch (error) {
+                alert('更新錯誤: ' + error.message);
+            }
         }
 """
 
@@ -1001,7 +1302,7 @@ JS_USER_FUNCTIONS = """
             tbody.innerHTML = '';
             
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">暫無用戶數據</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center;">暫無用戶數據</td></tr>';
                 return;
             }
             
@@ -1025,21 +1326,30 @@ JS_USER_FUNCTIONS = """
                     statusText = '❌ 已過期';
                 }
                 
+                // 檢查在線狀態
+                const onlineUser = onlineUsers.find(ou => ou.uuid_preview === user.uuid_preview);
+                const onlineStatus = onlineUser ? getOnlineStatusIndicator(onlineUser.last_activity) : { color: '#666666', text: '⚫ 離線' };
+                
                 row.innerHTML = `
+                    <td>
+                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; background-color: ${onlineStatus.color};"></span>
+                        <small>${onlineStatus.text}</small>
+                    </td>
                     <td>${user.display_name || 'Unknown'}</td>
                     <td><code style="font-size: 11px;">${user.uuid_preview || 'N/A'}</code></td>
                     <td class="${statusClass}">${statusText}</td>
                     <td>${user.expires_at || '永久'}</td>
                     <td>${user.login_count || 0}</td>
+                    <td>${onlineUser ? getTimeAgo(onlineUser.last_activity) : '-'}</td>
                     <td>${user.created_at || 'Unknown'}</td>
                     <td>${user.payment_status || '手動創建'}</td>
                     <td>
-                        <button onclick="editUser('${user.document_id}', '${user.display_name}')" class="btn" style="font-size: 10px;">編輯</button>
+                        <button onclick="editUser('${user.document_id}', '${user.display_name}')" class="btn" style="font-size: 10px;">✏️ 編輯</button>
                         ${!isRefunded ? `<button onclick="toggleUser('${user.document_id}', ${!isActive})" class="btn btn-warning" style="font-size: 10px;">
                             ${isActive ? '停用' : '啟用'}
                         </button>` : ''}
-                        <button onclick="deleteUser('${user.document_id}', '${user.display_name}')" class="btn btn-danger" style="font-size: 10px;">刪除</button>
-                        ${user.payment_id ? `<button onclick="viewPaymentDetails('${user.payment_id}')" class="btn btn-info" style="font-size: 10px;">付款</button>` : ''}
+                        <button onclick="deleteUser('${user.document_id}', '${user.display_name}')" class="btn btn-danger" style="font-size: 10px;">🗑️ 刪除</button>
+                        ${user.payment_id ? `<button onclick="viewPaymentDetails('${user.payment_id}')" class="btn btn-info" style="font-size: 10px;">💳 付款</button>` : ''}
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -1610,39 +1920,6 @@ JS_USER_OPERATIONS = """
         });
 
         // 其他用戶操作函數
-        async function editUser(documentId, currentName) {
-            if (!isLoggedIn) return;
-            
-            const newName = prompt('新的顯示名稱:', currentName);
-            if (!newName || newName === currentName) return;
-            
-            const newDays = prompt('延長有效期天數:', '30');
-            if (!newDays) return;
-            
-            try {
-                const response = await fetch(`/admin/users/${documentId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Admin-Token': ADMIN_TOKEN
-                    },
-                    body: JSON.stringify({
-                        display_name: newName,
-                        extend_days: parseInt(newDays)
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    alert('用戶更新成功!');
-                    loadUsers();
-                } else {
-                    alert('更新失敗: ' + data.error);
-                }
-            } catch (error) {
-                alert('更新錯誤: ' + error.message);
-            }
-        }
 
         async function toggleUser(documentId, newStatus) {
             if (!isLoggedIn) return;
@@ -1757,9 +2034,14 @@ JS_USER_OPERATIONS = """
 
         // 點擊模態框外部關閉
         window.onclick = function(event) {
-            const modal = document.getElementById('refund-modal');
-            if (event.target === modal) {
+            const refundModal = document.getElementById('refund-modal');
+            const editModal = document.getElementById('edit-user-modal');
+            
+            if (event.target === refundModal) {
                 closeRefundModal();
+            }
+            if (event.target === editModal) {
+                closeEditUserModal();
             }
         }
     </script>
@@ -2030,6 +2312,30 @@ def update_user_admin(document_id):
                 new_expires = datetime.now() + timedelta(days=extend_days)
             
             update_data['expires_at'] = new_expires.isoformat()
+
+            # 更新到期時間（完整設定，不是延長）
+        if 'expires_at' in data:
+            expires_at = data['expires_at']
+            if expires_at is None or expires_at == '':
+                # 設為永久
+                from firebase_admin import firestore
+                update_data['expires_at'] = firestore.DELETE_FIELD
+            else:
+                # 設定具體的到期時間
+                try:
+                    from datetime import datetime
+                    if isinstance(expires_at, str):
+                        # 解析 ISO 格式的時間字符串
+                        expires_datetime = datetime.fromisoformat(expires_at.replace('Z', ''))
+                        update_data['expires_at'] = expires_datetime
+                    else:
+                        update_data['expires_at'] = expires_at
+                except ValueError as ve:
+                    return jsonify({'success': False, 'error': f'無效的日期格式: {str(ve)}'}), 400
+        
+        # 更新備註
+        if 'notes' in data:
+            update_data['notes'] = data['notes']
         
         update_data['updated_at'] = datetime.now()
         update_data['updated_by'] = 'admin_dashboard'
@@ -2542,4 +2848,140 @@ def backup_data():
         
     except Exception as e:
         logger.error(f"Backup data error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/online-users', methods=['GET'])
+def get_online_users():
+    """獲取在線用戶列表"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+        
+        # 獲取最近 5 分鐘內活動的用戶 session
+        from datetime import datetime, timedelta
+        cutoff_time = datetime.now() - timedelta(minutes=5)
+        
+        # 查詢活躍的 session
+        sessions_ref = db.collection('user_sessions')
+        active_sessions = sessions_ref.where('last_activity', '>=', cutoff_time).stream()
+        
+        online_users = []
+        active_session_count = 0
+        
+        for session in active_sessions:
+            session_data = session.to_dict()
+            active_session_count += 1
+            
+            # 獲取對應的用戶資訊
+            user_uuid = session_data.get('user_uuid')
+            if user_uuid:
+                # 計算 UUID hash 來查找用戶
+                import hashlib
+                uuid_hash = hashlib.sha256(user_uuid.encode()).hexdigest()
+                user_ref = db.collection('authorized_users').document(uuid_hash)
+                user_doc = user_ref.get()
+                
+                if user_doc.exists:
+                    user_data = user_doc.to_dict()
+                    
+                    # 處理最後活動時間
+                    last_activity = session_data.get('last_activity')
+                    if hasattr(last_activity, 'isoformat'):
+                        last_activity_str = last_activity.isoformat()
+                    else:
+                        last_activity_str = str(last_activity)
+                    
+                    # 生成 UUID 預覽
+                    original_uuid = user_data.get('original_uuid', user_uuid)
+                    uuid_preview = original_uuid[:16] + '...' if len(original_uuid) > 16 else original_uuid
+                    
+                    online_user = {
+                        'user_uuid': user_uuid,
+                        'uuid_preview': uuid_preview,
+                        'display_name': user_data.get('display_name', 'Unknown'),
+                        'last_activity': last_activity_str,
+                        'session_id': session.id,
+                        'ip_address': session_data.get('ip_address', 'Unknown')
+                    }
+                    
+                    # 避免重複用戶
+                    if not any(u['user_uuid'] == user_uuid for u in online_users):
+                        online_users.append(online_user)
+        
+        # 按最後活動時間排序
+        online_users.sort(key=lambda x: x['last_activity'], reverse=True)
+        
+        stats = {
+            'online_count': len(online_users),
+            'active_sessions': active_session_count,
+            'last_updated': datetime.now().isoformat()
+        }
+        
+        return jsonify({
+            'success': True,
+            'online_users': online_users,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Get online users error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@admin_bp.route('/users/<document_id>', methods=['GET'])
+def get_user_details(document_id):
+    """獲取單個用戶的詳細資訊"""
+    if not check_admin_token(request):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    try:
+        from app import db
+        if db is None:
+            return jsonify({'success': False, 'error': 'Database not available'}), 503
+            
+        user_ref = db.collection('authorized_users').document(document_id)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists:
+            return jsonify({'success': False, 'error': '用戶不存在'}), 404
+        
+        user_data = user_doc.to_dict()
+        
+        # 處理時間格式
+        created_at = user_data.get('created_at')
+        if hasattr(created_at, 'strftime'):
+            created_at_str = created_at.strftime('%Y-%m-%d %H:%M')
+        else:
+            created_at_str = str(created_at)[:16] if created_at else 'Unknown'
+        
+        expires_at = user_data.get('expires_at')
+        expires_at_str = None
+        if expires_at:
+            if isinstance(expires_at, str):
+                expires_at_str = expires_at
+            else:
+                expires_at_str = expires_at.isoformat() if hasattr(expires_at, 'isoformat') else str(expires_at)
+        
+        user_details = {
+            'original_uuid': user_data.get('original_uuid', 'Unknown'),
+            'display_name': user_data.get('display_name', 'Unknown'),
+            'active': user_data.get('active', False),
+            'expires_at': expires_at_str,
+            'login_count': user_data.get('login_count', 0),
+            'created_at': created_at_str,
+            'notes': user_data.get('notes', ''),
+            'payment_status': user_data.get('payment_status', '手動創建'),
+            'payment_id': user_data.get('payment_id')
+        }
+        
+        return jsonify({
+            'success': True,
+            'user': user_details
+        })
+        
+    except Exception as e:
+        logger.error(f"Get user details error: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500

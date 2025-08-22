@@ -906,7 +906,7 @@ JS_LOGIN_FUNCTIONS = """
                     if (data.success) {
                         onlineUsers = data.online_users;
                         renderOnlineUsers(onlineUsers);
-                        updateOnlineStats(data.stats);
+                        updateOnlineStats(data.stats);  // 使用相同的函數名
                         
                         const now = new Date();
                         document.getElementById('last-refresh-time').textContent = 
@@ -983,8 +983,11 @@ JS_LOGIN_FUNCTIONS = """
             const onlineCountEl = document.getElementById('online-count');
             const activeSessionsEl = document.getElementById('active-sessions');
             
-            if (onlineCountEl) onlineCountEl.textContent = stats.online_count;
-            if (activeSessionsEl) activeSessionsEl.textContent = stats.active_sessions;
+            // 兩個數值相同
+            const onlineCount = stats.online_count;
+            
+            if (onlineCountEl) onlineCountEl.textContent = onlineCount;
+            if (activeSessionsEl) activeSessionsEl.textContent = onlineCount;
         }
 
         // 編輯用戶功能
@@ -1327,7 +1330,7 @@ JS_USER_FUNCTIONS = """
                 }
                 
                 // 檢查在線狀態
-                const onlineUser = onlineUsers.find(ou => ou.uuid_preview === user.uuid_preview);
+                const onlineUser = onlineUsers.find(ou => ou.user_uuid === user.original_uuid);
                 const onlineStatus = onlineUser ? getOnlineStatusIndicator(onlineUser.last_activity) : { color: '#666666', text: '⚫ 離線' };
                 
                 row.innerHTML = `
@@ -2852,7 +2855,7 @@ def backup_data():
 
 @admin_bp.route('/online-users', methods=['GET'])
 def get_online_users():
-    """獲取在線用戶列表"""
+    """獲取在線用戶列表 - 簡化版本"""
     if not check_admin_token(request):
         return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     
@@ -2870,54 +2873,44 @@ def get_online_users():
         active_sessions = sessions_ref.where('last_activity', '>=', cutoff_time).stream()
         
         online_users = []
-        active_session_count = 0
         
         for session in active_sessions:
             session_data = session.to_dict()
-            active_session_count += 1
             
-            # 獲取對應的用戶資訊
-            user_uuid = session_data.get('user_uuid')
-            if user_uuid:
-                # 計算 UUID hash 來查找用戶
-                import hashlib
-                uuid_hash = hashlib.sha256(user_uuid.encode()).hexdigest()
-                user_ref = db.collection('authorized_users').document(uuid_hash)
-                user_doc = user_ref.get()
-                
-                if user_doc.exists:
-                    user_data = user_doc.to_dict()
-                    
-                    # 處理最後活動時間
-                    last_activity = session_data.get('last_activity')
-                    if hasattr(last_activity, 'isoformat'):
-                        last_activity_str = last_activity.isoformat()
-                    else:
-                        last_activity_str = str(last_activity)
-                    
-                    # 生成 UUID 預覽
-                    original_uuid = user_data.get('original_uuid', user_uuid)
-                    uuid_preview = original_uuid[:16] + '...' if len(original_uuid) > 16 else original_uuid
-                    
-                    online_user = {
-                        'user_uuid': user_uuid,
-                        'uuid_preview': uuid_preview,
-                        'display_name': user_data.get('display_name', 'Unknown'),
-                        'last_activity': last_activity_str,
-                        'session_id': session.id,
-                        'ip_address': session_data.get('ip_address', 'Unknown')
-                    }
-                    
-                    # 避免重複用戶
-                    if not any(u['user_uuid'] == user_uuid for u in online_users):
-                        online_users.append(online_user)
+            # 處理最後活動時間
+            last_activity = session_data.get('last_activity')
+            if hasattr(last_activity, 'isoformat'):
+                last_activity_str = last_activity.isoformat()
+            else:
+                last_activity_str = str(last_activity)
+            
+            # 獲取用戶資訊（直接從 session 中獲取）
+            user_uuid = session_data.get('user_uuid', 'Unknown')
+            display_name = session_data.get('display_name', 'Unknown User')
+            
+            # 生成 UUID 預覽
+            uuid_preview = user_uuid[:16] + '...' if len(user_uuid) > 16 else user_uuid
+            
+            online_user = {
+                'user_uuid': user_uuid,
+                'uuid_preview': uuid_preview,
+                'display_name': display_name,
+                'last_activity': last_activity_str,
+                'session_id': session.id,
+                'ip_address': session_data.get('ip_address', 'Unknown')
+            }
+            
+            online_users.append(online_user)
         
         # 按最後活動時間排序
         online_users.sort(key=lambda x: x['last_activity'], reverse=True)
         
+        # 簡化統計：活躍session數 = 在線用戶數
+        online_count = len(online_users)
+        
         stats = {
-            'online_count': len(online_users),
-            'active_sessions': active_session_count,
+            'online_count': online_count,
+            'active_sessions': online_count,  # 相同數值
             'last_updated': datetime.now().isoformat()
         }
         
