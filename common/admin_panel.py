@@ -929,20 +929,19 @@ JS_LOGIN_FUNCTIONS = """
             
             users.forEach(user => {
                 const item = document.createElement('div');
-                item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 10px; margin: 5px 0; background: #2a2a2a; border-radius: 8px; border: 1px solid #333333;';
+                item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; margin: 3px 0; background: #2a2a2a; border-radius: 6px; border: 1px solid #333333; font-size: 13px;';
                 
                 const statusIndicator = getOnlineStatusIndicator(user.last_activity);
                 const timeAgo = getTimeAgo(user.last_activity);
                 
                 item.innerHTML = `
-                    <div>
-                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; background-color: ${statusIndicator.color};"></span>
-                        <strong>${user.display_name}</strong>
-                        <small style="color: #b3b3b3;">(${user.uuid_preview})</small>
+                    <div style="display: flex; align-items: center; flex: 1;">
+                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background-color: ${statusIndicator.color};"></span>
+                        <strong style="margin-right: 8px;">${user.display_name}</strong>
+                        <code style="font-size: 11px; color: #888; background: #1a1a1a; padding: 2px 4px; border-radius: 3px;">${user.uuid_preview}</code>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 12px; color: #10b981;">${statusIndicator.text}</div>
-                        <div style="font-size: 11px; color: #666;">${timeAgo}</div>
+                    <div style="text-align: right; font-size: 11px; color: #666;">
+                        ${timeAgo}
                     </div>
                 `;
                 
@@ -2850,12 +2849,9 @@ def backup_data():
         })
         
     except Exception as e:
-        logger.error(f"Backup data error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
-@admin_bp.route('/online-users', methods=['GET'])
+        logger.error(f"Backup data error: {str(e)}")@admin_bp.route('/online-users', methods=['GET'])
 def get_online_users():
-    """獲取在線用戶列表 - 簡化版本"""
+    """獲取在線用戶列表 - 修復版本"""
     if not check_admin_token(request):
         return jsonify({'success': False, 'error': 'Unauthorized'}), 401
     
@@ -2884,12 +2880,31 @@ def get_online_users():
             else:
                 last_activity_str = str(last_activity)
             
-            # 獲取用戶資訊（直接從 session 中獲取）
-            user_uuid = session_data.get('user_uuid', 'Unknown')
-            display_name = session_data.get('display_name', 'Unknown User')
+            # 從 session 獲取 user_uuid（可能的欄位名稱）
+            user_uuid = (session_data.get('user_uuid') or 
+                        session_data.get('uuid') or 
+                        session_data.get('user_id') or 
+                        'Unknown')
             
-            # 生成 UUID 預覽
-            uuid_preview = user_uuid[:16] + '...' if len(user_uuid) > 16 else user_uuid
+            display_name = 'Unknown User'
+            
+            # 嘗試從用戶表獲取正確的顯示名稱
+            if user_uuid != 'Unknown':
+                import hashlib
+                try:
+                    # 嘗試通過 UUID hash 查找用戶
+                    uuid_hash = hashlib.sha256(user_uuid.encode()).hexdigest()
+                    user_ref = db.collection('authorized_users').document(uuid_hash)
+                    user_doc = user_ref.get()
+                    
+                    if user_doc.exists:
+                        user_data = user_doc.to_dict()
+                        display_name = user_data.get('display_name', 'Unknown User')
+                except Exception as e:
+                    logger.warning(f"無法查找用戶資訊: {str(e)}")
+            
+            # 生成簡短的 UUID 預覽
+            uuid_preview = user_uuid[:8] + '...' if len(user_uuid) > 8 else user_uuid
             
             online_user = {
                 'user_uuid': user_uuid,
@@ -2910,7 +2925,7 @@ def get_online_users():
         
         stats = {
             'online_count': online_count,
-            'active_sessions': online_count,  # 相同數值
+            'active_sessions': online_count,
             'last_updated': datetime.now().isoformat()
         }
         
