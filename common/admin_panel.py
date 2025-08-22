@@ -2872,6 +2872,11 @@ def get_online_users():
         
         for session in active_sessions:
             session_data = session.to_dict()
+
+            # 調試：查看 session 數據結構
+            if len(online_users) == 0:  # 只打印第一個
+                logger.info(f"Session 數據: {session_data}")
+                logger.info(f"Session 欄位: {list(session_data.keys())}")            
             
             # 處理最後活動時間
             last_activity = session_data.get('last_activity')
