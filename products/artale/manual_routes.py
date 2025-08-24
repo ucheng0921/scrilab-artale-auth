@@ -2273,6 +2273,16 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                             <div class="param-range">預設值：0.01</div>
                             <div class="param-desc">螢幕擷取畫面頻率，依據電腦效能設置，效能不佳請設定0.05~</div>
                         </div>
+                        <div class="config-param-card">
+                            <div class="param-name">虛擬邊界邊距(VIRTUAL_BOUNDARY_MARGIN)</div>
+                            <div class="param-range">預設值：150</div>
+                            <div class="param-desc">距離視窗邊界的距離，角色依此判斷是否需改變方向</div>
+                        </div>
+                        <div class="config-param-card">
+                            <div class="param-name">閒置移動超時停止(STOP_NO_MONSTER_TIMEOUT)</div>
+                            <div class="param-range">預設值：90秒</div>
+                            <div class="param-desc">避免角色無意義的隨機遊走(換地圖、未設定怪物等等狀況)</div>
+                        </div>                                                
                     </div>
                 </div>                
 
