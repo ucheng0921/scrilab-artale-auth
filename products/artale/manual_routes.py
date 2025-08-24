@@ -2075,6 +2075,11 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                             <div class="param-desc">角色攻擊範圍的橫向距離，數值越大檢測範圍越廣</div>
                         </div>                            
                         <div class="config-param-card">
+                            <div class="param-name">攻擊冷卻時間 (ATTACK_COOLDOWN)</div>
+                            <div class="param-range">預設值:0.1</div>
+                            <div class="param-desc">預設可以不用調整，除非角色攻擊速度太慢很常空打再調(可自行多嘗試，但預設沒問題)</div>
+                        </div>
+                        <div class="config-param-card">
                             <div class="param-name">上跳攻擊模式 (JUMP_ATTACK_MOMDE)</div>
                             <div class="param-range">一般、法師、不啟用</div>
                             <div class="param-desc">上方怪物的處理:一般(跳+攻擊)、法師(順移+攻擊)、不啟用(直接攻擊)</div>
