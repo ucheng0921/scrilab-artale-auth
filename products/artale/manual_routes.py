@@ -1793,7 +1793,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <div class="video-header">
                             <h3 class="video-tutorial-title">
                                 <i class="fas fa-cog"></i>
-                                正確執行步驟教學
+                                參數說明與設定教學
                             </h3>
                             <p class="video-tutorial-desc">
                                 詳細說明個參數意義、如何正確設定與執行腳本
@@ -1823,10 +1823,10 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <div class="video-header">
                             <h3 class="video-tutorial-title">
                                 <i class="fas fa-play-circle"></i>
-                                參數設定與實際演示
+                                實際演示
                             </h3>
                             <p class="video-tutorial-desc">
-                                詳細說明各項參數設定調整方法與實際操作演示
+                                實際操作演示部分支援地圖與功能
                             </p>
                         </div>
                         <div class="video-player-container">
