@@ -11,8 +11,8 @@ import time
 failed_attempts = defaultdict(list)  # IP -> [timestamp1, timestamp2, ...]
 # Google Drive 影片配置
 GOOGLE_DRIVE_CONFIG = {
-    'setup_video_id': '1neJKwUi5kYJGB2sNSHbOGZFhV8fpE9Eb',  # 設定教學影片 ID
-    'demo_video_id': '1neJKwUi5kYJGB2sNSHbOGZFhV8fpE9Eb'    # 演示影片 ID  
+    'setup_video_id': '1O8elAix27BbdshAyrZyHybG7RgjGQsNh',  # 設定教學影片 ID
+    'demo_video_id': ''    # 演示影片 ID  
 }
 
 def is_rate_limited(ip):
@@ -1796,7 +1796,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                                 正確執行步驟教學
                             </h3>
                             <p class="video-tutorial-desc">
-                                完整演示角色定位工具、怪物下載系統及繩子工具的使用方法
+                                詳細說明個參數意義、如何正確設定與執行腳本
                             </p>
                         </div>
                         <div class="video-player-container">
