@@ -11,7 +11,7 @@ import time
 failed_attempts = defaultdict(list)  # IP -> [timestamp1, timestamp2, ...]
 # Google Drive 影片配置
 GOOGLE_DRIVE_CONFIG = {
-    'setup_video_id': '1O8elAix27BbdshAyrZyHybG7RgjGQsNh',  # 設定教學影片 ID
+    'setup_video_id': '1MU8gx8hkAdLI4z2w3IUqAMnI3nBFNpz',  # 設定教學影片 ID
     'demo_video_id': ''    # 演示影片 ID  
 }
 
