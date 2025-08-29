@@ -1636,7 +1636,7 @@ INTRO_TEMPLATE = r"""
         // Google Drive 影片配置
         const GOOGLE_DRIVE_CONFIG = {
             // 請將這裡的 FILE_ID 替換為您的 Google Drive 影片檔案 ID
-            fileId: '1neJKwUi5kYJGB2sNSHbOGZFhV8fpE9Eb'
+            fileId: '1O4skseU-1Dfq_wl6OheA45UmiHLjdn8M'
         };
 
         // 影片初始化
