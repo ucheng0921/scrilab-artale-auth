@@ -491,12 +491,46 @@ class RouteHandlers:
             duration = time.time() - start_time
             self._record_request_metric('logout', duration)
     
-    @rate_limit(max_requests=120, time_window=60)
+    @rate_limit(max_requests=60, time_window=60)  # 從120次/分鐘降到60次/分鐘
     def validate_session(self):
-        """驗證會話令牌 - 修復權限同步問題版本"""
+        """驗證會話令牌 - 修復權限同步問題版本 + 增強攻擊防護"""
         start_time = time.time()
         
         try:
+            # === 新增：快速前置檢查，立即拒絕無效請求 ===
+            data = request.get_json()
+            session_token = data.get('session_token') if data else None
+            
+            # 1. 基本存在性檢查
+            if not session_token:
+                return jsonify({
+                    'success': False,
+                    'error': 'Missing session token',
+                    'code': 'MISSING_SESSION_TOKEN'
+                }), 400
+            
+            # 2. Token長度檢查（正常token約43字符，設定最低15字符）
+            if len(session_token) < 20 or len(session_token) > 60:
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid session token format',
+                    'code': 'INVALID_SESSION_FORMAT'
+                }), 400
+            
+            # 3. 記憶體檢查（如果系統過載，立即拒絕）
+            if PSUTIL_AVAILABLE:
+                try:
+                    memory_percent = psutil.virtual_memory().percent
+                    if memory_percent > 90:  # 記憶體使用超過80%就拒絕
+                        return jsonify({
+                            'success': False,
+                            'error': 'Server temporarily overloaded',
+                            'code': 'SERVER_OVERLOADED'
+                        }), 503
+                except:
+                    pass  # 如果無法檢查記憶體，繼續處理
+            
+            # === 以下是原有的檢查邏輯，保持不變 ===
             if not self.db:
                 return jsonify({
                     'success': False,
@@ -510,16 +544,6 @@ class RouteHandlers:
                     'error': 'Session service unavailable',
                     'code': 'SESSION_MANAGER_NOT_AVAILABLE'
                 }), 503
-                
-            data = request.get_json()
-            session_token = data.get('session_token') if data else None
-            
-            if not session_token:
-                return jsonify({
-                    'success': False,
-                    'error': 'Missing session token',
-                    'code': 'MISSING_SESSION_TOKEN'
-                }), 400
             
             # 驗證會話令牌
             is_valid, session_data = self.session_manager.verify_session_token(session_token)
