@@ -159,6 +159,122 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             max-width: 1200px;
             margin: 0 auto;
             padding-top: 4rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-text {
+            /* 左側文字區 */
+        }
+
+        .hero-visual {
+            /* 右側視覺區 */
+            position: relative;
+            height: 500px;
+        }
+
+        /* 程式碼終端機效果 */
+        .code-terminal {
+            background: #0d1117;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .code-terminal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: #161b22;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .terminal-header {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff5f57;
+        }
+
+        .terminal-dot:nth-child(2) {
+            background: #febc2e;
+        }
+
+        .terminal-dot:nth-child(3) {
+            background: #28c840;
+        }
+
+        .terminal-title {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'Courier New', monospace;
+        }
+
+        .code-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.8;
+            color: #c9d1d9;
+        }
+
+        .code-line {
+            display: block;
+            white-space: pre;
+            opacity: 0;
+            animation: fadeInLine 0.3s ease-out forwards;
+        }
+
+        @keyframes fadeInLine {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* 語法高亮 */
+        .keyword { color: #ff7b72; }
+        .function { color: #d2a8ff; }
+        .string { color: #a5d6ff; }
+        .comment { color: #8b949e; }
+        .number { color: #79c0ff; }
+        .class { color: #ffa657; }
+
+        /* 游標閃爍 */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: var(--primary);
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
         }
 
         .hero h1 {
@@ -861,6 +977,15 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 padding-right: 1.5rem;
             }
 
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .hero-visual {
+                height: 300px;
+            }
+
             .hero h1 {
                 font-size: 2rem;
             }
@@ -941,17 +1066,33 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <!-- Hero Section -->
     <section id="home" class="hero">
         <div class="hero-content">
-            <h1>專業的<span class="highlight">遊戲技術服務</span><br>為您量身打造</h1>
-            <p>Scrilab 提供高效能的自動化遊戲技術服務，協助玩家提升遊戲體驗。透過先進的視覺識別與多線程技術，為您打造個人化的解決方案。</p>
-            <div class="hero-buttons">
-                <a href="#games" class="btn btn-primary">
-                    <span>瀏覽服務</span>
-                    <i class="fas fa-arrow-right"></i>
-                </a>
-                <a href="#contact" class="btn btn-secondary">
-                    <i class="fas fa-headset"></i>
-                    <span>技術支援</span>
-                </a>
+            <div class="hero-text">
+                <h1>專業的<span class="highlight">遊戲技術服務</span><br>為您量身打造</h1>
+                <p>Scrilab 提供高效能的自動化遊戲技術服務，協助玩家提升遊戲體驗。透過先進的視覺識別與多線程技術，為您打造個人化的解決方案。</p>
+                <div class="hero-buttons">
+                    <a href="#games" class="btn btn-primary">
+                        <span>瀏覽服務</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <a href="#contact" class="btn btn-secondary">
+                        <i class="fas fa-headset"></i>
+                        <span>技術支援</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="hero-visual">
+                <div class="code-terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dot"></div>
+                        <div class="terminal-dot"></div>
+                        <div class="terminal-dot"></div>
+                        <div class="terminal-title">game_automation.py</div>
+                    </div>
+                    <div class="code-content" id="code-display">
+                        <!-- 程式碼將由 JavaScript 動態生成 -->
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -1413,6 +1554,93 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 closeModal();
             }
         });
+
+        // Hero Code Terminal Animation
+        const codeSnippets = [
+            `<span class="keyword">import</span> cv2
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> threading
+<span class="keyword">from</span> PIL <span class="keyword">import</span> Image
+
+<span class="keyword">class</span> <span class="class">GameBot</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.running = <span class="keyword">True</span>
+        self.config = self.<span class="function">load_config</span>()
+    
+    <span class="keyword">async def</span> <span class="function">detect_target</span>(self, frame):
+        <span class="comment"># 視覺識別處理</span>
+        hsv = cv2.<span class="function">cvtColor</span>(frame, cv2.COLOR_BGR2HSV)
+        mask = cv2.<span class="function">inRange</span>(hsv, lower, upper)
+        <span class="keyword">return</span> <span class="function">len</span>(contours) > <span class="number">0</span>`,
+            
+            `<span class="keyword">def</span> <span class="function">optimize_performance</span>(self):
+    <span class="comment"># 多線程優化</span>
+    threads = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(self.thread_count):
+        t = threading.<span class="function">Thread</span>(
+            target=self.<span class="function">process_task</span>,
+            args=(i,)
+        )
+        threads.<span class="function">append</span>(t)
+        t.<span class="function">start</span>()
+    
+    <span class="keyword">for</span> t <span class="keyword">in</span> threads:
+        t.<span class="function">join</span>()`,
+
+            `<span class="keyword">class</span> <span class="class">AutomationEngine</span>:
+    <span class="keyword">def</span> <span class="function">execute_action</span>(self):
+        <span class="comment"># 完全隨機性演算法</span>
+        delay = random.<span class="function">uniform</span>(<span class="number">0.1</span>, <span class="number">0.3</span>)
+        time.<span class="function">sleep</span>(delay)
+        
+        <span class="keyword">if</span> self.<span class="function">verify_state</span>():
+            self.<span class="function">perform_action</span>()
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        <span class="keyword">return</span> <span class="keyword">False</span>`
+        ];
+
+        let currentSnippet = 0;
+        
+        function displayCode() {
+            const codeDisplay = document.getElementById('code-display');
+            if (!codeDisplay) return;
+            
+            const snippet = codeSnippets[currentSnippet];
+            const lines = snippet.split('\n');
+            
+            codeDisplay.innerHTML = '';
+            
+            lines.forEach((line, index) => {
+                setTimeout(() => {
+                    const lineElement = document.createElement('span');
+                    lineElement.className = 'code-line';
+                    lineElement.innerHTML = line;
+                    lineElement.style.animationDelay = `${index * 0.1}s`;
+                    codeDisplay.appendChild(lineElement);
+                    codeDisplay.appendChild(document.createElement('br'));
+                    
+                    // 在最後一行添加游標
+                    if (index === lines.length - 1) {
+                        setTimeout(() => {
+                            const cursor = document.createElement('span');
+                            cursor.className = 'cursor';
+                            codeDisplay.appendChild(cursor);
+                        }, 100);
+                    }
+                }, index * 150);
+            });
+            
+            // 循環播放
+            currentSnippet = (currentSnippet + 1) % codeSnippets.length;
+            setTimeout(displayCode, lines.length * 150 + 4000);
+        }
+
+        // 頁面載入後開始動畫
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', displayCode);
+        } else {
+            displayCode();
+        }
     </script>
 </body>
 </html>
