@@ -1,4 +1,4 @@
-# templates.py - 更新版本，僅支援 itch.io 付款
+# templates.py - 專業高級版本
 PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -7,7 +7,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scrilab - Python 遊戲技術服務</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -16,36 +16,41 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #1a1a1a;
-            --bg-tertiary: #2a2a2a;
-            --bg-card: #1e1e1e;
-            --bg-hover: #333333;
+            /* 背景色 */
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-card: #111111;
+            --bg-elevated: #1a1a1a;
             
+            /* 文字色 */
             --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --text-muted: #808080;
+            --text-secondary: #a3a3a3;
+            --text-muted: #737373;
             
-            --accent-blue: #00d4ff;
-            --accent-purple: #8b5cf6;
-            --accent-green: #10b981;
-            --accent-orange: #f59e0b;
+            /* 主色 - 只用藍色 */
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --primary-light: rgba(59, 130, 246, 0.1);
+            --primary-border: rgba(59, 130, 246, 0.3);
             
-            --border-color: #333333;
-            --border-hover: #555555;
+            /* 功能色 */
+            --success: #10b981;
+            --success-light: rgba(16, 185, 129, 0.1);
+            --warning: #f59e0b;
+            --warning-light: rgba(245, 158, 11, 0.1);
             
-            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --gradient-accent: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%);
-            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            /* 邊框 */
+            --border: rgba(255, 255, 255, 0.1);
+            --border-hover: rgba(255, 255, 255, 0.2);
             
-            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.15);
-            --shadow-md: 0 8px 25px rgba(0, 0, 0, 0.25);
-            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
-            --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.3);
+            /* 陰影 */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
             
-            --border-radius: 16px;
-            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            /* 其他 */
+            --radius: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
@@ -53,28 +58,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
-            overflow-x: hidden;
-            position: relative;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* 背景動效 */
-        @keyframes typewriter {
-            0% { width: 0; }
-            90% { width: 100%; }
-            100% { width: 100%; }
-        }
-
-        @keyframes blink-cursor {
-            0%, 50% { border-right: 2px solid #00d4ff; }
-            51%, 100% { border-right: 2px solid transparent; }
-        }
-
-        @keyframes fade-out {
-            0% { opacity: 0.15; }
-            70% { opacity: 0.15; }
-            100% { opacity: 0; }
-        }
-
+        /* 背景效果 - 降低透明度 */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -82,7 +70,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             width: 100%;
             height: 100%;
             z-index: -1;
-            opacity: 1;
+            opacity: 0.3;
         }
 
         .bg-animation::before {
@@ -92,49 +80,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             left: 0;
             width: 100%;
             height: 100%;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
-                linear-gradient(45deg, transparent 30%, rgba(0, 212, 255, 0.02) 50%, transparent 70%);
-            animation: float 20s ease-in-out infinite;
-        }
-
-        .bg-animation::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                conic-gradient(from 0deg at 70% 30%, transparent, rgba(139, 92, 246, 0.03), transparent),
-                conic-gradient(from 180deg at 30% 70%, transparent, rgba(0, 212, 255, 0.02), transparent),
-                linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(139, 92, 246, 0.05) 50%, transparent 100%);
-            animation: gradient-flow 25s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(30px, -30px) rotate(1deg); }
-            66% { transform: translate(-20px, 20px) rotate(-1deg); }
-        }
-
-        @keyframes gradient-flow {
-            0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
-            50% { transform: translate(-20px, 20px) scale(1.05); opacity: 1; }
-            100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
-        }
-
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
         }
 
         /* Navigation */
@@ -142,47 +88,48 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(26, 26, 26, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
             z-index: 1000;
             transition: var(--transition);
         }
 
         .nav-container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.2rem 2rem;
+            padding: 1rem 2rem;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.8rem;
-            font-size: 1.8rem;
-            font-weight: 800;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
             color: var(--text-primary);
             text-decoration: none;
         }
 
         .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--gradient-accent);
-            border-radius: 10px;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+            font-size: 0.875rem;
         }
 
         .nav-links {
             display: flex;
             list-style: none;
-            gap: 2.5rem;
+            gap: 2rem;
             align-items: center;
         }
 
@@ -190,14 +137,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             text-decoration: none;
             color: var(--text-secondary);
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 0.875rem;
             transition: var(--transition);
-            position: relative;
-            padding: 0.5rem 0;
         }
 
         .nav-links a:hover {
-            color: var(--accent-blue);
+            color: var(--text-primary);
         }
 
         /* Hero Section */
@@ -205,188 +150,161 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             min-height: 100vh;
             display: flex;
             align-items: center;
-            position: relative;
-            background: var(--bg-primary);
-            overflow: hidden;
+            padding: 0 2rem;
         }
 
         .hero-content {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 0 2rem;
-            z-index: 2;
-            position: relative;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            color: var(--accent-blue);
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-bottom: 2rem;
-            animation: slideInUp 1s ease-out;
+            padding-top: 4rem;
         }
 
         .hero h1 {
-            font-size: clamp(3rem, 8vw, 5.5rem);
-            font-weight: 800;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
             margin-bottom: 1.5rem;
             line-height: 1.1;
-            animation: slideInUp 1s ease-out 0.2s both;
+            letter-spacing: -0.02em;
         }
 
         .hero .highlight {
-            background: var(--gradient-accent);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--primary);
         }
 
         .hero p {
-            font-size: 1.3rem;
+            font-size: 1.125rem;
             color: var(--text-secondary);
-            margin-bottom: 3rem;
-            max-width: 700px;
+            margin-bottom: 2.5rem;
+            max-width: 600px;
             line-height: 1.7;
-            animation: slideInUp 1s ease-out 0.4s both;
         }
 
         .hero-buttons {
             display: flex;
-            gap: 1.5rem;
+            gap: 1rem;
             flex-wrap: wrap;
-            animation: slideInUp 1s ease-out 0.6s both;
         }
 
-        .btn-primary {
-            background: var(--gradient-accent);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 12px;
+        /* 按鈕系統 - 簡化版 */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.875rem;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             transition: var(--transition);
-            border: none;
             cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-glow);
+            background: var(--primary-hover);
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
             background: transparent;
             color: var(--text-primary);
-            padding: 1rem 2rem;
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: var(--transition);
+            border: 1px solid var(--border);
         }
 
         .btn-secondary:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-            transform: translateY(-3px);
+            border-color: var(--border-hover);
+            background: var(--bg-elevated);
         }
 
-        /* Games Section */
-        .games {
-            padding: 8rem 2rem;
+        /* Sections */
+        .section {
+            padding: 6rem 2rem;
+        }
+
+        .section-alt {
             background: var(--bg-secondary);
-            position: relative;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         .section-header {
             text-align: center;
-            margin-bottom: 5rem;
+            margin-bottom: 4rem;
         }
 
         .section-badge {
             display: inline-block;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            color: var(--accent-blue);
-            padding: 0.5rem 1rem;
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            color: var(--primary);
+            padding: 0.375rem 0.75rem;
             border-radius: 50px;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 500;
-            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
         }
 
         .section-title {
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
         }
 
         .section-description {
-            font-size: 1.2rem;
+            font-size: 1.125rem;
             color: var(--text-secondary);
-            max-width: 700px;
+            max-width: 600px;
             margin: 0 auto;
-            line-height: 1.7;
         }
 
+        /* Games Grid */
         .games-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 3rem;
-            margin-top: 4rem;
+            gap: 2rem;
         }
 
         .game-card {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             overflow: hidden;
             transition: var(--transition);
             cursor: pointer;
-            position: relative;
         }
 
-        .game-card.active:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent-blue);
+        .game-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
             box-shadow: var(--shadow-lg);
         }
 
         .game-card.coming-soon {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        .game-card.coming-soon:hover {
+            transform: none;
         }
 
         .game-image {
             position: relative;
             width: 100%;
-            height: 250px;
+            height: 200px;
             overflow: hidden;
-            background: var(--bg-tertiary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: var(--bg-elevated);
         }
 
         .game-image img {
@@ -396,72 +314,66 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             transition: var(--transition);
         }
 
-        .game-card.active:hover .game-image img {
-            transform: scale(1.05);
+        .game-card:hover .game-image img {
+            transform: scale(1.02);
         }
 
         .game-info {
-            padding: 2rem;
+            padding: 1.5rem;
         }
 
         .game-info h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.25rem;
+            font-weight: 600;
             margin-bottom: 0.5rem;
-            color: var(--text-primary);
         }
 
         .game-subtitle {
-            color: var(--accent-blue);
-            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
             margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .game-description {
             color: var(--text-secondary);
+            font-size: 0.9375rem;
             line-height: 1.6;
-            margin-bottom: 2rem;
-        }
-
-        .game-status {
-            display: flex;
-            gap: 1rem;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
             margin-bottom: 1.5rem;
         }
 
         .status-badge {
             display: inline-flex;
             align-items: center;
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
         }
 
         .status-badge.active {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--accent-green);
+            background: var(--success-light);
+            color: var(--success);
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .status-badge.coming {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--accent-orange);
+            background: var(--warning-light);
+            color: var(--warning);
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
         .enter-game-btn {
             width: 100%;
-            background: var(--gradient-accent);
+            background: var(--primary);
             color: white;
-            padding: 1.2rem 2rem;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1.1rem;
+            padding: 0.875rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9375rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -472,210 +384,166 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .enter-game-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+            background: var(--primary-hover);
         }
 
-        .enter-game-btn i {
-            transition: transform 0.3s ease;
-        }
-
-        .enter-game-btn:hover i {
-            transform: translateX(5px);
-        }
-
-        /* Services Section */
-        .services {
-            padding: 8rem 2rem;
-            background: var(--bg-primary);
-        }
-
-        /* 資源快捷列 */
+        /* Resources Section */
         .resources-section {
-            margin: 3rem 0 5rem;
+            margin: 3rem 0 4rem;
         }
 
         .resources-title {
             text-align: center;
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
         }
 
         .resources-subtitle {
             text-align: center;
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: var(--text-secondary);
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
         }
 
         .resources-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
         }
 
         .resource-card {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 2rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
             text-align: center;
             transition: var(--transition);
-            cursor: pointer;
             text-decoration: none;
             display: block;
         }
 
         .resource-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent-blue);
-            box-shadow: var(--shadow-lg);
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
         }
 
         .resource-icon {
-            width: 70px;
-            height: 70px;
-            background: var(--gradient-accent);
-            border-radius: 12px;
+            width: 48px;
+            height: 48px;
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1.5rem;
-            font-size: 2rem;
-            color: white;
-        }
-
-        .resource-card.intro .resource-icon {
-            background: linear-gradient(135deg, #00d4ff 0%, #0ea5e9 100%);
-        }
-
-        .resource-card.manual .resource-icon {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        }
-
-        .resource-card.download .resource-icon {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            margin: 0 auto 1rem;
+            font-size: 1.25rem;
+            color: var(--primary);
         }
 
         .resource-card h3 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 0.8rem;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
             color: var(--text-primary);
         }
 
         .resource-card p {
             color: var(--text-secondary);
-            font-size: 1rem;
-            line-height: 1.6;
+            font-size: 0.875rem;
+            line-height: 1.5;
         }
 
+        /* Service Cards */
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 3rem;
-            margin-top: 3rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
         }
 
         .service-card {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             overflow: hidden;
             transition: var(--transition);
-            position: relative;
         }
 
         .service-card:hover {
-            transform: translateY(-5px);
             border-color: var(--border-hover);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
         }
 
         .service-header {
-            padding: 2.5rem 2rem 1.5rem;
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--border-color);
-            position: relative;
-        }
-
-        .popular-badge {
-            position: absolute;
-            top: -12px;
-            right: 2rem;
-            background: var(--gradient-accent);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            box-shadow: var(--shadow-md);
+            padding: 2rem 1.5rem 1.5rem;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
         }
 
         .service-title {
-            font-size: 1.6rem;
-            font-weight: 700;
+            font-size: 1.25rem;
+            font-weight: 600;
             margin-bottom: 0.5rem;
-            color: var(--text-primary);
         }
 
         .service-subtitle {
             color: var(--text-secondary);
-            font-size: 1rem;
+            font-size: 0.875rem;
             margin-bottom: 1.5rem;
         }
 
         .service-price {
-            font-size: 2.8rem;
-            font-weight: 800;
-            color: var(--text-primary);
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
             margin-bottom: 0.5rem;
         }
 
         .service-price .currency {
-            font-size: 1.2rem;
-            vertical-align: top;
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .service-price .amount {
+            font-size: 2.5rem;
+            font-weight: 700;
         }
 
         .service-price .period {
-            font-size: 1rem;
+            font-size: 0.875rem;
             color: var(--text-secondary);
-            font-weight: 400;
         }
 
-        .gumroad-info {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            border-radius: 8px;
-            padding: 0.8rem;
-            margin: 1rem 0;
-            font-size: 0.9rem;
-            color: var(--accent-blue);
+        .payment-info {
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius);
+            padding: 0.75rem;
+            margin-top: 1rem;
+            font-size: 0.8125rem;
+            color: var(--primary);
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
         .service-body {
-            padding: 2rem;
+            padding: 1.5rem;
         }
 
         .service-features {
             list-style: none;
-            margin-bottom: 2.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .service-features li {
-            padding: 0.8rem 0;
+            padding: 0.75rem 0;
             display: flex;
             align-items: flex-start;
-            gap: 0.8rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.95rem;
-            line-height: 1.6;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
         }
 
         .service-features li:last-child {
@@ -683,21 +551,21 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .feature-check {
-            color: var(--accent-green);
-            font-size: 1.1rem;
-            margin-top: 0.1rem;
+            color: var(--success);
+            font-size: 1rem;
             flex-shrink: 0;
+            margin-top: 0.125rem;
         }
 
         .service-button {
             width: 100%;
-            padding: 1rem;
-            background: var(--gradient-accent);
+            padding: 0.875rem;
+            background: var(--primary);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
+            border-radius: var(--radius);
+            font-size: 0.9375rem;
+            font-weight: 500;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
@@ -707,60 +575,84 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         }
 
         .service-button:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-glow);
+            background: var(--primary-hover);
         }
 
         /* Footer */
         .footer {
             background: var(--bg-primary);
-            border-top: 1px solid var(--border-color);
-            padding: 4rem 2rem 2rem;
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem 2rem;
         }
 
-        .footer-simple {
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
             text-align: center;
-            margin-bottom: 3rem;
+        }
+
+        .footer h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
         }
 
         .contact-methods {
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 3rem;
+            gap: 2rem;
             margin-bottom: 2rem;
             flex-wrap: wrap;
         }
 
-        .discord-link, .email-link {
+        .contact-link {
             display: flex;
             align-items: center;
-            gap: 0.8rem;
+            gap: 0.5rem;
             color: var(--text-secondary);
             text-decoration: none;
-            font-size: 1.1rem;
-            transition: var(--transition);
-            padding: 0.8rem 1.5rem;
-            border-radius: 12px;
+            font-size: 0.875rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius);
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
+            transition: var(--transition);
         }
 
-        .discord-link:hover {
-            color: #5865F2;
-            border-color: #5865F2;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(88, 101, 242, 0.3);
+        .contact-link:hover {
+            border-color: var(--border-hover);
+            color: var(--text-primary);
         }
 
-        .email-link:hover {
-            color: var(--accent-blue);
-            border-color: var(--accent-blue);
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        .footer-note {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
         }
 
-        /* Purchase Modal */
+        .footer-bottom {
+            border-top: 1px solid var(--border);
+            padding-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .footer-links {
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin: 0 1rem;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -768,34 +660,22 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
             z-index: 2000;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(10px);
+            padding: 2rem;
         }
 
         .modal-content {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            max-width: 500px;
-            width: 90%;
-            padding: 2.5rem;
-            text-align: center;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-width: 480px;
+            width: 100%;
+            padding: 2rem;
             position: relative;
-            animation: modalSlideIn 0.4s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8) translateY(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
         }
 
         .modal-close {
@@ -808,188 +688,172 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             font-size: 1.5rem;
             cursor: pointer;
             transition: var(--transition);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .modal-close:hover {
             color: var(--text-primary);
         }
 
-        .plan-info {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
+        .modal h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
         }
 
-        .gumroad-notice {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem 0;
-            font-size: 0.9rem;
-            color: var(--accent-blue);
+        .plan-info {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-info h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-info p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .plan-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-period {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .modal-notice {
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius);
+            padding: 0.875rem;
+            margin-bottom: 1rem;
+            font-size: 0.8125rem;
+            color: var(--primary);
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .modal-notice i {
+            flex-shrink: 0;
+            margin-top: 0.125rem;
         }
 
         .form-group {
-            margin: 1.5rem 0;
-            text-align: left;
+            margin-bottom: 1.5rem;
         }
 
         .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-secondary);
-            font-weight: 500;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            line-height: 1.5;
         }
 
-        .form-input {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 1rem;
-            transition: var(--transition);
+        .form-group input[type="checkbox"] {
+            margin-top: 0.25rem;
+            accent-color: var(--primary);
+            cursor: pointer;
         }
 
-        .form-input:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        .form-group a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .form-group a:hover {
+            text-decoration: underline;
         }
 
         .modal-buttons {
             display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
+            gap: 0.75rem;
         }
 
         .btn-cancel {
+            flex: 1;
             background: transparent;
             color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-            padding: 12px 24px;
-            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 0.875rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.875rem;
             cursor: pointer;
-            font-weight: 600;
             transition: var(--transition);
         }
 
         .btn-cancel:hover {
-            color: var(--text-primary);
             border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-submit {
+            flex: 2;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.875rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
         }
 
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
+            animation: spin 0.6s linear infinite;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        /* 原價顯示（被劃掉的價格） */
-        .original-price {
-            text-align: center;
-            margin-bottom: 5px;
-        }
-
-        .original-amount {
-            font-size: 1.2rem;
-            color: #999;
-            text-decoration: line-through;
-            font-weight: 500;
-        }
-
-        .original-period {
-            font-size: 0.9rem;
-            color: #999;
-            margin-left: 3px;
-        }
-
-        /* 現在價格樣式 */
-        .current-price {
-            display: flex;
-            align-items: baseline;
-            justify-content: center;
-            margin-bottom: 10px;
-        }
-
-        /* 折扣標籤 */
-        .discount-badge {
-            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            display: inline-block;
-            margin-top: 8px;
-            box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3);
-            animation: pulse-glow 2s infinite;
-        }
-
-        /* 折扣標籤發光動畫 */
-        @keyframes pulse-glow {
-            0%, 100% {
-                box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3);
-                transform: scale(1);
-            }
-            50% {
-                box-shadow: 0 4px 15px rgba(255, 65, 108, 0.5);
-                transform: scale(1.02);
-            }
-        }
-
-        /* 讓有折扣的卡片更突出 */
-        .service-card.discount-card {
-            border: 2px solid rgba(255, 65, 108, 0.3);
-            box-shadow: 0 0 20px rgba(255, 65, 108, 0.15);
-            animation: card-glow 3s ease-in-out infinite;
-        }
-
-        @keyframes card-glow {
-            0%, 100% {
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            }
-            50% {
-                box-shadow: 0 8px 30px rgba(255, 65, 108, 0.2);
-            }
-        }
-
-        /* 體驗方案（沒有折扣）的價格樣式調整 */
-        .service-card:first-child .service-price {
-            display: flex;
-            align-items: baseline;
-            justify-content: center;
-        }
-
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
             }
 
             .hero h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
             }
 
-            .hero-buttons {
-                flex-direction: column;
-                align-items: flex-start;
+            .section-title {
+                font-size: 2rem;
             }
 
             .games-grid,
@@ -998,20 +862,42 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 grid-template-columns: 1fr;
             }
 
-            .section-title {
-                font-size: 2.2rem;
-            }
-
             .contact-methods {
                 flex-direction: column;
-                gap: 1.5rem;
-            }
-
-            .game-status {
-                flex-direction: column;
-                align-items: flex-start;
                 gap: 1rem;
             }
+
+            .modal-buttons {
+                flex-direction: column;
+            }
+
+            .btn-cancel,
+            .btn-submit {
+                flex: 1;
+            }
+        }
+
+        /* 背景程式碼效果 - 精簡版 */
+        @keyframes float-code {
+            0%, 100% { opacity: 0; transform: translateY(0); }
+            10%, 90% { opacity: 0.05; }
+            50% { transform: translateY(-20px); }
+        }
+
+        .code-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            color: var(--primary);
+            font-size: 12px;
+            line-height: 1.8;
+            opacity: 0.05;
         }
 
     </style>
@@ -1041,18 +927,14 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <!-- Hero Section -->
     <section id="home" class="hero">
         <div class="hero-content">
-            <div class="hero-badge">
-                <span class="taiwan-flag">🇹🇼</span>
-                <span>臺灣製造</span>
-            </div>
-            <h1>自動化<span class="highlight">遊戲技術服務</span><br>與個人化方案</h1>
-            <p>Scrilab 為遊戲愛好者提供專業的遊戲技術服務！透過我們的技術團隊為您量身打造個人化的遊戲效率提升方案。</p>
+            <h1>專業的<span class="highlight">遊戲技術服務</span><br>為您量身打造</h1>
+            <p>Scrilab 提供高效能的自動化遊戲技術服務，協助玩家提升遊戲體驗。透過先進的視覺識別與多線程技術，為您打造個人化的解決方案。</p>
             <div class="hero-buttons">
-                <a href="#games" class="btn-primary">
-                    <i class="fas fa-gamepad"></i>
-                    <span>查看遊戲列表</span>
+                <a href="#games" class="btn btn-primary">
+                    <span>瀏覽服務</span>
+                    <i class="fas fa-arrow-right"></i>
                 </a>
-                <a href="#contact" class="btn-secondary">
+                <a href="#contact" class="btn btn-secondary">
                     <i class="fas fa-headset"></i>
                     <span>技術支援</span>
                 </a>
@@ -1061,32 +943,30 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     </section>
 
     <!-- Games Section -->
-    <section id="games" class="games">
+    <section id="games" class="section section-alt">
         <div class="container">
             <div class="section-header">
                 <div class="section-badge">遊戲服務</div>
                 <h2 class="section-title">選擇您的遊戲</h2>
-                <p class="section-description">選擇適合您的服務方案，享受最佳遊戲體驗</p>
+                <p class="section-description">我們為各類遊戲提供專業的技術服務方案</p>
             </div>
             
             <div class="games-grid">
                 <!-- MapleStory Worlds - Artale -->
-                <div class="game-card active" onclick="showGamePlans('artale')">
+                <div class="game-card" onclick="showGamePlans('artale')">
                     <div class="game-image">
-                        <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale">
                     </div>
                     <div class="game-info">
-                        <h3>MapleStory Worlds - Artale (繁體中文版)</h3>
-                        <p class="game-subtitle">Fully automated script</p>
-                        <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案。提供完整的技術服務與個人化設定。</p>
-                        <div class="game-status">
-                            <span class="status-badge active">
-                                <i class="fas fa-check-circle"></i>
-                                服務中
-                            </span>
-                        </div>
+                        <h3>MapleStory Worlds - Artale</h3>
+                        <p class="game-subtitle">繁體中文版</p>
+                        <p class="game-description">專為 Artale 玩家設計的全自動化技術服務，提供完整的功能與個人化設定。</p>
+                        <span class="status-badge active">
+                            <i class="fas fa-circle"></i>
+                            服務中
+                        </span>
                         <button class="enter-game-btn">
-                            <span>進入遊戲頁面</span>
+                            <span>查看服務方案</span>
                             <i class="fas fa-arrow-right"></i>
                         </button>
                     </div>
@@ -1095,18 +975,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <!-- Coming Soon Games -->
                 <div class="game-card coming-soon">
                     <div class="game-image">
-                        <img src="/static/images/coming-soon.jpg" alt="Coming Soon Games" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="/static/images/coming-soon.jpg" alt="更多遊戲即將推出">
                     </div>
                     <div class="game-info">
                         <h3>更多遊戲</h3>
                         <p class="game-subtitle">即將推出</p>
-                        <p class="game-description">我們正在開發更多遊戲的優化解決方案，敬請期待</p>
-                        <div class="game-status">
-                            <span class="status-badge coming">
-                                <i class="fas fa-clock"></i>
-                                開發中
-                            </span>
-                        </div>
+                        <p class="game-description">我們正在為更多遊戲開發專業的技術服務方案。</p>
+                        <span class="status-badge coming">
+                            <i class="fas fa-clock"></i>
+                            開發中
+                        </span>
                     </div>
                 </div>
             </div>
@@ -1114,15 +992,15 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     </section>
 
     <!-- Services Section -->
-    <section id="services" class="services" style="display: none;">
+    <section id="services" class="section" style="display: none;">
         <div class="container">
             <div class="section-header">
-                <button class="btn-secondary" onclick="backToGames()" style="margin-bottom: 2rem;">
+                <button class="btn btn-secondary" onclick="backToGames()" style="margin-bottom: 2rem;">
                     <i class="fas fa-arrow-left"></i>
                     <span>返回遊戲列表</span>
                 </button>
                 <div class="section-badge">服務方案</div>
-                <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale (繁體中文版)</h2>
+                <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale</h2>
                 <p class="section-description">透過 Gumroad 付款，支援信用卡與 Apple Pay。如不方便使用信用卡，請至 Discord 聯絡管理員使用其他匯款方式。</p>
             </div>
             
@@ -1131,28 +1009,28 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <h3 class="resources-title">遊戲資源</h3>
                 <p class="resources-subtitle">查看操作手冊、基本介紹與下載連結</p>
                 <div class="resources-grid">
-                    <a href="/intro" class="resource-card intro">
+                    <a href="/intro" class="resource-card">
                         <div class="resource-icon">
                             <i class="fas fa-info-circle"></i>
                         </div>
                         <h3>基本介紹</h3>
-                        <p>了解服務功能與特色，快速掌握使用方法</p>
+                        <p>了解服務功能與特色</p>
                     </a>
                     
-                    <a href="/manual" class="resource-card manual">
+                    <a href="/manual" class="resource-card">
                         <div class="resource-icon">
                             <i class="fas fa-book"></i>
                         </div>
                         <h3>操作手冊</h3>
-                        <p>詳細的使用說明與常見問題解答</p>
+                        <p>詳細的使用說明與設定</p>
                     </a>
                     
-                    <a href="/download" class="resource-card download">
+                    <a href="/download" class="resource-card">
                         <div class="resource-icon">
                             <i class="fas fa-download"></i>
                         </div>
                         <h3>下載連結</h3>
-                        <p>取得最新版本的服務程式與相關檔案</p>
+                        <p>取得最新版本的服務程式</p>
                     </a>
                 </div>
             </div>
@@ -1164,12 +1042,13 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                         <div class="service-title">體驗服務</div>
                         <div class="service-subtitle">適合新手玩家體驗</div>
                         <div class="service-price">
-                            <span class="currency">NT$</span>199
-                            <span class="period">/ 7+1天</span>
+                            <span class="currency">NT$</span>
+                            <span class="amount">199</span>
+                            <span class="period">/ 7+1 天</span>
                         </div>
-                        <div class="gumroad-info">
+                        <div class="payment-info">
                             <i class="fas fa-shield-alt"></i>
-                            <span>透過 Gumroad 付款</span>
+                            <span>透過 Gumroad 安全付款</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1200,32 +1079,24 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                         </ul>
                         <button class="service-button" onclick="selectPlan('trial_7')">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Gumroad 付款</span>
+                            <span>選擇方案</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- 標準方案 -->
-                <div class="service-card discount-card">
+                <div class="service-card">
                     <div class="service-header">
-                        <div class="popular-badge">最受歡迎</div>
                         <div class="service-title">標準服務</div>
-                        <div class="service-subtitle">最佳性價比選擇</div>
+                        <div class="service-subtitle">最受歡迎的選擇</div>
                         <div class="service-price">
-                            <div class="original-price">
-                                <span class="original-amount">NT$821</span>
-                                <span class="original-period">/ 30+3天</span>
-                            </div>
-                            <div class="current-price">
-                                <span class="currency">NT$</span>399
-                                <span class="period">/ 30+3天</span>
-                            </div>
-                            <div class="discount-badge">省52%</div>
+                            <span class="currency">NT$</span>
+                            <span class="amount">399</span>
+                            <span class="period">/ 30+3 天</span>
                         </div>
-                        <div class="gumroad-info">
+                        <div class="payment-info">
                             <i class="fas fa-shield-alt"></i>
-                            <span>透過 Gumroad 付款</span>
+                            <span>透過 Gumroad 安全付款</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1256,31 +1127,24 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                         </ul>
                         <button class="service-button" onclick="selectPlan('monthly_30')">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Gumroad 付款</span>
+                            <span>選擇方案</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- 季度方案 -->
-                <div class="service-card discount-card">
+                <!-- 最佳方案 -->
+                <div class="service-card">
                     <div class="service-header">
                         <div class="service-title">最佳服務</div>
-                        <div class="service-subtitle">長期使用最划算</div>
+                        <div class="service-subtitle">長期使用推薦</div>
                         <div class="service-price">
-                            <div class="original-price">
-                                <span class="original-amount">NT$2,488</span>
-                                <span class="original-period">/ 90+10天</span>
-                            </div>
-                            <div class="current-price">
-                                <span class="currency">NT$</span>999
-                                <span class="period">/ 90+10天</span>
-                            </div>
-                            <div class="discount-badge">省60%</div>
+                            <span class="currency">NT$</span>
+                            <span class="amount">999</span>
+                            <span class="period">/ 90+10 天</span>
                         </div>
-                        <div class="gumroad-info">
+                        <div class="payment-info">
                             <i class="fas fa-shield-alt"></i>
-                            <span>透過 Gumroad 付款</span>
+                            <span>透過 Gumroad 安全付款</span>
                         </div>
                     </div>
                     <div class="service-body">
@@ -1311,8 +1175,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                             </li>
                         </ul>
                         <button class="service-button" onclick="selectPlan('quarterly_90')">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Gumroad 付款</span>
+                            <span>選擇方案</span>
                         </button>
                     </div>
                 </div>
@@ -1322,26 +1185,25 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
     <!-- Footer -->
     <footer id="contact" class="footer">
-        <div class="container">
-            <div class="footer-simple">
-                <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; color: var(--text-primary); font-weight: 600;">聯絡我們</h3>
-                <div class="contact-methods">
-                    <a href="https://discord.gg/nmMmm9gZDC" target="_blank" class="discord-link">
-                        <i class="fab fa-discord"></i>
-                        <span>Discord 技術支援</span>
-                    </a>
-                    <a href="mailto:scrilabstaff@gmail.com" class="email-link">
-                        <i class="fas fa-envelope"></i>
-                        <span>scrilabstaff@gmail.com</span>
-                    </a>
-                </div>
-                <p style="color: var(--text-muted); font-size: 0.95rem;">所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
+        <div class="footer-content">
+            <h3>聯絡我們</h3>
+            <div class="contact-methods">
+                <a href="https://discord.gg/nmMmm9gZDC" target="_blank" class="contact-link">
+                    <i class="fab fa-discord"></i>
+                    <span>Discord 技術支援</span>
+                </a>
+                <a href="mailto:scrilabstaff@gmail.com" class="contact-link">
+                    <i class="fas fa-envelope"></i>
+                    <span>scrilabstaff@gmail.com</span>
+                </a>
             </div>
-            <div style="border-top: 1px solid var(--border-color); padding-top: 2rem; text-align: center; color: var(--text-muted);">
-                <p style="margin-bottom: 1rem;">
-                    <a href="/disclaimer" style="color: var(--text-muted); text-decoration: none; margin-right: 2rem; transition: color 0.3s ease;" onmouseover="this.style.color='var(--accent-blue)'" onmouseout="this.style.color='var(--text-muted)'">免責聲明</a>
-                </p>
-                <p>&copy; 2025 Scrilab. All rights reserved. Powered by Scrilab.</p>
+            <p class="footer-note">所有技術支援與客服諮詢，請優先透過 Discord 聯繫我們</p>
+            
+            <div class="footer-bottom">
+                <div class="footer-links">
+                    <a href="/disclaimer">免責聲明</a>
+                </div>
+                <p>&copy; 2025 Scrilab. All rights reserved. Made in Taiwan 🇹🇼</p>
             </div>
         </div>
     </footer>
@@ -1350,33 +1212,41 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     <div id="purchase-modal" class="modal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
-            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Gumroad 安全付款</h3>
+            <h3>確認購買</h3>
+            
             <div id="selected-plan-info" class="plan-info">
                 <!-- Plan info will be inserted here -->
             </div>
-            <div class="gumroad-notice">
+            
+            <div class="modal-notice">
                 <i class="fas fa-shield-alt"></i>
-                <span>將跳轉至 Gumroad 完成付款，支援 PayPal、信用卡、Apple Pay 及 Google Pay</span>
+                <span>將跳轉至 Gumroad 完成付款，支援信用卡與 Apple Pay</span>
             </div>
-            <div class="gumroad-notice" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--accent-green);">
+            
+            <div class="modal-notice">
+                <i class="fab fa-discord"></i>
+                <span>不方便使用信用卡？請至 Discord 聯絡管理員使用其他匯款方式</span>
+            </div>
+            
+            <div class="modal-notice">
                 <i class="fas fa-info-circle"></i>
-                <span>購買完成後，序號將自動發送至您的信箱(請同時檢查垃圾郵件)</span>
+                <span>購買完成後，序號將自動發送至您的信箱（請同時檢查垃圾郵件）</span>
             </div>
-            <div class="form-group" style="text-align: left;">
-                <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
-                    <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
-                    <span style="font-size: 0.95rem; line-height: 1.5;">
-                        我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-blue); text-decoration: none;">免責聲明與服務條款</a>，
-                        理解使用本服務的風險，並自願承擔相關責任。
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="agree-terms" required>
+                    <span>
+                        我已閱讀並同意 <a href="/disclaimer" target="_blank">免責聲明與服務條款</a>，理解使用本服務的風險，並自願承擔相關責任。
                     </span>
                 </label>
             </div>
+            
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="closeModal()">取消</button>
-                <button class="btn-primary" onclick="submitPayment()" id="payment-btn">
+                <button class="btn-submit" onclick="submitPayment()" id="payment-btn">
                     <span id="payment-btn-text">
-                        <i class="fas fa-shield-alt"></i>
-                        前往 Gumroad 付款
+                        <span>前往付款</span>
                     </span>
                     <div class="loading" id="payment-loading" style="display: none;"></div>
                 </button>
@@ -1390,23 +1260,20 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             'trial_7': {
                 name: '體驗服務',
                 price_twd: 199,
-                price_usd: 6.56,
-                period: '7+1天',
+                period: '7+1 天',
                 description: '適合新手玩家體驗的基礎技術服務'
             },
             'monthly_30': {
                 name: '標準服務',
                 price_twd: 399,
-                price_usd: 13.17,
-                period: '30+3天',
+                period: '30+3 天',
                 description: '最受歡迎的完整技術服務方案'
             },
             'quarterly_90': {
-                name: '季度服務',
+                name: '最佳服務',
                 price_twd: 999,
-                price_usd: 33,
-                period: '90+10天',
-                description: '長期使用最划算的全功能技術服務'
+                period: '90+10 天',
+                description: '長期使用推薦的全功能技術服務'
             }
         };
 
@@ -1432,18 +1299,10 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             const plan = servicePlans[planId];
             
             document.getElementById('selected-plan-info').innerHTML = `
-                <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">${plan.name}</h4>
-                <p style="margin: 0 0 1rem 0; color: var(--text-secondary);">${plan.description}</p>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem;">
-                    <div style="font-size: 1.3rem; font-weight: bold; color: var(--text-primary);">
-                        NT$ ${plan.price_twd.toLocaleString()}
-                    </div>
-                    <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent-blue); font-family: 'Courier New', monospace;">
-                    </div>
-                </div>
-                <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                    服務期限：${plan.period}
-                </div>
+                <h4>${plan.name}</h4>
+                <p>${plan.description}</p>
+                <div class="plan-price">NT$ ${plan.price_twd.toLocaleString()}</div>
+                <div class="plan-period">服務期限：${plan.period}</div>
             `;
             
             document.getElementById('purchase-modal').style.display = 'flex';
@@ -1488,7 +1347,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 
                 if (data.success) {
                     window.location.href = data.purchase_url;
-                    closeModal();
                 } else {
                     alert('付款創建失敗: ' + data.error);
                     resetPaymentButton();
@@ -1510,10 +1368,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             });
         });
@@ -1521,330 +1376,26 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         // Navbar scroll effect
         window.addEventListener('scroll', function() {
             const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 100) {
-                navbar.style.background = 'rgba(26, 26, 26, 0.98)';
-                navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(0, 0, 0, 0.95)';
             } else {
-                navbar.style.background = 'rgba(26, 26, 26, 0.95)';
-                navbar.style.boxShadow = 'none';
+                navbar.style.background = 'rgba(0, 0, 0, 0.8)';
             }
         });
 
-        // Close modal when clicking outside
+        // Close modal on outside click
         document.getElementById('purchase-modal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeModal();
             }
         });
 
-        // Escape key to close modal
+        // Close modal on Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeModal();
             }
         });
-
-        // 背景特效代碼
-        function createCodeBackground() {
-            const codeContainer = document.createElement('div');
-            codeContainer.id = 'code-background';
-            codeContainer.style.cssText = `
-                position: fixed; 
-                top: 10%; 
-                left: 5%; 
-                width: 90%; 
-                height: 80%; 
-                pointer-events: none; 
-                z-index: 1; 
-                opacity: 1; 
-                font-family: 'Courier New', monospace; 
-                color: #00d4ff;
-                overflow: hidden; 
-                font-size: 14px; 
-                font-weight: 400;
-                line-height: 1.6;
-            `;
-            
-            document.body.appendChild(codeContainer);
-            startTypingCycle();
-        }
-
-        function startTypingCycle() {
-            const container = document.getElementById('code-background');
-            if (!container) return;
-            
-            const codeSnippets = [
-                'import cv2',
-                'import numpy as np', 
-                'import threading',
-                'import time',
-                'import random',
-                'from selenium import webdriver',
-                'from PIL import Image',
-                '',
-                'def optimize_game():',
-                '    while True:',
-                '        screenshot = cv2.imread("game.png")',
-                '        if detect_target(screenshot):',
-                '            execute_action()',
-                '        time.sleep(random.uniform(0.1, 0.3))',
-                '',
-                'class GameBot:',
-                '    def __init__(self):',
-                '        self.running = True',
-                '        self.thread_pool = []',
-                '        self.config = load_config()',
-                '',
-                '    async def process_frame(self):',
-                '        frame = await self.capture_screen()',
-                '        result = self.analyze_frame(frame)',
-                '        return result',
-                '',
-                '    def detect_enemy(self, frame):',
-                '        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)',
-                '        mask = cv2.inRange(hsv, lower_red, upper_red)',
-                '        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)',
-                '        return len(contours) > 0',
-                '',
-                'def main():',
-                '    bot = GameBot()',
-                '    try:',
-                '        bot.start()',
-                '    except KeyboardInterrupt:',
-                '        bot.stop()',
-                '        print("Bot stopped safely")',
-                '',
-                'if __name__ == "__main__":',
-                '    main()'
-            ];
-            
-            let currentLine = 0;
-            let lineHeight = 22;
-            
-            function typeLine() {
-                if (currentLine >= codeSnippets.length) {
-                    setTimeout(() => {
-                        container.innerHTML = '';
-                        currentLine = 0;
-                        typeLine();
-                    }, 3000);
-                    return;
-                }
-                
-                const line = codeSnippets[currentLine];
-                const lineElement = document.createElement('div');
-                
-                lineElement.style.cssText = `
-                    position: absolute;
-                    left: 0;
-                    top: ${currentLine * lineHeight}px;
-                    white-space: pre;
-                    overflow: hidden;
-                    opacity: 0.12;
-                    width: 0;
-                    animation: 
-                        typewriter ${1.5 + (line.length * 0.05)}s steps(${Math.max(line.length, 1)}) 1 forwards,
-                        blink-cursor 1s step-end infinite,
-                        fade-out ${6 + Math.random() * 2}s ease-in-out ${2 + Math.random()}s forwards;
-                `;
-                
-                lineElement.textContent = line;
-                container.appendChild(lineElement);
-                
-                currentLine++;
-                setTimeout(typeLine, 400 + Math.random() * 600);
-            }
-            
-            typeLine();
-        }
-
-        function createFloatingParticles() {
-            const particlesContainer = document.createElement('div');
-            particlesContainer.style.cssText = `
-                position: fixed; 
-                top: 0; 
-                left: 0; 
-                width: 100%; 
-                height: 100%; 
-                pointer-events: none; 
-                z-index: -1;
-            `;
-            
-            for (let i = 0; i < 50; i++) {
-                const particle = document.createElement('div');
-                particle.style.cssText = `
-                    position: absolute; 
-                    width: 2px; 
-                    height: 2px; 
-                    background: var(--accent-blue); 
-                    border-radius: 50%; 
-                    opacity: 0.3; 
-                    animation: float-particle ${10 + Math.random() * 10}s linear infinite; 
-                    left: ${Math.random() * 100}%; 
-                    top: ${Math.random() * 100}%; 
-                    animation-delay: ${Math.random() * 10}s;
-                `;
-                particlesContainer.appendChild(particle);
-            }
-            
-            document.body.appendChild(particlesContainer);
-        }
-
-        const particleStyle = document.createElement('style');
-        particleStyle.textContent = `
-            @keyframes float-particle { 
-                0% { transform: translateY(0) translateX(0); opacity: 0; } 
-                10% { opacity: 0.3; } 
-                90% { opacity: 0.3; } 
-                100% { transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px); opacity: 0; } 
-            }
-            .screenshot-overlay {
-                position: fixed;
-                top: 10%;
-                right: 5%;
-                width: 40%;
-                height: 80%;
-                pointer-events: none;
-                z-index: 1;
-                opacity: 0.08;
-                overflow: hidden;
-            }
-
-            .detection-box {
-                position: absolute;
-                border: 2px solid #00d4ff;
-                background: rgba(0, 212, 255, 0.05);
-                animation: scan-box 3s ease-in-out infinite;
-            }
-
-            .target-marker {
-                position: absolute;
-                width: 20px;
-                height: 20px;
-                border: 2px solid #10b981;
-                border-radius: 50%;
-                background: rgba(16, 185, 129, 0.1);
-                animation: pulse-target 2s ease-in-out infinite;
-            }
-
-            .scan-line {
-                position: absolute;
-                width: 100%;
-                height: 2px;
-                background: linear-gradient(
-                    90deg, 
-                    transparent 0%, 
-                    #00d4ff 30%, 
-                    #8b5cf6 70%, 
-                    transparent 100%
-                );
-                animation: scan-sweep 4s linear infinite;
-            }
-
-            @keyframes scan-box {
-                0%, 100% { 
-                    transform: scale(1); 
-                    opacity: 0.3; 
-                    border-color: #00d4ff; 
-                }
-                50% { 
-                    transform: scale(1.05); 
-                    opacity: 0.6; 
-                    border-color: #10b981; 
-                }
-            }
-
-            @keyframes pulse-target {
-                0%, 100% { 
-                    transform: scale(1); 
-                    border-color: #10b981; 
-                    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3); 
-                }
-                50% { 
-                    transform: scale(1.2); 
-                    border-color: #00d4ff; 
-                    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); 
-                }
-            }
-
-            @keyframes scan-sweep {
-                0% { 
-                    top: 0%; 
-                    opacity: 0; 
-                }
-                10% { 
-                    opacity: 0.8; 
-                }
-                90% { 
-                    opacity: 0.8; 
-                }
-                100% { 
-                    top: 100%; 
-                    opacity: 0; 
-                }
-            }
-        `;
-        document.head.appendChild(particleStyle);
-
-        function createScreenshotDetection() {
-            const detectionContainer = document.createElement('div');
-            detectionContainer.className = 'screenshot-overlay';
-            
-            for (let i = 0; i < 5; i++) {
-                const detectionBox = document.createElement('div');
-                detectionBox.className = 'detection-box';
-                detectionBox.style.cssText = `
-                    left: ${Math.random() * 70}%;
-                    top: ${Math.random() * 80}%;
-                    width: ${80 + Math.random() * 120}px;
-                    height: ${60 + Math.random() * 80}px;
-                    animation-delay: ${Math.random() * 3}s;
-                `;
-                detectionContainer.appendChild(detectionBox);
-            }
-            
-            for (let i = 0; i < 8; i++) {
-                const targetMarker = document.createElement('div');
-                targetMarker.className = 'target-marker';
-                targetMarker.style.cssText = `
-                    left: ${Math.random() * 90}%;
-                    top: ${Math.random() * 90}%;
-                    animation-delay: ${Math.random() * 2}s;
-                `;
-                detectionContainer.appendChild(targetMarker);
-            }
-            
-            for (let i = 0; i < 3; i++) {
-                const scanLine = document.createElement('div');
-                scanLine.className = 'scan-line';
-                scanLine.style.cssText = `
-                    left: ${Math.random() * 30}%;
-                    width: ${60 + Math.random() * 40}%;
-                    animation-delay: ${Math.random() * 4}s;
-                `;
-                detectionContainer.appendChild(scanLine);
-            }
-            
-            document.body.appendChild(detectionContainer);
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            createCodeBackground();
-            createFloatingParticles();
-            createScreenshotDetection();
-        });
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                createCodeBackground();
-                createFloatingParticles();
-                createScreenshotDetection();
-            });
-        } else {
-            createCodeBackground();
-            createFloatingParticles();
-            createScreenshotDetection();
-        }
     </script>
 </body>
 </html>
@@ -2131,7 +1682,7 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
         </div>
         
         <h1 class="success-title">付款成功！</h1>
-        <p class="success-subtitle">感謝您透過 itch.io 購買 Scrilab Artale 遊戲技術服務</p>
+        <p class="success-subtitle">感謝您購買 Scrilab Artale 遊戲技術服務</p>
         
         <div class="purchase-info">
             <div class="info-row">
@@ -2145,10 +1696,6 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
             <div class="info-row">
                 <span class="info-label">付款金額</span>
                 <span class="info-value">NT$ {{ payment_record.amount_twd if payment_record else 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">付款方式</span>
-                <span class="info-value">itch.io</span>
             </div>
             <div class="info-row">
                 <span class="info-label">付款時間</span>
@@ -2175,8 +1722,8 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
         </div>
         
         <div class="email-notice">
-            <i class="fab fa-itch-io"></i>
-            <span>詳細的服務訊息和序號已發送至您的信箱，請查收。感謝您選擇 itch.io 付款！</span>
+            <i class="fas fa-envelope"></i>
+            <span>序號已發送至您的信箱，請查收（請同時檢查垃圾郵件）</span>
         </div>
         
         <div class="contact-info">
@@ -2215,10 +1762,8 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
                     const btn = event.target.closest('button');
                     const originalText = btn.innerHTML;
                     btn.innerHTML = '<i class="fas fa-check"></i><span>已複製</span>';
-                    btn.style.background = 'var(--gradient-success)';
                     setTimeout(() => {
                         btn.innerHTML = originalText;
-                        btn.style.background = 'var(--gradient-success)';
                     }, 2000);
                 }).catch(err => {
                     alert('複製失敗，請手動複製序號');
@@ -2237,7 +1782,6 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
 服務方案：${planName}
 服務期限：${planPeriod}
 付款金額：NT$ ${amount}
-付款方式：itch.io
 專屬序號：${uuid}
 
 請妥善保管您的序號，避免外洩給他人使用。
@@ -2245,7 +1789,7 @@ PAYMENT_SUCCESS_TEMPLATE = r"""
 操作手冊：請訪問 /manual 查看詳細使用說明
 
 技術支援：
-- Discord：https://discord.gg/HPzNrQmN
+- Discord：https://discord.gg/nmMmm9gZDC
 - Email：scrilabstaff@gmail.com
 
 Scrilab 技術團隊
@@ -2288,7 +1832,6 @@ PAYMENT_CANCEL_TEMPLATE = r"""
             --text-secondary: #b3b3b3;
             --text-muted: #808080;
             --accent-orange: #f59e0b;
-            --accent-itchio: #fa5c5c;
             --border-color: #333333;
             --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
@@ -2389,7 +1932,7 @@ PAYMENT_CANCEL_TEMPLATE = r"""
 
         .btn-secondary:hover {
             color: var(--text-primary);
-            border-color: var(--accent-itchio);
+            border-color: var(--accent-orange);
         }
 
         .footer-note {
@@ -2422,7 +1965,7 @@ PAYMENT_CANCEL_TEMPLATE = r"""
         </div>
         
         <h1 class="cancel-title">付款已取消</h1>
-        <p class="cancel-subtitle">您已取消付款流程，如果需要購買服務，請重新選擇方案。</p>
+        <p class="cancel-subtitle">您已取消付款流程，如需購買服務，請重新選擇方案。</p>
         
         <div style="margin-top: 2rem;">
             <a href="/products" class="btn btn-primary">
@@ -2435,7 +1978,7 @@ PAYMENT_CANCEL_TEMPLATE = r"""
             </a>
         </div>
         
-        <p class="footer-note">如有任何問題，歡迎透過 Discord 或 Email 聯繫我們，或查看操作手冊了解更多資訊。</p>
+        <p class="footer-note">如有任何問題，歡迎透過 Discord 或 Email 聯繫我們。</p>
     </div>
 </body>
 </html>
