@@ -55,7 +55,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0a0a; /* 深灰色外層背景 */
+            background: #1a1a1a; /* 明顯的深灰色外層背景 */
             color: var(--text-primary);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
@@ -67,7 +67,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             max-width: 1400px;
             margin: 0 auto;
             background: var(--bg-primary); /* 純黑色內容區 */
-            box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.8);
         }
 
         /* Navigation - 固定在頂部，跨越全寬 */
