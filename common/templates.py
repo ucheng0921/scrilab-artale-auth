@@ -1123,7 +1123,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 </button>
                 <div class="section-badge">服務方案</div>
                 <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale (繁體中文版)</h2>
-                <p class="section-description">透過 Gumroad 付款，支援信用卡、Apple Pay、Google Pay 等方式付款。</p>
+                <p class="section-description">透過 Gumroad 付款，支援信用卡與 Apple Pay。如不方便使用信用卡，請至 Discord 聯絡管理員使用其他匯款方式。</p>
             </div>
             
             <!-- 資源快捷列 -->
