@@ -55,53 +55,53 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
+            background: #0a0a0a; /* 深灰色外層背景 */
             color: var(--text-primary);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* 背景效果 - 降低透明度 */
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.3;
+        /* 主要內容容器 - 浮動卡片效果 */
+        .main-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--bg-primary); /* 純黑色內容區 */
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
         }
 
-        .bg-animation::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
-        }
-
-        /* Navigation */
+        /* Navigation - 固定在頂部，跨越全寬 */
         .navbar {
             position: fixed;
             top: 0;
-            width: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
             z-index: 1000;
             transition: var(--transition);
         }
 
+        .navbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 1400px;
+            height: 1px;
+            background: var(--border);
+        }
+
         .nav-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 2rem;
+            padding: 1rem 3rem;
         }
 
         .logo {
@@ -223,7 +223,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         /* Sections */
         .section {
-            padding: 6rem 2rem;
+            padding: 6rem 3rem;
         }
 
         .section-alt {
