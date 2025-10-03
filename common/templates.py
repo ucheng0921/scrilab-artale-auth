@@ -150,7 +150,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             min-height: 100vh;
             display: flex;
             align-items: center;
-            padding: 0 2rem;
+            padding: 0 3rem;
         }
 
         .hero-content {
@@ -844,8 +844,19 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         /* Responsive */
         @media (max-width: 768px) {
+            .main-wrapper {
+                box-shadow: none;
+            }
+
             .nav-links {
                 display: none;
+            }
+
+            .nav-container,
+            .hero,
+            .section {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
             }
 
             .hero h1 {
@@ -903,7 +914,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
     </style>
 </head>
 <body>
-    <div class="bg-animation"></div>
+    <!-- 主要內容包裹器 - 創造浮動卡片效果 -->
+    <div class="main-wrapper">
 
     <!-- Navigation -->
     <nav class="navbar">
@@ -1207,6 +1219,9 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             </div>
         </div>
     </footer>
+
+    </div>
+    <!-- 結束 main-wrapper -->
 
     <!-- Purchase Modal -->
     <div id="purchase-modal" class="modal">
