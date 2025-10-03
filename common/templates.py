@@ -55,7 +55,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #ff6600; /* 測試用：超級明顯的橘色！ */
+            background: #1a1a1a; /* 深灰色外層背景 - 改回正常顏色 */
             color: var(--text-primary);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
