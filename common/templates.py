@@ -55,7 +55,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a1a; /* 明顯的深灰色外層背景 */
+            background: #ff6600; /* 測試用：超級明顯的橘色！ */
             color: var(--text-primary);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
@@ -64,7 +64,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         /* 主要內容容器 - 浮動卡片效果 */
         .main-wrapper {
-            max-width: 1400px;
+            max-width: 1200px; /* 改小讓更多螢幕能看到分層 */
             margin: 0 auto;
             background: var(--bg-primary); /* 純黑色內容區 */
             border-left: 1px solid rgba(255, 255, 255, 0.05);
@@ -78,7 +78,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(10, 10, 10, 0.95);
+            background: rgba(26, 26, 26, 0.95); /* 配合外層背景 */
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
             z-index: 1000;
@@ -92,13 +92,13 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
-            max-width: 1400px;
+            max-width: 1200px; /* 配合 main-wrapper */
             height: 1px;
             background: var(--border);
         }
 
         .nav-container {
-            max-width: 1400px;
+            max-width: 1200px; /* 配合 main-wrapper */
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
