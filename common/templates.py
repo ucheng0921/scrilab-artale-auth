@@ -381,7 +381,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         .game-image {
             position: relative;
             width: 100%;
-            height: 200px;
+            height: 250px;
             overflow: hidden;
             background: var(--bg-tertiary);
             display: flex;
@@ -396,27 +396,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             transition: var(--transition);
         }
 
-        .game-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: var(--transition);
-        }
-
-        .game-card.active:hover .game-overlay {
-            opacity: 1;
-        }
-
-        .game-overlay i {
-            font-size: 2.5rem;
-            color: var(--accent-blue);
+        .game-card.active:hover .game-image img {
+            transform: scale(1.05);
         }
 
         .game-info {
@@ -439,7 +420,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         .game-description {
             color: var(--text-secondary);
             line-height: 1.6;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .game-status {
@@ -448,6 +429,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            margin-bottom: 1.5rem;
         }
 
         .status-badge {
@@ -471,53 +453,35 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
-        .game-buttons {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .manual-btn {
+        .enter-game-btn {
+            width: 100%;
             background: var(--gradient-accent);
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
+            padding: 1.2rem 2rem;
+            border-radius: 12px;
             text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: var(--transition);
-            display: inline-flex;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
             align-items: center;
-            gap: 0.3rem;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
         }
 
-        .manual-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        .enter-game-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
         }
 
-        .intro-btn {
-            background: transparent;
-            border: 1px solid var(--accent-blue);
-            color: var(--accent-blue);
+        .enter-game-btn i {
+            transition: transform 0.3s ease;
         }
 
-        .intro-btn:hover {
-            background: var(--accent-blue);
-            color: white;
-        }
-
-        .download-btn {
-            background: var(--gradient-success);
-            border: 1px solid var(--accent-green);
-            color: white;
-        }
-
-        .download-btn:hover {
-            background: var(--accent-green);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        .enter-game-btn:hover i {
+            transform: translateX(5px);
         }
 
         /* Services Section */
@@ -526,11 +490,94 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             background: var(--bg-primary);
         }
 
+        /* 資源快捷列 */
+        .resources-section {
+            margin: 3rem 0 5rem;
+        }
+
+        .resources-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .resources-subtitle {
+            text-align: center;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .resource-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+        }
+
+        .resource-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .resource-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--gradient-accent);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .resource-card.intro .resource-icon {
+            background: linear-gradient(135deg, #00d4ff 0%, #0ea5e9 100%);
+        }
+
+        .resource-card.manual .resource-icon {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        .resource-card.download .resource-icon {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .resource-card h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .resource-card p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
         .services-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 3rem;
-            margin-top: 5rem;
+            margin-top: 3rem;
         }
 
         .service-card {
@@ -854,57 +901,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             to { transform: rotate(360deg); }
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .games-grid,
-            .services-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .section-title {
-                font-size: 2.2rem;
-            }
-
-            .contact-methods {
-                flex-direction: column;
-                gap: 1.5rem;
-            }
-
-            .game-status {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-
-            .game-buttons {
-                width: 100%;
-                justify-content: flex-start;
-            }
-        }
-
-        /* 添加到你的 CSS 中，或者放在 <style> 標籤內 */
-
-        /* 期限顯示樣式 */
-        .service-price .period {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            font-weight: 400;
-            margin-left: 5px;
-        }
-
         /* 原價顯示（被劃掉的價格） */
         .original-price {
             text-align: center;
@@ -981,6 +977,43 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             justify-content: center;
         }
 
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .games-grid,
+            .services-grid,
+            .resources-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            .contact-methods {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .game-status {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1017,11 +1050,11 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             <div class="hero-buttons">
                 <a href="#games" class="btn-primary">
                     <i class="fas fa-gamepad"></i>
-                    <span>瀏覽遊戲服務</span>
+                    <span>查看遊戲列表</span>
                 </a>
                 <a href="#contact" class="btn-secondary">
-                    <i class="fas fa-book"></i>
-                    <span>聯絡我們</span>
+                    <i class="fas fa-headset"></i>
+                    <span>技術支援</span>
                 </a>
             </div>
         </div>
@@ -1041,31 +1074,21 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <div class="game-card active" onclick="showGamePlans('artale')">
                     <div class="game-image">
                         <img src="/static/images/artale-cover.jpg" alt="MapleStory Worlds - Artale" style="width: 100%; height: 100%; object-fit: cover;">
-                        <div class="game-overlay">
-                            <i class="fas fa-play"></i>
-                        </div>
                     </div>
                     <div class="game-info">
                         <h3>MapleStory Worlds - Artale (繁體中文版)</h3>
                         <p class="game-subtitle">Fully automated script</p>
-                        <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案。</p>
+                        <p class="game-description">專為 Artale 玩家打造的自動化遊戲方案。提供完整的技術服務與個人化設定。</p>
                         <div class="game-status">
-                            <span class="status-badge active">服務中</span>
-                            <div class="game-buttons">
-                                <a href="/intro" class="manual-btn intro-btn">
-                                    <i class="fas fa-info-circle"></i>
-                                    基本介紹
-                                </a>
-                                <a href="/manual" class="manual-btn">
-                                    <i class="fas fa-book"></i>
-                                    操作手冊
-                                </a>
-                                <a href="/download" class="manual-btn download-btn">
-                                    <i class="fas fa-download"></i>
-                                    下載連結
-                                </a>
-                            </div>
+                            <span class="status-badge active">
+                                <i class="fas fa-check-circle"></i>
+                                服務中
+                            </span>
                         </div>
+                        <button class="enter-game-btn">
+                            <span>進入遊戲頁面</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -1073,16 +1096,16 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <div class="game-card coming-soon">
                     <div class="game-image">
                         <img src="/static/images/coming-soon.jpg" alt="Coming Soon Games" style="width: 100%; height: 100%; object-fit: cover;">
-                        <div class="game-overlay">
-                            <i class="fas fa-clock"></i>
-                        </div>
                     </div>
                     <div class="game-info">
                         <h3>更多遊戲</h3>
                         <p class="game-subtitle">即將推出</p>
                         <p class="game-description">我們正在開發更多遊戲的優化解決方案，敬請期待</p>
                         <div class="game-status">
-                            <span class="status-badge coming">開發中</span>
+                            <span class="status-badge coming">
+                                <i class="fas fa-clock"></i>
+                                開發中
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -1090,7 +1113,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         </div>
     </section>
 
-<!-- Services Section -->
+    <!-- Services Section -->
     <section id="services" class="services" style="display: none;">
         <div class="container">
             <div class="section-header">
@@ -1099,8 +1122,39 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                     <span>返回遊戲列表</span>
                 </button>
                 <div class="section-badge">服務方案</div>
-                <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale(繁體中文版)</h2>
-                <p class="section-description">透過 Gumroad 付款，支援信用卡、apple pay、google pay等方式付款。</p>
+                <h2 class="section-title" id="game-plans-title">MapleStory Worlds - Artale (繁體中文版)</h2>
+                <p class="section-description">透過 Gumroad 付款，支援信用卡、Apple Pay、Google Pay 等方式付款。</p>
+            </div>
+            
+            <!-- 資源快捷列 -->
+            <div class="resources-section">
+                <h3 class="resources-title">遊戲資源</h3>
+                <p class="resources-subtitle">查看操作手冊、基本介紹與下載連結</p>
+                <div class="resources-grid">
+                    <a href="/intro" class="resource-card intro">
+                        <div class="resource-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <h3>基本介紹</h3>
+                        <p>了解服務功能與特色，快速掌握使用方法</p>
+                    </a>
+                    
+                    <a href="/manual" class="resource-card manual">
+                        <div class="resource-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <h3>操作手冊</h3>
+                        <p>詳細的使用說明與常見問題解答</p>
+                    </a>
+                    
+                    <a href="/download" class="resource-card download">
+                        <div class="resource-icon">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <h3>下載連結</h3>
+                        <p>取得最新版本的服務程式與相關檔案</p>
+                    </a>
+                </div>
             </div>
             
             <div class="services-grid">
@@ -1287,48 +1341,48 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 <p style="margin-bottom: 1rem;">
                     <a href="/disclaimer" style="color: var(--text-muted); text-decoration: none; margin-right: 2rem; transition: color 0.3s ease;" onmouseover="this.style.color='var(--accent-blue)'" onmouseout="this.style.color='var(--text-muted)'">免責聲明</a>
                 </p>
-                <p>&copy; 2025 Scrilab. All rights reserved. Powered by Gumroad.</p>
+                <p>&copy; 2025 Scrilab. All rights reserved. Powered by Scrilab.</p>
             </div>
         </div>
     </footer>
 
     <!-- Purchase Modal -->
-        <div id="purchase-modal" class="modal">
-            <div class="modal-content">
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-                <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Gumroad 安全付款</h3>
-                <div id="selected-plan-info" class="plan-info">
-                    <!-- Plan info will be inserted here -->
-                </div>
-                <div class="gumroad-notice">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>將跳轉至 Gumroad 完成付款，支援 PayPal、信用卡、apple pay及google pay</span>
-                </div>
-                <div class="gumroad-notice" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--accent-green);">
-                    <i class="fas fa-info-circle"></i>
-                    <span>購買完成後，序號將自動發送至您的信箱(請同時檢查垃圾郵件)</span>
-                </div>
-                <div class="form-group" style="text-align: left;">
-                    <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
-                        <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
-                        <span style="font-size: 0.95rem; line-height: 1.5;">
-                            我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-blue); text-decoration: none;">免責聲明與服務條款</a>，
-                            理解使用本服務的風險，並自願承擔相關責任。
-                        </span>
-                    </label>
-                </div>
-                <div class="modal-buttons">
-                    <button class="btn-cancel" onclick="closeModal()">取消</button>
-                    <button class="btn-primary" onclick="submitPayment()" id="payment-btn">
-                        <span id="payment-btn-text">
-                            <i class="fas fa-shield-alt"></i>
-                            前往 Gumroad 付款
-                        </span>
-                        <div class="loading" id="payment-loading" style="display: none;"></div>
-                    </button>
-                </div>
+    <div id="purchase-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Gumroad 安全付款</h3>
+            <div id="selected-plan-info" class="plan-info">
+                <!-- Plan info will be inserted here -->
+            </div>
+            <div class="gumroad-notice">
+                <i class="fas fa-shield-alt"></i>
+                <span>將跳轉至 Gumroad 完成付款，支援 PayPal、信用卡、Apple Pay 及 Google Pay</span>
+            </div>
+            <div class="gumroad-notice" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--accent-green);">
+                <i class="fas fa-info-circle"></i>
+                <span>購買完成後，序號將自動發送至您的信箱(請同時檢查垃圾郵件)</span>
+            </div>
+            <div class="form-group" style="text-align: left;">
+                <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
+                    <input type="checkbox" id="agree-terms" required style="margin-top: 0.2rem; accent-color: var(--accent-blue);">
+                    <span style="font-size: 0.95rem; line-height: 1.5;">
+                        我已閱讀並同意 <a href="/disclaimer" target="_blank" style="color: var(--accent-blue); text-decoration: none;">免責聲明與服務條款</a>，
+                        理解使用本服務的風險，並自願承擔相關責任。
+                    </span>
+                </label>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal()">取消</button>
+                <button class="btn-primary" onclick="submitPayment()" id="payment-btn">
+                    <span id="payment-btn-text">
+                        <i class="fas fa-shield-alt"></i>
+                        前往 Gumroad 付款
+                    </span>
+                    <div class="loading" id="payment-loading" style="display: none;"></div>
+                </button>
             </div>
         </div>
+    </div>
 
     <script>
         // Service plans data
@@ -1397,9 +1451,7 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
 
         function closeModal() {
             document.getElementById('purchase-modal').style.display = 'none';
-            // 清理表單
             document.getElementById('agree-terms').checked = false;
-            // 重置按鈕
             resetPaymentButton();
         }
 
@@ -1411,15 +1463,12 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 return;
             }
             
-            // 顯示載入狀態
             document.getElementById('payment-btn-text').style.display = 'none';
             document.getElementById('payment-loading').style.display = 'inline-block';
             
-            // 直接提交 Gumroad 付款，不需要用戶信息
             submitGumroadPayment();
         }
 
-        // Gumroad 付款提交
         async function submitGumroadPayment() {
             try {
                 const response = await fetch('/gumroad/create-payment', {
@@ -1438,12 +1487,8 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 直接跳轉到 Gumroad，不保存 payment_id
-                    window.location.href = data.purchase_url;  // 改為 location.href 而不是 window.open
+                    window.location.href = data.purchase_url;
                     closeModal();
-                    
-                    // 移除 showPaymentInstructions 調用
-                    // showPaymentInstructions(data.payment_id);  // 刪除這行
                 } else {
                     alert('付款創建失敗: ' + data.error);
                     resetPaymentButton();
@@ -1457,11 +1502,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
         function resetPaymentButton() {
             document.getElementById('payment-btn-text').style.display = 'inline-flex';
             document.getElementById('payment-loading').style.display = 'none';
-        }
-
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
         }
 
         // Smooth scrolling
@@ -1658,7 +1698,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 90% { opacity: 0.3; } 
                 100% { transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px); opacity: 0; } 
             }
-            /* 截圖辨識視覺效果 */
             .screenshot-overlay {
                 position: fixed;
                 top: 10%;
@@ -1751,7 +1790,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             const detectionContainer = document.createElement('div');
             detectionContainer.className = 'screenshot-overlay';
             
-            // 創建多個檢測框
             for (let i = 0; i < 5; i++) {
                 const detectionBox = document.createElement('div');
                 detectionBox.className = 'detection-box';
@@ -1765,7 +1803,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 detectionContainer.appendChild(detectionBox);
             }
             
-            // 創建目標標記
             for (let i = 0; i < 8; i++) {
                 const targetMarker = document.createElement('div');
                 targetMarker.className = 'target-marker';
@@ -1777,7 +1814,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
                 detectionContainer.appendChild(targetMarker);
             }
             
-            // 創建掃描線
             for (let i = 0; i < 3; i++) {
                 const scanLine = document.createElement('div');
                 scanLine.className = 'scan-line';
@@ -1792,7 +1828,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             document.body.appendChild(detectionContainer);
         }
 
-        // 初始化背景效果
         document.addEventListener('DOMContentLoaded', function() {
             createCodeBackground();
             createFloatingParticles();
@@ -1810,37 +1845,6 @@ PROFESSIONAL_PRODUCTS_TEMPLATE = r"""
             createFloatingParticles();
             createScreenshotDetection();
         }
-
-        // 讓密碼輸入框支援 Enter 鍵
-        document.addEventListener('DOMContentLoaded', function() {
-            const userNameInput = document.getElementById('user-name');
-            const contactEmailInput = document.getElementById('contact-email');
-            const contactPhoneInput = document.getElementById('contact-phone');
-            
-            if (userNameInput) {
-                userNameInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        submitPayment();
-                    }
-                });
-            }
-            
-            if (contactEmailInput) {
-                contactEmailInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        submitPayment();
-                    }
-                });
-            }
-            
-            if (contactPhoneInput) {
-                contactPhoneInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        submitPayment();
-                    }
-                });
-            }
-        });
     </script>
 </body>
 </html>
