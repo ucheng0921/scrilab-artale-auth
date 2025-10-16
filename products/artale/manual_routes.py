@@ -91,81 +91,123 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
 
         :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #1a1a1a;
-            --bg-card: #1e1e1e;
-            --bg-tertiary: #2a2a2a;
+            /* 背景色 */
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-card: #111111;
+            --bg-elevated: #1a1a1a;
+            
+            /* 文字色 */
             --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --text-muted: #808080;
-            --accent-blue: #00d4ff;
-            --accent-purple: #8b5cf6;
-            --accent-green: #10b981;
-            --accent-orange: #f59e0b;
-            --accent-red: #ef4444;
-            --border-color: #333333;
-            --border-hover: #555555;
-            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --gradient-accent: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%);
-            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
-            --border-radius: 16px;
-            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --text-secondary: #a3a3a3;
+            --text-muted: #737373;
+            
+            /* 主色 - 只用藍色 */
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --primary-light: rgba(59, 130, 246, 0.1);
+            --primary-border: rgba(59, 130, 246, 0.3);
+            
+            /* 功能色 */
+            --success: #10b981;
+            --success-light: rgba(16, 185, 129, 0.1);
+            --warning: #f59e0b;
+            --warning-light: rgba(245, 158, 11, 0.1);
+            
+            /* 邊框 */
+            --border: rgba(255, 255, 255, 0.1);
+            --border-hover: rgba(255, 255, 255, 0.2);
+            
+            /* 陰影 */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+            
+            /* 其他 */
+            --radius: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
+            background: #1a1a1a;
             color: var(--text-primary);
             line-height: 1.6;
-            padding-top: 80px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Navigation */
+        /* 主要內容容器 - 浮動卡片效果 */
+        .main-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-primary);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.8);
+            min-height: 100vh;
+        }
+
+        /* Navigation - 固定在頂部，跨越全寬 */
         .navbar {
             position: fixed;
             top: 0;
-            width: 100%;
+            left: 0;
+            right: 0;
             background: rgba(26, 26, 26, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
             z-index: 1000;
             transition: var(--transition);
         }
 
+        .navbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 1200px;
+            height: 1px;
+            background: var(--border);
+        }
+
         .nav-container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.2rem 2rem;
+            padding: 1rem 3rem;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.8rem;
-            font-size: 1.8rem;
-            font-weight: 800;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
             color: var(--text-primary);
             text-decoration: none;
         }
 
         .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--gradient-accent);
-            border-radius: 10px;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+            font-size: 0.875rem;
         }
 
         .nav-links {
             display: flex;
             list-style: none;
-            gap: 2.5rem;
+            gap: 2rem;
             align-items: center;
         }
 
@@ -173,40 +215,39 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             text-decoration: none;
             color: var(--text-secondary);
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 0.875rem;
             transition: var(--transition);
-            position: relative;
-            padding: 0.5rem 0;
         }
 
         .nav-links a:hover {
-            color: var(--accent-blue);
+            color: var(--text-primary);
         }
 
         .back-btn {
-            background: var(--gradient-accent);
+            background: var(--primary);
             color: white;
-            padding: 0.7rem 1.5rem;
-            border-radius: 50px;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
             text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
+            font-weight: 500;
+            font-size: 0.875rem;
             transition: var(--transition);
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            border: none;
         }
 
         .back-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+            background: var(--primary-hover);
+            transform: translateY(-1px);
         }
 
         /* Main Content */
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 6rem 3rem 2rem;
         }
 
         .manual-header {
@@ -214,15 +255,15 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             margin-bottom: 3rem;
             padding: 2rem 0;
             background: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
         }
 
         .manual-title {
             font-size: 2.5rem;
             font-weight: 800;
             margin-bottom: 1rem;
-            background: var(--gradient-accent);
+            background: var(--primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -238,7 +279,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             display: inline-block;
             background: rgba(16, 185, 129, 0.1);
             border: 1px solid rgba(16, 185, 129, 0.3);
-            color: var(--accent-green);
+            color: var(--success);
             padding: 0.4rem 0.8rem;
             border-radius: 20px;
             font-size: 0.85rem;
@@ -248,8 +289,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         /* Auth Section */
         .auth-section {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2.5rem;
             margin-bottom: 3rem;
             text-align: center;
@@ -259,7 +300,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             font-size: 1.8rem;
             font-weight: 700;
             margin-bottom: 1rem;
-            color: var(--accent-blue);
+            color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -269,7 +310,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .auth-icon {
             width: 45px;
             height: 45px;
-            background: var(--gradient-accent);
+            background: var(--primary);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -304,8 +345,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .form-input {
             width: 100%;
             padding: 12px 16px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 8px;
             color: var(--text-primary);
             font-size: 1rem;
@@ -314,14 +355,14 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         .form-input:focus {
             outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
 
         .verify-btn {
             width: 100%;
             padding: 12px 16px;
-            background: var(--gradient-accent);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 8px;
@@ -337,7 +378,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         .verify-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 8px 25px var(--primary-border);
         }
 
         .verify-btn:disabled {
@@ -383,8 +424,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         /* Interface Preview */
         .interface-preview {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2rem;
             margin-bottom: 3rem;
             text-align: center;
@@ -393,12 +434,12 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .interface-preview h3 {
             font-size: 1.4rem;
             margin-bottom: 1.5rem;
-            color: var(--accent-blue);
+            color: var(--primary);
         }
 
         .gui-mockup {
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 2px solid var(--border);
             border-radius: 12px;
             padding: 1.5rem;
             margin: 0 auto;
@@ -411,7 +452,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         .left-panel {
             background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 1rem;
             display: flex;
@@ -421,7 +462,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         .right-panel {
             background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 1rem;
             display: flex;
@@ -430,7 +471,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         .panel-section {
             background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 6px;
             padding: 0.8rem;
             margin-bottom: 0.5rem;
@@ -439,13 +480,13 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .panel-title {
             font-size: 0.9rem;
             font-weight: 600;
-            color: var(--accent-blue);
+            color: var(--primary);
             margin-bottom: 0.5rem;
         }
 
         .mock-input {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 4px;
             padding: 0.4rem 0.6rem;
             font-size: 0.8rem;
@@ -454,7 +495,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
 
         .mock-button {
-            background: var(--accent-blue);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 4px;
@@ -465,7 +506,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
 
         .mock-button.green {
-            background: var(--accent-green);
+            background: var(--success);
         }
 
         .mock-button.red {
@@ -480,7 +521,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         .mock-tab {
             background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 4px;
             padding: 0.4rem 0.8rem;
             font-size: 0.8rem;
@@ -489,25 +530,25 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
 
         .mock-tab.active {
-            background: var(--accent-blue);
+            background: var(--primary);
             color: white;
         }
 
         .mock-log {
             background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 4px;
             padding: 0.8rem;
             font-family: monospace;
             font-size: 0.75rem;
-            color: var(--accent-green);
+            color: var(--success);
             flex: 1;
             overflow-y: auto;
         }
 
         .mock-settings {
             background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 4px;
             padding: 0.8rem;
             font-family: inherit;
@@ -520,11 +561,11 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .mock-settings-category {
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
         }
 
         .mock-settings-category h4 {
-            color: var(--accent-blue);
+            color: var(--primary);
             font-size: 0.8rem;
             margin-bottom: 8px;
         }
@@ -544,8 +585,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         /* Locked Content */
         .locked-content {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 3rem;
             margin-bottom: 2rem;
             text-align: center;
@@ -561,7 +602,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             right: 0;
             bottom: 0;
             background: linear-gradient(to bottom, transparent 0%, rgba(10, 10, 10, 0.9) 70%, rgba(10, 10, 10, 1) 100%);
-            border-radius: var(--border-radius);
+            border-radius: var(--radius);
             z-index: 1;
         }
 
@@ -577,7 +618,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .locked-icon {
             width: 60px;
             height: 60px;
-            background: var(--gradient-accent);
+            background: var(--primary);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -611,8 +652,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         /* 原有的手冊樣式保持不變 */
         .manual-section {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2.5rem;
             margin-bottom: 2rem;
             scroll-margin-top: 100px;
@@ -622,7 +663,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             font-size: 1.8rem;
             font-weight: 700;
             margin-bottom: 1.5rem;
-            color: var(--accent-blue);
+            color: var(--primary);
             display: flex;
             align-items: center;
             gap: 0.8rem;
@@ -631,7 +672,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .section-icon {
             width: 45px;
             height: 45px;
-            background: var(--gradient-accent);
+            background: var(--primary);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -642,8 +683,18 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         /* Responsive */
         @media (max-width: 768px) {
+            .main-wrapper {
+                box-shadow: none;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .nav-container,
             .container {
-                padding: 1rem;
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
             }
             
             .manual-title {
@@ -667,8 +718,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         /* 購買提示 */
         .purchase-prompt {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2.5rem;
             margin-bottom: 3rem;
             text-align: center;
@@ -678,7 +729,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             font-size: 1.5rem;
             font-weight: 700;
             margin-bottom: 1rem;
-            color: var(--accent-blue);
+            color: var(--primary);
         }
 
         .purchase-prompt p {
@@ -688,7 +739,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
 
         .purchase-btn {
-            background: var(--gradient-accent);
+            background: var(--primary);
             color: white;
             padding: 1rem 2rem;
             border-radius: 12px;
@@ -703,14 +754,14 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         .purchase-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 8px 25px var(--primary-border);
         }
 
         .purchase-prompt h3 {
             font-size: 1.5rem;
             font-weight: 700;
             margin-bottom: 1rem;
-            color: var(--accent-blue);
+            color: var(--primary);
         }
 
         .purchase-prompt p {
@@ -720,7 +771,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
 
         .purchase-btn {
-            background: var(--gradient-accent);
+            background: var(--primary);
             color: white;
             padding: 1rem 2rem;
             border-radius: 12px;
@@ -735,7 +786,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         .purchase-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 8px 25px var(--primary-border);
         }
 
         # ===== 在這裡添加新的CSS樣式 =====
@@ -743,7 +794,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         /* 進階設定改進樣式 */
         .mock-settings-header {
             background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 6px;
             padding: 12px;
             margin-bottom: 10px;
@@ -761,7 +812,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-control-btn {
-            background: var(--accent-blue);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 4px;
@@ -781,7 +832,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-control-btn.apply {
-            background: var(--accent-blue);
+            background: var(--primary);
         }
         
         .mock-settings-content {
@@ -795,12 +846,12 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-settings-content::-webkit-scrollbar-track {
-            background: var(--bg-tertiary);
+            background: var(--bg-elevated);
             border-radius: 3px;
         }
         
         .mock-settings-content::-webkit-scrollbar-thumb {
-            background: var(--border-color);
+            background: var(--border);
             border-radius: 3px;
         }
         
@@ -812,16 +863,16 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             margin-bottom: 15px;
             padding: 10px;
             background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 6px;
         }
         
         .mock-settings-category h4 {
-            color: var(--accent-blue);
+            color: var(--primary);
             font-size: 0.8rem;
             margin-bottom: 10px;
             font-weight: 600;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
             padding-bottom: 5px;
         }
         
@@ -850,8 +901,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-setting-input {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 3px;
             padding: 2px 4px;
             color: var(--text-primary);
@@ -861,8 +912,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-setting-select {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 3px;
             padding: 2px 4px;
             color: var(--text-primary);
@@ -877,14 +928,14 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         /* 角色定位工具樣式 */
         .mock-tool-section {
             background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 6px;
             padding: 8px;
             margin-bottom: 10px;
         }
         
         .mock-tool-title {
-            color: var(--accent-blue);
+            color: var(--primary);
             font-size: 0.75rem;
             font-weight: 600;
             margin-bottom: 6px;
@@ -898,7 +949,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-tool-btn {
-            background: var(--accent-blue);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 4px;
@@ -917,8 +968,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-preview-box {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 4px;
             padding: 6px;
             text-align: center;
@@ -933,22 +984,22 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         /* 技能網格樣式 */
         .mock-skill-grid {
             background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 4px;
             margin: 8px 0;
             overflow: hidden;
         }
         
         .mock-skill-header {
-            background: var(--bg-tertiary);
+            background: var(--bg-elevated);
             display: grid;
             grid-template-columns: 1fr 0.6fr 0.8fr 0.5fr;
             gap: 6px;
             padding: 6px;
             font-size: 0.65rem;
             font-weight: 600;
-            color: var(--accent-blue);
-            border-bottom: 1px solid var(--border-color);
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
         }
         
         .mock-skill-row {
@@ -957,7 +1008,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             gap: 6px;
             padding: 6px;
             align-items: center;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
             font-size: 0.65rem;
         }
         
@@ -970,8 +1021,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-skill-input {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 3px;
             padding: 2px 4px;
             color: var(--text-primary);
@@ -986,7 +1037,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             margin-top: 0.5rem;
             padding: 0.3rem;
             background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 4px;
         }
         
@@ -995,12 +1046,12 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             display: flex;
             gap: 2px;
             margin-bottom: 8px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
         }
         
         .mock-monster-tab {
             background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-bottom: none;
             border-radius: 4px 4px 0 0;
             padding: 4px 8px;
@@ -1010,14 +1061,14 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-monster-tab.active {
-            background: var(--accent-blue);
+            background: var(--primary);
             color: white;
-            border-color: var(--accent-blue);
+            border-color: var(--primary);
         }
         
         .mock-monster-content {
             background: var(--bg-primary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 0 6px 6px 6px;
             padding: 8px;
             margin-bottom: 8px;
@@ -1032,8 +1083,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         
         .mock-search-input {
             flex: 1;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 3px;
             padding: 3px 6px;
             color: var(--text-primary);
@@ -1041,7 +1092,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-search-btn {
-            background: var(--accent-blue);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 3px;
@@ -1069,8 +1120,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-ctrl-btn {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 3px;
             padding: 2px 6px;
             font-size: 0.6rem;
@@ -1082,7 +1133,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .mock-monster-list {
             max-height: 80px;
             overflow-y: auto;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 3px;
             background: var(--bg-secondary);
         }
@@ -1091,7 +1142,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             padding: 3px 6px;
             font-size: 0.65rem;
             color: var(--text-secondary);
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             gap: 6px;
@@ -1109,7 +1160,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .mock-search-status {
             text-align: center;
             padding: 8px;
-            color: var(--accent-orange);
+            color: var(--warning);
             font-size: 0.65rem;
             font-style: italic;
         }
@@ -1121,11 +1172,11 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             align-items: center;
             margin-top: 8px;
             padding-top: 6px;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--border);
         }
         
         .mock-download-btn {
-            background: var(--accent-green);
+            background: var(--success);
             color: white;
             border: none;
             border-radius: 4px;
@@ -1152,7 +1203,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .mock-rope-list {
             max-height: 60px;
             overflow-y: auto;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 3px;
             background: var(--bg-secondary);
             margin-top: 6px;
@@ -1162,7 +1213,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             padding: 3px 6px;
             font-size: 0.65rem;
             color: var(--text-secondary);
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             gap: 6px;
@@ -1195,7 +1246,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
         
         .mock-test-btn {
-            background: var(--accent-blue);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 4px;
@@ -1223,13 +1274,13 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         
         .mock-monster-list::-webkit-scrollbar-track,
         .mock-rope-list::-webkit-scrollbar-track {
-            background: var(--bg-tertiary);
+            background: var(--bg-elevated);
             border-radius: 2px;
         }
         
         .mock-monster-list::-webkit-scrollbar-thumb,
         .mock-rope-list::-webkit-scrollbar-thumb {
-            background: var(--border-color);
+            background: var(--border);
             border-radius: 2px;
         }
         
@@ -1264,8 +1315,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         /* 教學影片區域樣式 */
         .video-tutorial-section {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2.5rem;
             margin-bottom: 3rem;
         }
@@ -1278,8 +1329,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         }
 
         .video-tutorial-card {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 12px;
             overflow: hidden;
             transition: var(--transition);
@@ -1287,13 +1338,13 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
         .video-tutorial-card:hover {
             transform: translateY(-5px);
-            border-color: var(--accent-blue);
+            border-color: var(--primary);
             box-shadow: var(--shadow-lg);
         }
 
         .video-header {
             padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
         }
 
         .video-tutorial-title {
@@ -1302,7 +1353,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             gap: 0.8rem;
             font-size: 1.3rem;
             font-weight: 700;
-            color: var(--accent-blue);
+            color: var(--primary);
             margin-bottom: 0.8rem;
         }
 
@@ -1344,7 +1395,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         .video-loading-overlay i {
             font-size: 2rem;
             margin-bottom: 1rem;
-            color: var(--accent-blue);
+            color: var(--primary);
         }
 
         .video-error-overlay i {
@@ -1367,6 +1418,9 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
     </style>
 </head>
 <body>
+    <!-- 主要內容包裹器 - 創造浮動卡片效果 -->
+    <div class="main-wrapper">
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
@@ -1456,7 +1510,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                     <div class="mock-settings" id="mock-settings-tab" style="display: none;">
                         <!-- 頂部控制按鈕區域 -->
                         <div class="mock-settings-header">
-                            <h4 style="color: var(--accent-blue); margin: 0 0 10px 0; font-size: 0.9rem;">配置設定</h4>
+                            <h4 style="color: var(--primary); margin: 0 0 10px 0; font-size: 0.9rem;">配置設定</h4>
                             <div class="mock-control-buttons">
                                 <button class="mock-control-btn save">保存設定</button>
                                 <button class="mock-control-btn reset">重置默認</button>
@@ -2536,11 +2590,11 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                         <div class="feature-title">技術支援</div>
                         <div class="feature-desc">
                             <strong>Discord 即時支援：</strong><br>
-                            <a href="https://discord.gg/nmMmm9gZDC" target="_blank" style="color: var(--accent-blue);">
+                            <a href="https://discord.gg/nmMmm9gZDC" target="_blank" style="color: var(--primary);">
                                 discord.gg/HPzNrQmN
                             </a><br><br>
                             <strong>Email 客服：</strong><br>
-                            <a href="mailto:scrilabstaff@gmail.com" style="color: var(--accent-blue);">
+                            <a href="mailto:scrilabstaff@gmail.com" style="color: var(--primary);">
                                 scrilabstaff@gmail.com
                             </a><br><br>
                             <strong>服務時間：</strong><br>
@@ -2895,7 +2949,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                     // 高亮輸入框提示用戶
                     const uuidInput = document.getElementById('uuid-input');
                     uuidInput.focus();
-                    uuidInput.style.borderColor = 'var(--accent-orange)';
+                    uuidInput.style.borderColor = 'var(--warning)';
                     uuidInput.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.2)';
                     
                     // 顯示提示訊息
@@ -2903,7 +2957,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                     
                     // 3秒後恢復正常樣式
                     setTimeout(() => {
-                        uuidInput.style.borderColor = 'var(--border-color)';
+                        uuidInput.style.borderColor = 'var(--border)';
                         uuidInput.style.boxShadow = 'none';
                         hideMessages();
                     }, 3000);
@@ -2923,12 +2977,10 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         // Navbar scroll effect
         window.addEventListener('scroll', function() {
             const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 100) {
-                navbar.style.background = 'rgba(26, 26, 26, 0.98)';
-                navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(0, 0, 0, 0.95)';
             } else {
-                navbar.style.background = 'rgba(26, 26, 26, 0.95)';
-                navbar.style.boxShadow = 'none';
+                navbar.style.background = 'rgba(0, 0, 0, 0.8)';
             }
         });
 
@@ -2949,14 +3001,14 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             }
 
             .info-box {
-                background: rgba(0, 212, 255, 0.1);
-                border-left-color: var(--accent-blue);
+                background: var(--primary-light);
+                border-left-color: var(--primary);
                 color: #7dd3fc;
             }
 
             .tip-box {
                 background: rgba(16, 185, 129, 0.1);
-                border-left-color: var(--accent-green);
+                border-left-color: var(--success);
                 color: #6ee7b7;
             }
 
@@ -2975,19 +3027,19 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             }
 
             .step {
-                background: var(--bg-tertiary);
-                border: 1px solid var(--border-color);
+                background: var(--bg-elevated);
+                border: 1px solid var(--border);
                 border-radius: 12px;
                 padding: 2rem;
                 position: relative;
-                border-left: 4px solid var(--accent-green);
+                border-left: 4px solid var(--success);
             }
 
             .step-number {
                 position: absolute;
                 top: -15px;
                 left: 20px;
-                background: var(--accent-green);
+                background: var(--success);
                 color: white;
                 width: 30px;
                 height: 30px;
@@ -3014,7 +3066,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
             .step-visual {
                 background: var(--bg-primary);
-                border: 1px solid var(--border-color);
+                border: 1px solid var(--border);
                 border-radius: 8px;
                 padding: 1.5rem;
                 margin: 1rem 0;
@@ -3026,7 +3078,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             .visual-icon {
                 width: 50px;
                 height: 50px;
-                background: var(--gradient-accent);
+                background: var(--primary);
                 border-radius: 10px;
                 display: flex;
                 align-items: center;
@@ -3053,8 +3105,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
             .config-section-detailed {
                 background: var(--bg-card);
-                border: 1px solid var(--border-color);
-                border-radius: var(--border-radius);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
                 padding: 2rem;
                 margin-bottom: 2rem;
             }
@@ -3066,7 +3118,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
                 font-size: 1.5rem;
                 font-weight: 700;
                 margin-bottom: 1.5rem;
-                color: var(--accent-blue);
+                color: var(--primary);
             }
 
             .config-param-grid {
@@ -3076,15 +3128,15 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             }
 
             .config-param-card {
-                background: var(--bg-tertiary);
-                border: 1px solid var(--border-color);
+                background: var(--bg-elevated);
+                border: 1px solid var(--border);
                 border-radius: 8px;
                 padding: 1.5rem;
                 transition: var(--transition);
             }
 
             .config-param-card:hover {
-                border-color: var(--accent-blue);
+                border-color: var(--primary);
                 transform: translateY(-2px);
             }
 
@@ -3096,7 +3148,7 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
 
             .param-range {
                 font-size: 0.9rem;
-                color: var(--accent-green);
+                color: var(--success);
                 margin-bottom: 0.8rem;
                 font-weight: 500;
             }
@@ -3115,22 +3167,22 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             }
 
             .feature-card {
-                background: var(--bg-tertiary);
-                border: 1px solid var(--border-color);
+                background: var(--bg-elevated);
+                border: 1px solid var(--border);
                 border-radius: 12px;
                 padding: 1.5rem;
                 transition: var(--transition);
             }
 
             .feature-card:hover {
-                border-color: var(--accent-blue);
+                border-color: var(--primary);
                 transform: translateY(-3px);
             }
 
             .feature-icon {
                 width: 50px;
                 height: 50px;
-                background: var(--gradient-accent);
+                background: var(--primary);
                 border-radius: 10px;
                 display: flex;
                 align-items: center;
@@ -3154,8 +3206,8 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
             }
 
             kbd {
-                background: var(--bg-tertiary);
-                border: 1px solid var(--border-color);
+                background: var(--bg-elevated);
+                border: 1px solid var(--border);
                 border-radius: 4px;
                 padding: 0.2rem 0.4rem;
                 font-size: 0.8rem;
@@ -3169,6 +3221,10 @@ MANUAL_TEMPLATE_WITH_AUTH = r"""
         styleSheet.textContent = additionalStyles;
         document.head.appendChild(styleSheet);
     </script>
+
+    </div>
+    <!-- 結束 main-wrapper -->
+
 </body>
 </html>
 """

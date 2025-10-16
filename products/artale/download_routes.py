@@ -87,81 +87,123 @@ DOWNLOAD_TEMPLATE = r"""
         }
 
         :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #1a1a1a;
-            --bg-card: #1e1e1e;
-            --bg-tertiary: #2a2a2a;
+            /* 背景色 */
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-card: #111111;
+            --bg-elevated: #1a1a1a;
+            
+            /* 文字色 */
             --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --text-muted: #808080;
-            --accent-blue: #00d4ff;
-            --accent-purple: #8b5cf6;
-            --accent-green: #10b981;
-            --accent-orange: #f59e0b;
-            --accent-red: #ef4444;
-            --border-color: #333333;
-            --border-hover: #555555;
-            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --gradient-accent: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%);
-            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.35);
-            --border-radius: 16px;
-            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --text-secondary: #a3a3a3;
+            --text-muted: #737373;
+            
+            /* 主色 - 只用藍色 */
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --primary-light: rgba(59, 130, 246, 0.1);
+            --primary-border: rgba(59, 130, 246, 0.3);
+            
+            /* 功能色 */
+            --success: #10b981;
+            --success-light: rgba(16, 185, 129, 0.1);
+            --warning: #f59e0b;
+            --warning-light: rgba(245, 158, 11, 0.1);
+            
+            /* 邊框 */
+            --border: rgba(255, 255, 255, 0.1);
+            --border-hover: rgba(255, 255, 255, 0.2);
+            
+            /* 陰影 */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+            
+            /* 其他 */
+            --radius: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
+            background: #1a1a1a;
             color: var(--text-primary);
             line-height: 1.6;
-            padding-top: 80px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Navigation */
+        /* 主要內容容器 - 浮動卡片效果 */
+        .main-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-primary);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.8);
+            min-height: 100vh;
+        }
+
+        /* Navigation - 固定在頂部，跨越全寬 */
         .navbar {
             position: fixed;
             top: 0;
-            width: 100%;
+            left: 0;
+            right: 0;
             background: rgba(26, 26, 26, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
             z-index: 1000;
             transition: var(--transition);
         }
 
+        .navbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 1200px;
+            height: 1px;
+            background: var(--border);
+        }
+
         .nav-container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.2rem 2rem;
+            padding: 1rem 3rem;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.8rem;
-            font-size: 1.8rem;
-            font-weight: 800;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
             color: var(--text-primary);
             text-decoration: none;
         }
 
         .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--gradient-accent);
-            border-radius: 10px;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+            font-size: 0.875rem;
         }
 
         .nav-links {
             display: flex;
             list-style: none;
-            gap: 2.5rem;
+            gap: 2rem;
             align-items: center;
         }
 
@@ -169,40 +211,39 @@ DOWNLOAD_TEMPLATE = r"""
             text-decoration: none;
             color: var(--text-secondary);
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 0.875rem;
             transition: var(--transition);
-            position: relative;
-            padding: 0.5rem 0;
         }
 
         .nav-links a:hover {
-            color: var(--accent-blue);
+            color: var(--text-primary);
         }
 
         .back-btn {
-            background: var(--gradient-accent);
+            background: var(--primary);
             color: white;
-            padding: 0.7rem 1.5rem;
-            border-radius: 50px;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
             text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
+            font-weight: 500;
+            font-size: 0.875rem;
             transition: var(--transition);
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            border: none;
         }
 
         .back-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+            background: var(--primary-hover);
+            transform: translateY(-1px);
         }
 
         /* Main Content */
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 6rem 3rem 2rem;
         }
 
         .download-header {
@@ -210,15 +251,15 @@ DOWNLOAD_TEMPLATE = r"""
             margin-bottom: 3rem;
             padding: 2rem 0;
             background: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
         }
 
         .download-title {
             font-size: 2.5rem;
             font-weight: 800;
             margin-bottom: 1rem;
-            background: var(--gradient-accent);
+            background: var(--primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -234,7 +275,7 @@ DOWNLOAD_TEMPLATE = r"""
             display: inline-block;
             background: rgba(16, 185, 129, 0.1);
             border: 1px solid rgba(16, 185, 129, 0.3);
-            color: var(--accent-green);
+            color: var(--success);
             padding: 0.4rem 0.8rem;
             border-radius: 20px;
             font-size: 0.85rem;
@@ -244,8 +285,8 @@ DOWNLOAD_TEMPLATE = r"""
         /* Auth Section */
         .auth-section {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2.5rem;
             margin-bottom: 3rem;
             text-align: center;
@@ -255,7 +296,7 @@ DOWNLOAD_TEMPLATE = r"""
             font-size: 1.8rem;
             font-weight: 700;
             margin-bottom: 1rem;
-            color: var(--accent-blue);
+            color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -265,7 +306,7 @@ DOWNLOAD_TEMPLATE = r"""
         .auth-icon {
             width: 45px;
             height: 45px;
-            background: var(--gradient-accent);
+            background: var(--primary);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -300,8 +341,8 @@ DOWNLOAD_TEMPLATE = r"""
         .form-input {
             width: 100%;
             padding: 12px 16px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 8px;
             color: var(--text-primary);
             font-size: 1rem;
@@ -310,14 +351,14 @@ DOWNLOAD_TEMPLATE = r"""
 
         .form-input:focus {
             outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
 
         .verify-btn {
             width: 100%;
             padding: 12px 16px;
-            background: var(--gradient-accent);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 8px;
@@ -333,7 +374,7 @@ DOWNLOAD_TEMPLATE = r"""
 
         .verify-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 8px 25px var(--primary-border);
         }
 
         .verify-btn:disabled {
@@ -379,8 +420,8 @@ DOWNLOAD_TEMPLATE = r"""
         /* Purchase Prompt */
         .purchase-prompt {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2.5rem;
             margin-bottom: 3rem;
             text-align: center;
@@ -390,7 +431,7 @@ DOWNLOAD_TEMPLATE = r"""
             font-size: 1.5rem;
             font-weight: 700;
             margin-bottom: 1rem;
-            color: var(--accent-blue);
+            color: var(--primary);
         }
 
         .purchase-prompt p {
@@ -400,7 +441,7 @@ DOWNLOAD_TEMPLATE = r"""
         }
 
         .purchase-btn {
-            background: var(--gradient-accent);
+            background: var(--primary);
             color: white;
             padding: 1rem 2rem;
             border-radius: 12px;
@@ -415,7 +456,7 @@ DOWNLOAD_TEMPLATE = r"""
 
         .purchase-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 8px 25px var(--primary-border);
         }
 
         /* Download Content */
@@ -429,8 +470,8 @@ DOWNLOAD_TEMPLATE = r"""
 
         .download-section {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2.5rem;
             margin-bottom: 2rem;
         }
@@ -439,7 +480,7 @@ DOWNLOAD_TEMPLATE = r"""
             font-size: 1.8rem;
             font-weight: 700;
             margin-bottom: 1.5rem;
-            color: var(--accent-blue);
+            color: var(--primary);
             display: flex;
             align-items: center;
             gap: 0.8rem;
@@ -448,7 +489,7 @@ DOWNLOAD_TEMPLATE = r"""
         .section-icon {
             width: 45px;
             height: 45px;
-            background: var(--gradient-accent);
+            background: var(--primary);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -465,8 +506,8 @@ DOWNLOAD_TEMPLATE = r"""
         }
 
         .download-card {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 12px;
             padding: 2rem;
             transition: var(--transition);
@@ -474,7 +515,7 @@ DOWNLOAD_TEMPLATE = r"""
         }
 
         .download-card:hover {
-            border-color: var(--accent-blue);
+            border-color: var(--primary);
             transform: translateY(-5px);
             box-shadow: var(--shadow-lg);
         }
@@ -489,7 +530,7 @@ DOWNLOAD_TEMPLATE = r"""
         .download-icon {
             width: 50px;
             height: 50px;
-            background: var(--gradient-accent);
+            background: var(--primary);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -531,14 +572,14 @@ DOWNLOAD_TEMPLATE = r"""
         }
 
         .feature-check {
-            color: var(--accent-green);
+            color: var(--success);
             font-size: 0.8rem;
         }
 
         .download-button {
             width: 100%;
             padding: 1rem;
-            background: var(--gradient-accent);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 8px;
@@ -554,7 +595,7 @@ DOWNLOAD_TEMPLATE = r"""
 
         .download-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 8px 25px var(--primary-border);
         }
 
         .warning-box {
@@ -576,12 +617,12 @@ DOWNLOAD_TEMPLATE = r"""
         }
 
         .info-box {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
             border-radius: 8px;
             padding: 1.5rem;
             margin: 2rem 0;
-            border-left: 4px solid var(--accent-blue);
+            border-left: 4px solid var(--primary);
         }
 
         .info-box .box-title {
@@ -595,20 +636,26 @@ DOWNLOAD_TEMPLATE = r"""
 
         /* Responsive */
         @media (max-width: 768px) {
+            .main-wrapper {
+                box-shadow: none;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .nav-container,
             .container {
-                padding: 1rem;
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
             }
             
             .download-title {
                 font-size: 2rem;
             }
             
-            .nav-links {
-                display: none;
-            }
-            
             .download-section {
-                padding: 2rem;
+                padding: 1.5rem;
             }
             
             .download-grid {
@@ -618,6 +665,9 @@ DOWNLOAD_TEMPLATE = r"""
     </style>
 </head>
 <body>
+    <!-- 主要內容包裹器 - 創造浮動卡片效果 -->
+    <div class="main-wrapper">
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
@@ -807,26 +857,26 @@ DOWNLOAD_TEMPLATE = r"""
                 </h2>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-                    <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">
+                    <div style="background: var(--bg-elevated); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <h4 style="color: var(--primary); margin-bottom: 1rem;">
                             <i class="fab fa-discord"></i> Discord 即時支援
                         </h4>
                         <p style="color: var(--text-secondary); margin-bottom: 1rem;">
                             加入我們的 Discord 社群獲得即時技術支援和使用交流。
                         </p>
-                        <a href="https://discord.gg/nmMmm9gZDC" target="_blank" style="color: var(--accent-blue); text-decoration: none;">
+                        <a href="https://discord.gg/nmMmm9gZDC" target="_blank" style="color: var(--primary); text-decoration: none;">
                             discord.gg/HPzNrQmN
                         </a>
                     </div>
                     
-                    <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">
+                    <div style="background: var(--bg-elevated); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <h4 style="color: var(--primary); margin-bottom: 1rem;">
                             <i class="fas fa-envelope"></i> Email 客服
                         </h4>
                         <p style="color: var(--text-secondary); margin-bottom: 1rem;">
                             如需詳細技術支援或帳號相關問題，請透過 Email 聯繫。
                         </p>
-                        <a href="mailto:scrilabstaff@gmail.com" style="color: var(--accent-blue); text-decoration: none;">
+                        <a href="mailto:scrilabstaff@gmail.com" style="color: var(--primary); text-decoration: none;">
                             scrilabstaff@gmail.com
                         </a>
                     </div>
@@ -964,11 +1014,11 @@ DOWNLOAD_TEMPLATE = r"""
                     
                     // 顯示成功狀態
                     button.innerHTML = '<i class="fas fa-check"></i><span>下載完成</span>';
-                    button.style.background = 'var(--gradient-success)';
+                    button.style.background = 'var(--success)';
                     
                     setTimeout(() => {
                         button.innerHTML = originalText;
-                        button.style.background = 'var(--gradient-accent)';
+                        button.style.background = 'var(--primary)';
                         button.disabled = false;
                     }, 3000);
                     
@@ -979,11 +1029,11 @@ DOWNLOAD_TEMPLATE = r"""
             } catch (error) {
                 console.error('下載錯誤:', error);
                 button.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>下載失敗</span>';
-                button.style.background = 'var(--accent-red)';
+                button.style.background = '#ef4444';
                 
                 setTimeout(() => {
                     button.innerHTML = originalText;
-                    button.style.background = 'var(--gradient-accent)';
+                    button.style.background = 'var(--primary)';
                     button.disabled = false;
                 }, 3000);
             }
@@ -1004,15 +1054,17 @@ DOWNLOAD_TEMPLATE = r"""
         // 導航欄滾動效果
         window.addEventListener('scroll', function() {
             const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 100) {
-                navbar.style.background = 'rgba(26, 26, 26, 0.98)';
-                navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(0, 0, 0, 0.95)';
             } else {
-                navbar.style.background = 'rgba(26, 26, 26, 0.95)';
-                navbar.style.boxShadow = 'none';
+                navbar.style.background = 'rgba(0, 0, 0, 0.8)';
             }
         });
     </script>
+
+    </div>
+    <!-- 結束 main-wrapper -->
+
 </body>
 </html>
 """
